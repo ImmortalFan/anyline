@@ -1,0 +1,14 @@
+!revision
+branches: {
+  }
+fileChange:
+  /LICENSE:
+    newFile: !uuid '9d2440412bb20dccf4e32f13cc7886e27ce75f9e'
+    oldFile: null
+  /README.md:
+    newFile: !uuid '321e3b77282d18ac55e41e17edd77f7077930fb6'
+    oldFile: null
+gitCommitId: !uuid '681070372a9b0282a0ac1f821377f5e486f2f1c5'
+renames: {
+  }
+revisionId: 1
