@@ -3,30 +3,27 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '57531f6a85cac382a420800d169a6f6437e71a00'
-    oldFile: !uuid '8507707681d77d9a1305e3f46a5a31820ea41167'
-  /anyline_core/src:
-    newFile: !uuid 'bb102e455bb4bc13df7f28e0a4820186d8b37704'
-    oldFile: !uuid '160877a4d72d579a3ded98fa1ae0089fc9d7c6b1'
-  /anyline_core/src/org:
-    newFile: !uuid '30b7df43352e747e175ef04cce65714cc0b882e3'
-    oldFile: !uuid '7e83dc7755673fa244b676db8e666ff394b1ae14'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '749d20c017e00860c5b843172142628899cdbe75'
-    oldFile: !uuid 'b1625262ca898fc605b2f95cbb6e9cca402c3747'
-  /anyline_core/src/org/anyline/config:
-    newFile: !uuid '3e27b3f1cbf51e1b92a65fdd1c78c2a9f9049392'
-    oldFile: !uuid '0c434c7bf3e27a5b21452a057a71d503655e5630'
-  /anyline_core/src/org/anyline/config/db:
-    newFile: !uuid '7f8bf577473ab7283ec41c4acc35571e3d451212'
-    oldFile: !uuid 'eda11e08fa8f5adddea95bdb122facdb5191922c'
-  /anyline_core/src/org/anyline/config/db/impl:
-    newFile: !uuid '2517d370896cd77caa457b7b63efe06623f1476d'
-    oldFile: !uuid '09891773027dead0ca93b38cb384c6752d38321a'
-  /anyline_core/src/org/anyline/config/db/impl/BasicSQLCreaterImpl.java:
-    newFile: !uuid 'bcece10a1a5061e568242ece098402bdfc5be2e2'
-    oldFile: !uuid '12b8645842bd33014aa40922949275b361fb83d9'
-gitCommitId: !uuid 'eb3e70f96b7bd9ef1f18250ee9d3d55866836152'
+    newFile: !uuid '7146f1fd5899677306e75dc0abdf3135908ffa4e'
+    oldFile: !uuid '57531f6a85cac382a420800d169a6f6437e71a00'
+  /anyline_core/WebRoot:
+    newFile: !uuid '30456bed01b3a20c2b2d8490de929ee2a083f74e'
+    oldFile: !uuid '57507b7c6b67620977e97a2b7e3c8ae66abe500b'
+  /anyline_core/WebRoot/WEB-INF:
+    newFile: !uuid 'c7f01bfb8835e444bde2d8951dbfbe00adeda59c'
+    oldFile: !uuid '2fce7199f1b2451acf681dece6d07417d8823508'
+  /anyline_core/WebRoot/WEB-INF/classes:
+    newFile: null
+    oldFile: !uuid '74dd31c99735477289bc90280bca4d8f63079943'
+  /anyline_core/WebRoot/WEB-INF/classes/.gitignore:
+    newFile: null
+    oldFile: !uuid '6dcaec450677edb1966204429378614741eca137'
+  /anyline_core/WebRoot/WEB-INF/lib:
+    newFile: !uuid '020a55dc7f0982f597a4518500607f57e975e67f'
+    oldFile: !uuid '8618a160e54bb654ad6db59144bbbf15de348a19'
+  /anyline_core/WebRoot/WEB-INF/lib/anyline_mssql.jar:
+    newFile: !uuid 'e8b75db0b21f857554d12831e2e9b01237144e35'
+    oldFile: !uuid 'b65a87460a68dd983af647fa0c50235882278c56'
+gitCommitId: !uuid '9b26cdc1dd00de0a032acac009661d006fac6bd9'
 renames: {
   }
-revisionId: 4
+revisionId: 5
