@@ -3,27 +3,24 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '7146f1fd5899677306e75dc0abdf3135908ffa4e'
-    oldFile: !uuid '57531f6a85cac382a420800d169a6f6437e71a00'
-  /anyline_core/WebRoot:
-    newFile: !uuid '30456bed01b3a20c2b2d8490de929ee2a083f74e'
-    oldFile: !uuid '57507b7c6b67620977e97a2b7e3c8ae66abe500b'
-  /anyline_core/WebRoot/WEB-INF:
-    newFile: !uuid 'c7f01bfb8835e444bde2d8951dbfbe00adeda59c'
-    oldFile: !uuid '2fce7199f1b2451acf681dece6d07417d8823508'
-  /anyline_core/WebRoot/WEB-INF/classes:
-    newFile: null
-    oldFile: !uuid '74dd31c99735477289bc90280bca4d8f63079943'
-  /anyline_core/WebRoot/WEB-INF/classes/.gitignore:
-    newFile: null
-    oldFile: !uuid '6dcaec450677edb1966204429378614741eca137'
-  /anyline_core/WebRoot/WEB-INF/lib:
-    newFile: !uuid '020a55dc7f0982f597a4518500607f57e975e67f'
-    oldFile: !uuid '8618a160e54bb654ad6db59144bbbf15de348a19'
-  /anyline_core/WebRoot/WEB-INF/lib/anyline_mssql.jar:
-    newFile: !uuid 'e8b75db0b21f857554d12831e2e9b01237144e35'
-    oldFile: !uuid 'b65a87460a68dd983af647fa0c50235882278c56'
-gitCommitId: !uuid '9b26cdc1dd00de0a032acac009661d006fac6bd9'
+    newFile: !uuid '37898524ee83238a3f7e65bc39b2585372eaa967'
+    oldFile: !uuid '7146f1fd5899677306e75dc0abdf3135908ffa4e'
+  /anyline_core/src:
+    newFile: !uuid '6fee9e2d480b200b0de50f85ee01ed55b397d960'
+    oldFile: !uuid 'bb102e455bb4bc13df7f28e0a4820186d8b37704'
+  /anyline_core/src/org:
+    newFile: !uuid '6d707847ee983787f65b29e4e6a16552fcc27687'
+    oldFile: !uuid '30b7df43352e747e175ef04cce65714cc0b882e3'
+  /anyline_core/src/org/anyline:
+    newFile: !uuid '7916919f455d540a8b225af9783afebb1407b248'
+    oldFile: !uuid '749d20c017e00860c5b843172142628899cdbe75'
+  /anyline_core/src/org/anyline/entity:
+    newFile: !uuid '851037ea3ac9b4352ef688a9d5f1b4ea66a15d21'
+    oldFile: !uuid 'b7ae14fbfa36f9af0aa6857c6065ba3f8fb1ad4a'
+  /anyline_core/src/org/anyline/entity/DataRow.java:
+    newFile: !uuid '968120ae9d8c87610b0cc720d7aa9065bc762b4c'
+    oldFile: !uuid '530db6fb8a98350c6bd426fbac3627fd1bc42020'
+gitCommitId: !uuid '143b985cb9983bff56a8c7cff9284d4e27b42ffd'
 renames: {
   }
-revisionId: 5
+revisionId: 6
