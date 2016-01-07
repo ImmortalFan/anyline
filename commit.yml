@@ -2,25 +2,10 @@
 branches: {
   }
 fileChange:
-  /anyline_core:
-    newFile: !uuid 'd5fe5c3e17c2d5a8a86d85812522b97872c0f2bc'
-    oldFile: !uuid '7eb771340b8baba8f6bb777a0b3eaa3501b3ccbc'
-  /anyline_core/src:
-    newFile: !uuid '855caddfb3d1e012efe08eb1680e50fba4991daa'
-    oldFile: !uuid 'e393236043f2b1c5a1d7a3d85a2991d01ee06261'
-  /anyline_core/src/org:
-    newFile: !uuid 'a89ac9687e2ce2d0d00ccd681c9ae6611528985e'
-    oldFile: !uuid 'd6ca1d653b732aa75e7e3f579364520faf46c1b6'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '7f8082f6a6b6e37e298190075dc79607dcd01d06'
-    oldFile: !uuid '6597022d704a7c76fb954c09a1a45b44c7dbf902'
-  /anyline_core/src/org/anyline/util:
-    newFile: !uuid '6bcbb14339b258fcd0674d09edd4c74898186b5e'
-    oldFile: !uuid '2cac4d426c8044dd3e17dcbe03aec87d72754e1a'
-  /anyline_core/src/org/anyline/util/MD5Util.java:
-    newFile: !uuid '7db9d6a27d7f1c49a325b1f2b9a752c7c0d4a94d'
-    oldFile: !uuid '77258a348d31aaa64f3430d778fb216f37f2f0b7'
-gitCommitId: !uuid '3e20ec6bbff764d461e531f23cf0b2da07f38b53'
+  /README.md:
+    newFile: !uuid 'fe38657af3fe38118970456abb141bffc36d4e08'
+    oldFile: !uuid '321e3b77282d18ac55e41e17edd77f7077930fb6'
+gitCommitId: !uuid '271a0f4716994e4edd58983a33ca8e0986cc1512'
 renames: {
   }
-revisionId: 16
+revisionId: 17
