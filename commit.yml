@@ -2,28 +2,10 @@
 branches: {
   }
 fileChange:
-  /anyline_core:
-    newFile: !uuid 'a46d8c9c6120e88f1b38ade5bdc9cafd299ad9f0'
-    oldFile: !uuid '1b256615ffe742b989c8fdf0469a04f54203735b'
-  /anyline_core/src:
-    newFile: !uuid '2a43ae1a534d40429ad79c59fb9b48e521c1cfcd'
-    oldFile: !uuid '42c28252a2b6bd38229b2797173cc9e8033ada75'
-  /anyline_core/src/org:
-    newFile: !uuid '94d148d7b230811da933583cb04f169bbc1b57ad'
-    oldFile: !uuid '57f3eb00324276f926ee1fa32be2a3dba6e4fafe'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid 'efc816cdaa8889546aa7da7b016e26e85dfca854'
-    oldFile: !uuid '5af4c0814688b9441ac13dcf1f23bab4ab30961b'
-  /anyline_core/src/org/anyline/util:
-    newFile: !uuid '57f68c76d6984490391d39305bab23fd441d07d8'
-    oldFile: !uuid '47b17ed6682a0b5075ef5d1dbc5a8d7d6c97481b'
-  /anyline_core/src/org/anyline/util/ImgUtil.java:
-    newFile: null
-    oldFile: !uuid '99f4fdc48f175c9256234c8184a630bf288d58d5'
-  /anyline_core/src/org/anyline/util/VerifyCodeUtil.java:
-    newFile: !uuid '6eeb35130f35788a8bdc6c95178b843016ba18c6'
-    oldFile: null
-gitCommitId: !uuid '9039afcb534379a772ac87442c30b86ea8f6c747'
+  /README.md:
+    newFile: !uuid 'd6b062474bb96791243e4751647c80cd5e344a54'
+    oldFile: !uuid 'fe38657af3fe38118970456abb141bffc36d4e08'
+gitCommitId: !uuid '258b6bfd9431ca0d39917bfe695fde62d6dfd120'
 renames: {
   }
-revisionId: 20
+revisionId: 21
