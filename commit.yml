@@ -2,46 +2,10 @@
 branches: {
   }
 fileChange:
-  /anyline_core:
-    newFile: !uuid '95ec3b2b42fffc84514b30ac1c288f810e0a6db2'
-    oldFile: !uuid '806f809f6d85f7dc49a6bf7d0b3f35de92870d53'
-  /anyline_core/WebRoot:
-    newFile: !uuid 'd6aa479e0a52b8e2a0dedc5a7b317ad243a307e2'
-    oldFile: !uuid 'fab5d1e8705a5bd138911051e697397a8ab0dadc'
-  /anyline_core/WebRoot/WEB-INF:
-    newFile: !uuid '1b819973ca32496d66bdce58993ac3bccccd4542'
-    oldFile: !uuid '493dad0c87924304927d6966aba48304fa8ab636'
-  /anyline_core/WebRoot/WEB-INF/classes:
-    newFile: !uuid 'ee3e2d72539e8b4c73fb2c3af06c4e96fb1a9873'
-    oldFile: !uuid '0ab48dbd33cca9b48e068ce00b327e69331a0f08'
-  /anyline_core/WebRoot/WEB-INF/classes/.gitignore:
-    newFile: !uuid '8867105c736503ad7aa6f8d91f54ffc6c0c5f3fa'
-    oldFile: !uuid '571ee510aee08828de2770f3fed9d6cc926569ba'
-  /anyline_core/src:
-    newFile: !uuid 'e9a3b0cb82821ed95fd1f894563a1d544c588fd6'
-    oldFile: !uuid '21a489ec0a17f5ed17784d0f20c1a7ba50613419'
-  /anyline_core/src/org:
-    newFile: !uuid '4f10a2d32f8765d1c73bc69007558f1fd74c44c5'
-    oldFile: !uuid 'ff0dfbbd00c617a585200db51d19d7e994b41163'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '995b9ae40c3e32ac682733bf6df6872c8e9554d5'
-    oldFile: !uuid 'ed6811f43d9570e7e4e6509a15e43388cc1e863e'
-  /anyline_core/src/org/anyline/controller:
-    newFile: !uuid '999c9299ca06561cb12121ecef1f70744ec9495b'
-    oldFile: !uuid '216cc6bbe5afc53055201977b9f3f2a80c10fc8d'
-  /anyline_core/src/org/anyline/controller/impl:
-    newFile: !uuid 'bd263740b92b17f4a347fd12608ad9ecc3fe3254'
-    oldFile: !uuid 'b5859c50ea7ce620c313d0679bb551ad6daac9bb'
-  /anyline_core/src/org/anyline/controller/impl/AnylineController.java:
-    newFile: !uuid 'ffd268022d6367d49115c11538821a61a02e3bab'
-    oldFile: !uuid '492dadfdc28bfee321fa53bd2bf73b4fb92bf9c1'
-  /anyline_core/src/org/anyline/util:
-    newFile: !uuid 'e19f3dec778f16e0bca78b641c0260875c78e455'
-    oldFile: !uuid '13ec73988b47509383de0020b6ed1ca2189ba2f8'
-  /anyline_core/src/org/anyline/util/JSONDateFormat.java:
-    newFile: !uuid 'a41c2323da38fbb0c090b6be7123f22d4f35566f'
-    oldFile: null
-gitCommitId: !uuid '165011473c6b94a4033732200763007cb279c681'
+  /README.md:
+    newFile: !uuid 'cbab7778f4a77da13a1047539b629971c2d46d33'
+    oldFile: !uuid 'd6b062474bb96791243e4751647c80cd5e344a54'
+gitCommitId: !uuid 'ea6e968f30ec9f5de16f2374a7172c21519a78e3'
 renames: {
   }
-revisionId: 24
+revisionId: 25
