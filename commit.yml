@@ -2,10 +2,28 @@
 branches: {
   }
 fileChange:
-  /README.md:
-    newFile: !uuid 'd682aa1f6b4613a9f349cff6d53cd25521328b8f'
-    oldFile: !uuid '9111c4a3f571f3aec1dc35d2381b1a4b04b3892a'
-gitCommitId: !uuid 'e63ffa248bbdaa53723d733a83e7fa73077c5a15'
+  /anyline_core:
+    newFile: !uuid 'b586c0bb14d7b6c4b32af8465e790fe362fbcc03'
+    oldFile: !uuid 'f98a8f459cf07fc0ccaf510972ec2cc3d9fad4bd'
+  /anyline_core/WebRoot:
+    newFile: !uuid 'e334dcf9e341f0f656cfd36d751ad1ad297d5d2c'
+    oldFile: !uuid 'c2b35bbbd4b655b651da5981d11e0a0e38503049'
+  /anyline_core/WebRoot/WEB-INF:
+    newFile: !uuid 'ff176800f712f5556246edb1dff2bf137f008e9d'
+    oldFile: !uuid 'ea605fb47efabcfa541fe3c9dde0049edc17284b'
+  /anyline_core/WebRoot/WEB-INF/lib:
+    newFile: !uuid 'c906b830573c18ae4e31a70326069d8d9503149f'
+    oldFile: !uuid '020a55dc7f0982f597a4518500607f57e975e67f'
+  /anyline_core/WebRoot/WEB-INF/lib/ehcache-2.10.1.jar:
+    newFile: !uuid 'bc46d55c51855549e6389abab6e30ea56e56f1ae'
+    oldFile: null
+  /anyline_core/WebRoot/WEB-INF/lib/slf4j-api-1.7.7.jar:
+    newFile: !uuid 'bebabd961960a011786715026cb86f85df00fe3e'
+    oldFile: null
+  /anyline_core/WebRoot/WEB-INF/lib/slf4j-jdk14-1.7.7.jar:
+    newFile: !uuid 'f957adb842588902c32a5a5fd88fdd81222d93cb'
+    oldFile: null
+gitCommitId: !uuid 'd7d040449f2fad07e5a7520c4274f68ab9bb306e'
 renames: {
   }
-revisionId: 38
+revisionId: 39
