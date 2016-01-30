@@ -2,10 +2,25 @@
 branches: {
   }
 fileChange:
-  /README.md:
-    newFile: !uuid '15c3439ea05e98abe1161b509bba40ed5e0e916e'
-    oldFile: !uuid 'bc090ac1f2562df089bc28a062aa5e8e806d5774'
-gitCommitId: !uuid '23f8b58249bd66fde54af8990c9c3676f141d88f'
+  /anyline_core:
+    newFile: !uuid 'fe6962207e9290c4c10eb6f6ae1a21425ad76a32'
+    oldFile: !uuid '1bce22b2f649b6a93513d528e0f7322b1e3d840f'
+  /anyline_core/WebRoot:
+    newFile: !uuid 'fb7f41ea1cf996bb6b068eac82af0cf9b104feb0'
+    oldFile: !uuid 'e334dcf9e341f0f656cfd36d751ad1ad297d5d2c'
+  /anyline_core/WebRoot/WEB-INF:
+    newFile: !uuid 'bed3a0f40cfc33e7c15b1880494dc1c17bf3bd38'
+    oldFile: !uuid 'ff176800f712f5556246edb1dff2bf137f008e9d'
+  /anyline_core/WebRoot/WEB-INF/lib:
+    newFile: !uuid '87450e06c8c83ace1c557cbf60feb7a7a3b5539a'
+    oldFile: !uuid 'c906b830573c18ae4e31a70326069d8d9503149f'
+  /anyline_core/WebRoot/WEB-INF/lib/anyline_mssql.jar:
+    newFile: null
+    oldFile: !uuid 'e8b75db0b21f857554d12831e2e9b01237144e35'
+  /anyline_core/WebRoot/WEB-INF/lib/aopalliance-1.0.jar:
+    newFile: !uuid '578b1a0c359ef88a84461bdb91d9d0041afd54de'
+    oldFile: null
+gitCommitId: !uuid 'd2ce5cc03af09aedf6d68946580f0f9465ba2f02'
 renames: {
   }
-revisionId: 52
+revisionId: 53
