@@ -3,24 +3,27 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'fe6962207e9290c4c10eb6f6ae1a21425ad76a32'
-    oldFile: !uuid '1bce22b2f649b6a93513d528e0f7322b1e3d840f'
-  /anyline_core/WebRoot:
-    newFile: !uuid 'fb7f41ea1cf996bb6b068eac82af0cf9b104feb0'
-    oldFile: !uuid 'e334dcf9e341f0f656cfd36d751ad1ad297d5d2c'
-  /anyline_core/WebRoot/WEB-INF:
-    newFile: !uuid 'bed3a0f40cfc33e7c15b1880494dc1c17bf3bd38'
-    oldFile: !uuid 'ff176800f712f5556246edb1dff2bf137f008e9d'
-  /anyline_core/WebRoot/WEB-INF/lib:
-    newFile: !uuid '87450e06c8c83ace1c557cbf60feb7a7a3b5539a'
-    oldFile: !uuid 'c906b830573c18ae4e31a70326069d8d9503149f'
-  /anyline_core/WebRoot/WEB-INF/lib/anyline_mssql.jar:
-    newFile: null
-    oldFile: !uuid 'e8b75db0b21f857554d12831e2e9b01237144e35'
-  /anyline_core/WebRoot/WEB-INF/lib/aopalliance-1.0.jar:
-    newFile: !uuid '578b1a0c359ef88a84461bdb91d9d0041afd54de'
-    oldFile: null
-gitCommitId: !uuid 'd2ce5cc03af09aedf6d68946580f0f9465ba2f02'
+    newFile: !uuid '910b9507cd1533244841c315a98adb0fcca86f4b'
+    oldFile: !uuid 'fe6962207e9290c4c10eb6f6ae1a21425ad76a32'
+  /anyline_core/src:
+    newFile: !uuid '5c741f077465dccead9d464215d389e7e83dec39'
+    oldFile: !uuid '5499761417fdb85bc88b434622a6d2c0ae3f3f93'
+  /anyline_core/src/org:
+    newFile: !uuid '538a059e834d664b43759feeef8595270de4db2d'
+    oldFile: !uuid '089732e20f99575d769e2c91b41969737b4ec337'
+  /anyline_core/src/org/anyline:
+    newFile: !uuid '6c459ef2f955f70e9a956e83e77fb4212af627cc'
+    oldFile: !uuid 'bbdacc2106c7513675fda943cbd4421b5c208731'
+  /anyline_core/src/org/anyline/service:
+    newFile: !uuid '049378e6ea4a33a7eaeb78cab3c0ba18a337e3f7'
+    oldFile: !uuid 'b13fcddd617513f9ad821737668e753588237fc2'
+  /anyline_core/src/org/anyline/service/impl:
+    newFile: !uuid '606ddf2fe737aeaf8d5da9ebb8cace527c0148f8'
+    oldFile: !uuid 'f0cd5b76cb688f63c4d1c663304cb6f6d286293a'
+  /anyline_core/src/org/anyline/service/impl/AnylineServiceImpl.java:
+    newFile: !uuid '1aafbceef8f32385694dc73ca44bb68662adda46'
+    oldFile: !uuid 'de1997b45634349d2cf5755310e2eb621c89cdd4'
+gitCommitId: !uuid '08e2e11d09d8ceef0460fd1f69e421c509bae69a'
 renames: {
   }
-revisionId: 53
+revisionId: 54
