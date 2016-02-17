@@ -3,24 +3,15 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '9fa087a7baef1d3274366ee342ca94eb5b46e5df'
-    oldFile: !uuid 'caffc117f2bfe6e8be366e5d46d6abf73aa5304b'
-  /anyline_core/src:
-    newFile: !uuid '4a3f5702b37b18a3cd255d97b5f6ebe382cb1c08'
-    oldFile: !uuid 'ba1a7827f760957b02c9f99ac6a6ad65a2520f32'
-  /anyline_core/src/org:
-    newFile: !uuid 'a31c225df4d04611803d42962833327fb2ffb0ae'
-    oldFile: !uuid 'a334965c0d14224628c46a1aaadf08d3b84af2d3'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '3ff6dd3a9e103750e21a16702d4baf820b2bc673'
-    oldFile: !uuid '926c51bf902cab8b3e677dc46631003d543f42e7'
-  /anyline_core/src/org/anyline/util:
-    newFile: !uuid '094952e442e8c365a458a024343523b522b9525c'
-    oldFile: !uuid 'fb6e041aa7fc65532fe8c13a8e4ae5853acaef85'
-  /anyline_core/src/org/anyline/util/Constant.java:
-    newFile: !uuid 'f9c1f1011fba3c717927f5387186031cf5ad2199'
-    oldFile: !uuid 'c854fff28c1c8190854210aadf7abae3e32eef79'
-gitCommitId: !uuid 'f14df30aef63a4fa0df36ad422281e83d5d48428'
+    newFile: !uuid '90cf744758a940ed28abb59b33ea73f35043cd14'
+    oldFile: !uuid '9fa087a7baef1d3274366ee342ca94eb5b46e5df'
+  /anyline_core/config:
+    newFile: !uuid '3692a8cf009bcf40324f609a3ab11b62453a3dbd'
+    oldFile: !uuid 'b5534dc4d97408c4863db6583f6768bc20253411'
+  /anyline_core/config/struts-anyline.xml:
+    newFile: !uuid 'e4e6e692299903c217347829a28168d3020e97e7'
+    oldFile: !uuid '2de49e2940b58fd130f3e7e9b16939bff4de79d0'
+gitCommitId: !uuid '0ae4b094f1371e300c57166316e70fbc083cc4de'
 renames: {
   }
-revisionId: 65
+revisionId: 66
