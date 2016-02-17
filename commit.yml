@@ -3,27 +3,24 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'caffc117f2bfe6e8be366e5d46d6abf73aa5304b'
-    oldFile: !uuid 'c659bbecb5d4f49be11f740ab9a1da4417d0ab49'
+    newFile: !uuid '9fa087a7baef1d3274366ee342ca94eb5b46e5df'
+    oldFile: !uuid 'caffc117f2bfe6e8be366e5d46d6abf73aa5304b'
   /anyline_core/src:
-    newFile: !uuid 'ba1a7827f760957b02c9f99ac6a6ad65a2520f32'
-    oldFile: !uuid 'd3fb880187ae756d5df6d2b35774ba2236f70650'
+    newFile: !uuid '4a3f5702b37b18a3cd255d97b5f6ebe382cb1c08'
+    oldFile: !uuid 'ba1a7827f760957b02c9f99ac6a6ad65a2520f32'
   /anyline_core/src/org:
-    newFile: !uuid 'a334965c0d14224628c46a1aaadf08d3b84af2d3'
-    oldFile: !uuid '8c32f42238a05b01bad1689944a6717fff1597cf'
+    newFile: !uuid 'a31c225df4d04611803d42962833327fb2ffb0ae'
+    oldFile: !uuid 'a334965c0d14224628c46a1aaadf08d3b84af2d3'
   /anyline_core/src/org/anyline:
-    newFile: !uuid '926c51bf902cab8b3e677dc46631003d543f42e7'
-    oldFile: !uuid '1ce779ef6ae1b37c21a4881b33c99092480d81d8'
-  /anyline_core/src/org/anyline/struts:
-    newFile: !uuid '6e8b37364eed372798136d70c67d6d3bdd34bb8b'
-    oldFile: !uuid 'a41b54ada20064ae50396b607ac3e94df4ba9509'
-  /anyline_core/src/org/anyline/struts/result:
-    newFile: !uuid '55e73db3d52809440ef19ddc829b312692fc10bb'
-    oldFile: !uuid '4d0e85064dd13fd816602ad0f66d3f37bfea8596'
-  /anyline_core/src/org/anyline/struts/result/TemplateResult.java:
-    newFile: !uuid '9ede5233d4d1a8e12c9534d6d873d8ff2ff67155'
-    oldFile: !uuid '61c033093af0beb120935673a96d80c553785da3'
-gitCommitId: !uuid '8efedddf9ea46d4d50a00d9e64f57db6fec6efa4'
+    newFile: !uuid '3ff6dd3a9e103750e21a16702d4baf820b2bc673'
+    oldFile: !uuid '926c51bf902cab8b3e677dc46631003d543f42e7'
+  /anyline_core/src/org/anyline/util:
+    newFile: !uuid '094952e442e8c365a458a024343523b522b9525c'
+    oldFile: !uuid 'fb6e041aa7fc65532fe8c13a8e4ae5853acaef85'
+  /anyline_core/src/org/anyline/util/Constant.java:
+    newFile: !uuid 'f9c1f1011fba3c717927f5387186031cf5ad2199'
+    oldFile: !uuid 'c854fff28c1c8190854210aadf7abae3e32eef79'
+gitCommitId: !uuid 'f14df30aef63a4fa0df36ad422281e83d5d48428'
 renames: {
   }
-revisionId: 64
+revisionId: 65
