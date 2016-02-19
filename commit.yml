@@ -3,27 +3,15 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'fda90d7758fbdf98c0104242c85683a8379ab590'
-    oldFile: !uuid '271daac538e9c0de4550dd5f574b9ed28b780a1b'
+    newFile: !uuid '93f7b3a7597d1f4547afbce03ed4f63b7f76bb0b'
+    oldFile: !uuid 'fda90d7758fbdf98c0104242c85683a8379ab590'
   /anyline_core/src:
-    newFile: !uuid '570d0ad6ba378484aad2fe059119803924ceb680'
-    oldFile: !uuid 'c69ef9ccdc8e961faa91048569be8ad629beccf6'
-  /anyline_core/src/org:
-    newFile: !uuid '38702f9c827a677d30f41dbdcd89a927c2b3039a'
-    oldFile: !uuid 'c749ce19c97711bd91584b11ad18d40b557eb88c'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '594fdfbde7c9669484d709ec2eedcbb852f1f7b2'
-    oldFile: !uuid 'f574bb2e48ff3f48eaef77e617f6560fc1f3168c'
-  /anyline_core/src/org/anyline/struts:
-    newFile: !uuid '98b22b3bbff7496b6cfa84943005fa0ed7e0b487'
-    oldFile: !uuid '5a5221b8cd5b2612d44b0f1ec249663f41ae4c05'
-  /anyline_core/src/org/anyline/struts/action:
-    newFile: !uuid '3a12e158d11bb1008c9993bc95866892a2f5b635'
-    oldFile: !uuid '733e993f49565312be9e42fe3d5d9cbb124e39b1'
-  /anyline_core/src/org/anyline/struts/action/AnylineAction.java:
-    newFile: !uuid 'dc9c6118ab9d6c3af98e2c28d29be3006adef5eb'
-    oldFile: !uuid '038001e68ea4c981703c0a9f86e40fe3edf1be02'
-gitCommitId: !uuid '9572c775573671bc486cff9b06e7ed13bdd7bf1a'
+    newFile: !uuid '77211db95b2b751f0fb68ec0366de9c465943896'
+    oldFile: !uuid '570d0ad6ba378484aad2fe059119803924ceb680'
+  /anyline_core/src/LicenseUtil.java:
+    newFile: !uuid 'd75bd186d503f1b4a6881c7bc2a3655f64ba487b'
+    oldFile: !uuid 'e1335afd5cdf236279b997ef9b0b7279295558d6'
+gitCommitId: !uuid '777828467f07185fa9e8691e6f2c2eeb676353f4'
 renames: {
   }
-revisionId: 80
+revisionId: 81
