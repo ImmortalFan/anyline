@@ -3,27 +3,24 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '2b335059221a31c33e76c12db4f6ba5cbe57cb6e'
-    oldFile: !uuid '6a0730af2372643dc9734f565ee3a1b7c47fc41c'
+    newFile: !uuid 'b87b10f149940270a18da42469bf50fb8fb45a7b'
+    oldFile: !uuid '2b335059221a31c33e76c12db4f6ba5cbe57cb6e'
   /anyline_core/src:
-    newFile: !uuid '6c2489013df0565c1791d812146f15db2e37130c'
-    oldFile: !uuid '5ae6aa278e6e55c6f738b88c2105bc1058994a4c'
+    newFile: !uuid '32bf1001899ddace2ebc6bb61189d5444f832a8c'
+    oldFile: !uuid '6c2489013df0565c1791d812146f15db2e37130c'
   /anyline_core/src/org:
-    newFile: !uuid '222dfec92b41b37c5e64f99a669401a5e4f81c9a'
-    oldFile: !uuid '2b9f1d7c810135fa6e6caf22b5d6c4180124f4ae'
+    newFile: !uuid 'a4eda9357da7325c791cb5db172c5a83a6ee5219'
+    oldFile: !uuid '222dfec92b41b37c5e64f99a669401a5e4f81c9a'
   /anyline_core/src/org/anyline:
-    newFile: !uuid '189cce8bd6e1a2b6c361879e50bdd0e2d620e21c'
-    oldFile: !uuid 'bbbe68ef4950b2d5d902f1d0191736bfa6d2bb5c'
-  /anyline_core/src/org/anyline/controller:
-    newFile: !uuid '49b8203b20f49f6304776764ce05829b6ad1f48a'
-    oldFile: !uuid '2d6701cfbd2d01b07f514fe57aea92e997f9ae2a'
-  /anyline_core/src/org/anyline/controller/impl:
-    newFile: !uuid '010ac55cc87721512c49521c00e80594dddf5f0e'
-    oldFile: !uuid 'e15d9fe4624e4ac0cc10d4b7f5950604a3d0b686'
-  /anyline_core/src/org/anyline/controller/impl/AnylineController.java:
-    newFile: !uuid '15ac2e10fe91b277a9f2a67335fa29f540bdbebe'
-    oldFile: !uuid '52f47396f588b7ca25b54027c92195cf86c90948'
-gitCommitId: !uuid '0b5f690a8ba83ca781cba623aed7eef0c2f39894'
+    newFile: !uuid '09edb1ec329ad3415b552101c677e33a75a64549'
+    oldFile: !uuid '189cce8bd6e1a2b6c361879e50bdd0e2d620e21c'
+  /anyline_core/src/org/anyline/util:
+    newFile: !uuid '7712ec45668bffbbc9387e50f98c85b41ed99e67'
+    oldFile: !uuid '2d9914ad85b428d1c4e6cfa781ebab3b8f4f3eb1'
+  /anyline_core/src/org/anyline/util/FileUtil.java:
+    newFile: !uuid 'af6fe477314e3f6b2198925fccdde77357fdddb2'
+    oldFile: !uuid '57ebb02fc25cf02f4e83f547e1ac6e49314f66cc'
+gitCommitId: !uuid 'b9c5bc1c90f934d86e4d67167575c37c1a426bbe'
 renames: {
   }
-revisionId: 76
+revisionId: 77
