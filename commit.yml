@@ -3,54 +3,33 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'c52da60bd076460290063cf5465d9911ec26df7e'
-    oldFile: !uuid '5871cc0ae901029dc81196b40fbf70c122814584'
+    newFile: !uuid '1901434e2a343b5b1f3677276774e8ff5543858f'
+    oldFile: !uuid 'c52da60bd076460290063cf5465d9911ec26df7e'
   /anyline_core/src:
-    newFile: !uuid '9453a4360a28dd83b48c9be868e105ba6086277a'
-    oldFile: !uuid 'ba85b24c96e9e73699592e439f21d3586cad1f79'
+    newFile: !uuid 'ade54d543cc76b298dfc7877fd681a7e5466e9e6'
+    oldFile: !uuid '9453a4360a28dd83b48c9be868e105ba6086277a'
   /anyline_core/src/org:
-    newFile: !uuid '542a46dc1f255212dddd23d33c2f756b3aa40e0c'
-    oldFile: !uuid '1c94368c7681b4547db10bcbb2a4a615fbfba498'
+    newFile: !uuid '830924aca178c92ef9f1ea4d4d740bf6b149d907'
+    oldFile: !uuid '542a46dc1f255212dddd23d33c2f756b3aa40e0c'
   /anyline_core/src/org/anyline:
-    newFile: !uuid 'e19cd89123f5d078b68a4b45906c53c144c60c95'
-    oldFile: !uuid 'cc4c5af6b686cadd7c6faa812aedf675b98190aa'
-  /anyline_core/src/org/anyline/controller:
-    newFile: !uuid '14df89aa4c1a7974961f26bc1f43d715de41f9dc'
-    oldFile: !uuid '49b8203b20f49f6304776764ce05829b6ad1f48a'
-  /anyline_core/src/org/anyline/controller/impl:
-    newFile: !uuid '714836903f703a6ba8e7b97262ec8cb7159393cb'
-    oldFile: !uuid '010ac55cc87721512c49521c00e80594dddf5f0e'
-  /anyline_core/src/org/anyline/controller/impl/AnylineController.java:
-    newFile: !uuid '71d63cf7451660e571cf50c207da27724080b405'
-    oldFile: !uuid '15ac2e10fe91b277a9f2a67335fa29f540bdbebe'
-  /anyline_core/src/org/anyline/struts:
-    newFile: !uuid '989d7ee689b0b4abfe72db9977f5615991707db1'
-    oldFile: !uuid '8795b662b008a17acb705b48f7ea7fea73e21338'
-  /anyline_core/src/org/anyline/struts/action:
-    newFile: !uuid '014462bbfe4d8cc391ee8c0b2b502b1968e73120'
-    oldFile: !uuid '4f493b43ed8195c717afde19ad06180fd7c5be3f'
-  /anyline_core/src/org/anyline/struts/action/AnylineAction.java:
-    newFile: !uuid '484ea23b73d9a6b6caabe9c19949c51d43c4dd82'
-    oldFile: !uuid '78d8ed4a7c26f6864622043aefc2904a208c3036'
-  /anyline_core/src/org/anyline/struts/result:
-    newFile: !uuid '01c939a43df0e647c041f610d8a09ba0811295a6'
-    oldFile: !uuid 'e79437f29d7ec79314a3d57f028625e90b764fbd'
-  /anyline_core/src/org/anyline/struts/result/JSONResult.java:
-    newFile: !uuid 'c5547fa0d4df6d49d04ce7ce1102ddab85dcd53d'
-    oldFile: !uuid '31f0368825aa945129ea1e29aa6ed4d22fbafdcd'
-  /anyline_core/src/org/anyline/struts/result/TemplateResult.java:
-    newFile: !uuid '974bf17d27ef49d9cbb047c0e95d2add111f04f9'
-    oldFile: !uuid '98d3163bb4118ef2a6fd8244b3d146430c5937ec'
-  /anyline_core/src/org/anyline/util:
-    newFile: !uuid '7c19db2f597ab627d45306937bf5125f1399f691'
-    oldFile: !uuid '6487036a0ff773208d83736ca9d04e52ec9a9e82'
-  /anyline_core/src/org/anyline/util/Constant.java:
-    newFile: !uuid 'e92f71c03c6111bd626d717ab15542034cd0d2df'
-    oldFile: !uuid '4d6cf16aa27aba7a61758cb051bceeb263833a35'
-  /anyline_core/src/org/anyline/util/JSONDateFormat.java:
-    newFile: null
-    oldFile: !uuid '34e2f2e272914d4356cab8d3c569157917eb8115'
-gitCommitId: !uuid '005e09fb1e64ea573d287991c041421df1ab08bd'
+    newFile: !uuid 'fa29e2bb32c71c4e75413949704eefac1425381a'
+    oldFile: !uuid 'e19cd89123f5d078b68a4b45906c53c144c60c95'
+  /anyline_core/src/org/anyline/plugin:
+    newFile: !uuid '1f8f78b6abbb5393b6184538175bba1b62edc07a'
+    oldFile: null
+  /anyline_core/src/org/anyline/plugin/springmvc:
+    newFile: !uuid 'bcd53d17834354c3fed09b299efcc79b112cd93c'
+    oldFile: null
+  /anyline_core/src/org/anyline/plugin/springmvc/TemplateModelAndView.java:
+    newFile: !uuid '225967f1f480036601c12f42bd5c93ef2c88c57e'
+    oldFile: null
+  /anyline_core/src/org/anyline/plugin/springmvc/TemplateResourceViewResolver.java:
+    newFile: !uuid '95cfa33ff192519ac24b2d38356b9990215cf097'
+    oldFile: null
+  /anyline_core/src/org/anyline/plugin/springmvc/TemplateView.java:
+    newFile: !uuid '644887b1a6c705d569ae40c8078c9208f39c37d0'
+    oldFile: null
+gitCommitId: !uuid 'b534c7bf5fcb3c497cdeb5545091241070215251'
 renames: {
   }
-revisionId: 85
+revisionId: 86
