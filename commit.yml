@@ -3,27 +3,21 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '17d2c9d3c0dfe9064437ccec92243bc6021dda96'
-    oldFile: !uuid '601f40729ebb64968d00d9ee409b01c1e791a86b'
-  /anyline_core/src:
-    newFile: !uuid 'f2da6dc3c56b2ec4ea50d359c9d645b6a2600238'
-    oldFile: !uuid 'bf18df0a5edd7f802a0bb77f4b4edf70b39aedc0'
-  /anyline_core/src/org:
-    newFile: !uuid 'c11b65e15a1917b2d59c1c281b0e9e4ed637cb4b'
-    oldFile: !uuid '677b9d9fb9d518c131b6072226ecd38a4966667d'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '4116c128c325e3b379d69eb360703241c6e0cb0b'
-    oldFile: !uuid '7e139e4641b49ceaab731a9d20d1f68fad689d9e'
-  /anyline_core/src/org/anyline/controller:
-    newFile: !uuid 'c5e65015021f59fda0ac2a16370136832f5c4301'
-    oldFile: !uuid '57c254ec5efa98695e6d4f185b0baa81818695d6'
-  /anyline_core/src/org/anyline/controller/impl:
-    newFile: !uuid '2567112ba53ba897f77ffceee335274ad29302f5'
-    oldFile: !uuid '94b734bde278c01e81485cd65934bf1d7d6970e2'
-  /anyline_core/src/org/anyline/controller/impl/TemplateController.java:
-    newFile: !uuid '8c7b2a4e9d17d9bf09766d859ea3438e0369b7b0'
-    oldFile: !uuid '605fc0ccfc4e1e335a9d87c429e3274c05cad323'
-gitCommitId: !uuid '65e4afb98bc9dfe86dd6ab11616ccd8c21572399'
+    newFile: !uuid '91fe0d198c36968e62abe506b87118183388a7cd'
+    oldFile: !uuid '17d2c9d3c0dfe9064437ccec92243bc6021dda96'
+  /anyline_core/WebRoot:
+    newFile: !uuid '468d5239dcb0ec5166670463886b68be413d7bd7'
+    oldFile: !uuid 'fb7f41ea1cf996bb6b068eac82af0cf9b104feb0'
+  /anyline_core/WebRoot/WEB-INF:
+    newFile: !uuid '4e749ac06be366b33ea8fc1d8755e993f1ea98a6'
+    oldFile: !uuid 'bed3a0f40cfc33e7c15b1880494dc1c17bf3bd38'
+  /anyline_core/WebRoot/WEB-INF/lib:
+    newFile: !uuid '9457ffaf67047b0a28e8e85cfa32fa5feaea2bd6'
+    oldFile: !uuid '87450e06c8c83ace1c557cbf60feb7a7a3b5539a'
+  /anyline_core/WebRoot/WEB-INF/lib/spring-webmvc-4.0.3.RELEASE.jar:
+    newFile: !uuid '4f895da8213cb2e5c6d20c18aca48e9b741d64e5'
+    oldFile: null
+gitCommitId: !uuid '753b8e6a682bac061141791c85f70f77cc7196c8'
 renames: {
   }
-revisionId: 89
+revisionId: 90
