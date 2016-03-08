@@ -3,21 +3,24 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '91fe0d198c36968e62abe506b87118183388a7cd'
-    oldFile: !uuid '17d2c9d3c0dfe9064437ccec92243bc6021dda96'
-  /anyline_core/WebRoot:
-    newFile: !uuid '468d5239dcb0ec5166670463886b68be413d7bd7'
-    oldFile: !uuid 'fb7f41ea1cf996bb6b068eac82af0cf9b104feb0'
-  /anyline_core/WebRoot/WEB-INF:
-    newFile: !uuid '4e749ac06be366b33ea8fc1d8755e993f1ea98a6'
-    oldFile: !uuid 'bed3a0f40cfc33e7c15b1880494dc1c17bf3bd38'
-  /anyline_core/WebRoot/WEB-INF/lib:
-    newFile: !uuid '9457ffaf67047b0a28e8e85cfa32fa5feaea2bd6'
-    oldFile: !uuid '87450e06c8c83ace1c557cbf60feb7a7a3b5539a'
-  /anyline_core/WebRoot/WEB-INF/lib/spring-webmvc-4.0.3.RELEASE.jar:
-    newFile: !uuid '4f895da8213cb2e5c6d20c18aca48e9b741d64e5'
-    oldFile: null
-gitCommitId: !uuid '753b8e6a682bac061141791c85f70f77cc7196c8'
+    newFile: !uuid '73881bcda27ac37668374af845593e0c733fff13'
+    oldFile: !uuid '91fe0d198c36968e62abe506b87118183388a7cd'
+  /anyline_core/src:
+    newFile: !uuid '50bf11e8560fd0a8fa82dc6718d02b922fb68bd6'
+    oldFile: !uuid 'f2da6dc3c56b2ec4ea50d359c9d645b6a2600238'
+  /anyline_core/src/org:
+    newFile: !uuid '99c323f228c43c6e3f0c6bfb9a782d16739562cd'
+    oldFile: !uuid 'c11b65e15a1917b2d59c1c281b0e9e4ed637cb4b'
+  /anyline_core/src/org/anyline:
+    newFile: !uuid '333ed2c5ce061d9a40f322deda2942ec9f06a2de'
+    oldFile: !uuid '4116c128c325e3b379d69eb360703241c6e0cb0b'
+  /anyline_core/src/org/anyline/util:
+    newFile: !uuid '1c135a44da6a307c63c845c9d1e3a681e00bb947'
+    oldFile: !uuid 'bc9e6be8ff367ed16b6d78e0066676c2b12e7c60'
+  /anyline_core/src/org/anyline/util/HttpUtil.java:
+    newFile: !uuid '37107f3c78abff413f519af99da92467d85b457a'
+    oldFile: !uuid '8a60369491c9bda332799ead8a3fb13bdbf57cd5'
+gitCommitId: !uuid '08a6bac8e85638e1ef35a9bd4f862a36bacad4c1'
 renames: {
   }
-revisionId: 90
+revisionId: 91
