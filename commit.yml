@@ -3,30 +3,33 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'dbc234b03b645c17c080ed6e18562f3e83cd6167'
-    oldFile: !uuid 'eeff79959c6e6f77c1f9c4c734159e51ee23581a'
+    newFile: !uuid 'cc2bb9e059135aa0d56b6f0f3f5c18a8ca52b9a5'
+    oldFile: !uuid 'dbc234b03b645c17c080ed6e18562f3e83cd6167'
   /anyline_core/src:
-    newFile: !uuid '53aff036af1393aae8987fa51cab2248fd4b0f45'
-    oldFile: !uuid '03b97ea91644abf9f2997c64d55c16ced2a8d0ba'
+    newFile: !uuid '401ce8b8ea7b8d6268a8abbf875eb9021149ffc9'
+    oldFile: !uuid '53aff036af1393aae8987fa51cab2248fd4b0f45'
   /anyline_core/src/org:
-    newFile: !uuid 'c6e54462a77905179b27bcfca9df889dd5447b5d'
-    oldFile: !uuid 'e94673917b6623853a534ecca829c6bf0d16d845'
+    newFile: !uuid '49ef89b2d291321e3224a56585526cb2ba143214'
+    oldFile: !uuid 'c6e54462a77905179b27bcfca9df889dd5447b5d'
   /anyline_core/src/org/anyline:
-    newFile: !uuid 'e81d943a3a108c8c503bf548e28b47073e1f5e5b'
-    oldFile: !uuid '6e12a8bd5260266300ce28a6d27c7433508b4a5d'
-  /anyline_core/src/org/anyline/service:
-    newFile: !uuid 'f1e56946eacd1307bcc930def0149634b34e57d6'
-    oldFile: !uuid '95f038ff16c033585c0f1c4b53fd99a0df46bc45'
-  /anyline_core/src/org/anyline/service/AnylineService.java:
-    newFile: !uuid 'faba65b3806fbfeafddfd427560336bc29d2c059'
-    oldFile: !uuid '3e6b842cc9d4619a6fe6eeb6c0b5bb1a48f2d618'
-  /anyline_core/src/org/anyline/service/impl:
-    newFile: !uuid '1729d471397a5c358bdd46e0c295abd45c9851ac'
-    oldFile: !uuid '9c01690444d97f9392dd444bdaa4d0b0c9ebe4c6'
-  /anyline_core/src/org/anyline/service/impl/AnylineServiceImpl.java:
-    newFile: !uuid '0eaf24aa59c1af3f0ab480bfa1e532b9e7e4fd80'
-    oldFile: !uuid '81464b2958dca7fe4f70f0637417a7232cf02a35'
-gitCommitId: !uuid '88e6832858d81a22d8bcdee982407905d7b72045'
-renames: {
-  }
-revisionId: 98
+    newFile: !uuid '69b84c4380ccddb7dafc4ddadd54e73ce3d0ce1f'
+    oldFile: !uuid 'e81d943a3a108c8c503bf548e28b47073e1f5e5b'
+  /anyline_core/src/org/anyline/util:
+    newFile: !uuid '6f75e3abdd626060abb639e50994fa46760d11ad'
+    oldFile: !uuid '854c55c0ac5e2df20901d8a24337b5551b895fde'
+  /anyline_core/src/org/anyline/util/BasicUtil.java:
+    newFile: !uuid '26b5379de2efd6fd0cc8a6ab864639788aa0d4b9'
+    oldFile: !uuid 'e1bee89de82523753512721312e7957dca96dc77'
+  /anyline_core/src/org/anyline/util/Escape.java:
+    newFile: null
+    oldFile: !uuid '4839aef72569c65c1e51649d838c21cfe1bebf94'
+  /anyline_core/src/org/anyline/util/EscapeUtil.java:
+    newFile: !uuid 'bc047454eb6bdb6700f4a4d6846ee7d300ba3ee1'
+    oldFile: null
+  /anyline_core/src/org/anyline/util/MoneyUtil.java:
+    newFile: !uuid 'eb1796d9a697e6a62df477c300a86ffd64fa479d'
+    oldFile: null
+gitCommitId: !uuid 'd9b88277617e0c271bcea88b2048f4d6dd4187ff'
+renames:
+  /anyline_core/src/org/anyline/util/EscapeUtil.java: /anyline_core/src/org/anyline/util/Escape.java
+revisionId: 99
