@@ -3,30 +3,27 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'f9468abbbcb79d3c6b482518264055f1401750f3'
-    oldFile: !uuid 'b004e79b5693341f0adb12651ffe40c0f625ec4f'
+    newFile: !uuid '9cb621ff2b67636bc9d6e56555799ec51e2cdd0c'
+    oldFile: !uuid 'f9468abbbcb79d3c6b482518264055f1401750f3'
   /anyline_core/src:
-    newFile: !uuid '9142e894f07138fc64575018667a00b350deff43'
-    oldFile: !uuid '66b1818f9dccd32100c067b998d05029c58918e4'
+    newFile: !uuid 'dcd5ccebb55dd075aa1258446cc16e41c4754a8d'
+    oldFile: !uuid '9142e894f07138fc64575018667a00b350deff43'
   /anyline_core/src/org:
-    newFile: !uuid '5b4d9718a301c61b50bd33f866c01b77380374ee'
-    oldFile: !uuid '399e5c8016e7eb5285f7769950b13d69e2cda0bf'
+    newFile: !uuid '32a0b576231fe9e752dffa6d491d7b7afe734747'
+    oldFile: !uuid '5b4d9718a301c61b50bd33f866c01b77380374ee'
   /anyline_core/src/org/anyline:
-    newFile: !uuid 'af6e749ce1a249d4191158d0a92e50d826599177'
-    oldFile: !uuid '9bc9fdeca92887de65a9de69003c299a517d5096'
-  /anyline_core/src/org/anyline/dao:
-    newFile: !uuid 'b0b99bfa476eca9b32a4ec3405a5dff019f7b2c4'
-    oldFile: !uuid '494fa203ca0a7074e9ccfd3ac536bebb32ed8b22'
-  /anyline_core/src/org/anyline/dao/impl:
-    newFile: !uuid 'dc404691f34402e2c7cf8c4fbd7a131194197ee3'
-    oldFile: !uuid '42d34e2f8da9f21af10858a97ba74c6474d711d8'
-  /anyline_core/src/org/anyline/dao/impl/springjdbc:
-    newFile: !uuid '181388155ec547767ebf109d1798c1b8eb2cf2c3'
-    oldFile: !uuid '886c0c31678c37fdc9eaae2adae2ecd6f22d2a00'
-  /anyline_core/src/org/anyline/dao/impl/springjdbc/AnylineDaoImpl.java:
-    newFile: !uuid '22958e40eaf3614544bd9d71d48f0e872f895260'
-    oldFile: !uuid '9d55011b437c8cd003eb5fb423f05fdbb2820f11'
-gitCommitId: !uuid '2468e0364207c0dc649392229ea9591fc26a744c'
+    newFile: !uuid '944e63a3a1fd889d231de94d46ff783c76b6fbc5'
+    oldFile: !uuid 'af6e749ce1a249d4191158d0a92e50d826599177'
+  /anyline_core/src/org/anyline/controller:
+    newFile: !uuid 'a05d1c2b57d0e0a73d7cd453702bfff2f35f60d3'
+    oldFile: !uuid 'c5e65015021f59fda0ac2a16370136832f5c4301'
+  /anyline_core/src/org/anyline/controller/impl:
+    newFile: !uuid '01d0e0f22824bc1e874df6cbb7bcbee90aa28d57'
+    oldFile: !uuid '2567112ba53ba897f77ffceee335274ad29302f5'
+  /anyline_core/src/org/anyline/controller/impl/TemplateController.java:
+    newFile: !uuid '9c71820cae0a68e1c1cae347492ce41a7f92bb87'
+    oldFile: !uuid '8c7b2a4e9d17d9bf09766d859ea3438e0369b7b0'
+gitCommitId: !uuid '8e07904407b3cceb27cf6825677c40ea4db39ead'
 renames: {
   }
-revisionId: 103
+revisionId: 104
