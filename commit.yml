@@ -3,33 +3,21 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'ca7c11fefd3cc66eb0ee49844b10fb3bbd84c0c7'
-    oldFile: !uuid '96c8f7de003c3836a8321996ff4fe1ad8b876bfd'
-  /anyline_core/src:
-    newFile: !uuid '3043bb8a8b6571f653a99a14d3962f2ae0fe81fe'
-    oldFile: !uuid '4042230b7a80439a7273d9871ab818f9bb9750e2'
-  /anyline_core/src/org:
-    newFile: !uuid '9ae9d5afd9a89a327d373f599b3fca6f0901c868'
-    oldFile: !uuid 'f6393a26e98e3be940fd113ec7f644a31a05ebc9'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '9b600cbe2707f31b3f6129ccc0056d1878be858b'
-    oldFile: !uuid 'bae769555ec20733da6e6b109072cad90c91876b'
-  /anyline_core/src/org/anyline/entity:
-    newFile: !uuid '6b1664e604417c3ae5e017af117e14eaad295790'
-    oldFile: !uuid 'fde2a602352c6144d0f526c0adc5330435818e24'
-  /anyline_core/src/org/anyline/entity/DataRow.java:
-    newFile: !uuid '9b4411c9a454e7c02dbb70b4f6cd1e60c22c6eea'
-    oldFile: !uuid '566c4ba830aafcf7ad22618fbcc7116f30970a61'
-  /anyline_core/src/org/anyline/entity/DataSet.java:
-    newFile: !uuid 'a14e580fa7195ff8d8011f5e1c5908eeaf69b909'
-    oldFile: !uuid '5ea6dcd695bf1638461970cfd8d24a18f69c823d'
-  /anyline_core/src/org/anyline/tag:
-    newFile: !uuid '3ba1660866134feb381e23fabdff3ca6b8538490'
-    oldFile: !uuid '6a21e9787cbd32920d6847ccb136d425d5bb87d8'
-  /anyline_core/src/org/anyline/tag/Select.java:
-    newFile: !uuid '2f46c2a932f1ab60b9074359608a8156be8a9636'
-    oldFile: !uuid 'ee2eaf5177aacbf06cb78aa2de38af3883207fbb'
-gitCommitId: !uuid '72ce481e0883ccd7c3934ebfaea7ddebb468be71'
+    newFile: !uuid 'd49bbe8822098f8d0b1d3d5f8bb14fab013471d3'
+    oldFile: !uuid 'ca7c11fefd3cc66eb0ee49844b10fb3bbd84c0c7'
+  /anyline_core/WebRoot:
+    newFile: !uuid '9ceb7b2fb59b0920bf3aebeea4dea5f77f0875ea'
+    oldFile: !uuid 'b50dcf8f5a32d783b45a9f440fe993f2baf0bbca'
+  /anyline_core/WebRoot/WEB-INF:
+    newFile: !uuid 'befdf7d7b701e17f3d18c5885418f68309deac68'
+    oldFile: !uuid '4e749ac06be366b33ea8fc1d8755e993f1ea98a6'
+  /anyline_core/WebRoot/WEB-INF/tld:
+    newFile: !uuid 'a4c6a2d4548300ac77284c69655462989a037264'
+    oldFile: !uuid 'da9be1d45d7a46026ec3356ac784218c66966076'
+  /anyline_core/WebRoot/WEB-INF/tld/anyline-core.tld:
+    newFile: !uuid 'b147a8bdec4874fd57a5474887fe5daf3762dc40'
+    oldFile: !uuid 'c114720a9e826c5bf45c25dc9d466d67ef820fb9'
+gitCommitId: !uuid '806b87f2dfc3f07b47115b670c87162c17a986e9'
 renames: {
   }
-revisionId: 106
+revisionId: 107
