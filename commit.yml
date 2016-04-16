@@ -3,24 +3,21 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '4355ca21ab269b2246fdef3625b6bb69ae1482fe'
-    oldFile: !uuid '79154807465f9552589ae0cad21ec0c568becbc1'
-  /anyline_core/src:
-    newFile: !uuid '6534271bb16d5f8edd3ab2ffa4c9eb32efa10db8'
-    oldFile: !uuid 'c65880923886120dff8eb5111ef20d177ab310bc'
-  /anyline_core/src/org:
-    newFile: !uuid '37f577a3869777e6e74e621fcf0bfebdd43f6b6f'
-    oldFile: !uuid '9c5f7d34ec199bd3a80cd5a483d8c32adbf11def'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '518d0920ca0b30b94bd22bf57a6b50863ae7d729'
-    oldFile: !uuid 'c906e028026b32ab034bf0f1357db206f015ac71'
-  /anyline_core/src/org/anyline/tag:
-    newFile: !uuid 'a4c139110bfec9cec3fd6caf8de6144ceb03dc60'
-    oldFile: !uuid 'a1b823241388941d9c74991ab02a9b8869f7e8ca'
-  /anyline_core/src/org/anyline/tag/Radio.java:
-    newFile: !uuid '2b90c9b2a1f4ca93d7ba70f808d83480643e55fa'
-    oldFile: null
-gitCommitId: !uuid '2bcfc508473322e991d8a4bf4464813396646e64'
+    newFile: !uuid 'b7ff2c875aee1dbcfcd178caeb1b829dd28fbee3'
+    oldFile: !uuid '4355ca21ab269b2246fdef3625b6bb69ae1482fe'
+  /anyline_core/WebRoot:
+    newFile: !uuid '9e0dc0fc4dc4ebfe4b67c2259024404c41428082'
+    oldFile: !uuid '0e3b9f9c469be56356fb04e13376b336b6dbed23'
+  /anyline_core/WebRoot/WEB-INF:
+    newFile: !uuid 'a727fce8d7aa6442b7c2ee7d483c2dc0a54893f3'
+    oldFile: !uuid '05035bbd38b21a60ad547b233f115431c1030152'
+  /anyline_core/WebRoot/WEB-INF/tld:
+    newFile: !uuid 'be552d83655d90cdb979721789703254b131e73c'
+    oldFile: !uuid 'a4c6a2d4548300ac77284c69655462989a037264'
+  /anyline_core/WebRoot/WEB-INF/tld/anyline-core.tld:
+    newFile: !uuid 'fbb35a095ee6fb0cf40643a9e1b079369d747c35'
+    oldFile: !uuid 'b147a8bdec4874fd57a5474887fe5daf3762dc40'
+gitCommitId: !uuid 'b81416c3613c22bd33626022779eb3fb8be1aca1'
 renames: {
   }
-revisionId: 127
+revisionId: 128
