@@ -3,24 +3,21 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'b306cfa91e545a882e5adef944cb1405767decb5'
-    oldFile: !uuid 'cb01c3e3b86467e852df1065c3e54b6c282197df'
-  /anyline_core/src:
-    newFile: !uuid '3d0a4d5343ff055c10be34dfb1670e9484ef6ae8'
-    oldFile: !uuid 'bc077f0dd7d6d802e061e966500c84ec369e4561'
-  /anyline_core/src/org:
-    newFile: !uuid '3ad5c97facc74824ca7c64f824a9c40f521453b3'
-    oldFile: !uuid 'd50b844a2c7db4fae50b92e45b751f07ab9171ae'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '5f93506ef67855d066aaa70d091ae61476c576f7'
-    oldFile: !uuid '79674563fef3caab1e6ab80ca3b81e41e22764f6'
-  /anyline_core/src/org/anyline/tag:
-    newFile: !uuid '49f36f4ca10c6c6ecb9de25e5373e06925dbf4a4'
-    oldFile: !uuid 'a4c139110bfec9cec3fd6caf8de6144ceb03dc60'
-  /anyline_core/src/org/anyline/tag/Checkbox.java:
-    newFile: !uuid '324d84056e3c10fbbd0fc7bdd75a3851fc0a41e9'
-    oldFile: !uuid '4f1bb4a5420d2e10f2dd1d6257068b68dbd47505'
-gitCommitId: !uuid '8b42c7b144d108833f849f528cbf71b62034f23b'
+    newFile: !uuid 'efe68b5265f5a1b67da6faac789280bd1fe0855f'
+    oldFile: !uuid 'b306cfa91e545a882e5adef944cb1405767decb5'
+  /anyline_core/WebRoot:
+    newFile: !uuid '9ee43ee2244f0ea87eadb696bb6c3be1d87406e3'
+    oldFile: !uuid '9e0dc0fc4dc4ebfe4b67c2259024404c41428082'
+  /anyline_core/WebRoot/WEB-INF:
+    newFile: !uuid 'b542d3df9d1a55226d9f552fc42b8728a3ec4c24'
+    oldFile: !uuid 'a727fce8d7aa6442b7c2ee7d483c2dc0a54893f3'
+  /anyline_core/WebRoot/WEB-INF/tld:
+    newFile: !uuid '9e1e4939bb96ff518e13f3777ce1809e6d43679c'
+    oldFile: !uuid 'be552d83655d90cdb979721789703254b131e73c'
+  /anyline_core/WebRoot/WEB-INF/tld/anyline-core.tld:
+    newFile: !uuid '73b4be166448fdc57bb0c637d31d1a13160c5a2d'
+    oldFile: !uuid 'fbb35a095ee6fb0cf40643a9e1b079369d747c35'
+gitCommitId: !uuid '1b4f9ec6b20ab1275dc274c5d3427e349a67798c'
 renames: {
   }
-revisionId: 130
+revisionId: 131
