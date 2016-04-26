@@ -3,36 +3,15 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '0574a0c9dcb54ef306d9651c3c673107d51b4107'
-    oldFile: !uuid '325e25c03be4577e16164737d3f4920cb9d0aae9'
-  /anyline_core/src:
-    newFile: !uuid '6077d128f63448d518f8ce3bbc0440f3195ab760'
-    oldFile: !uuid 'dc7f28ecb5e67a0b3ba08bcc4fbd93ddf551cfba'
-  /anyline_core/src/org:
-    newFile: !uuid '5978e395cdece6fed354c5f6d9087ad1c8dedc99'
-    oldFile: !uuid '2f6880da3a77545ae41e614abbd200ce2b33c61e'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '4511f0589245390da376fc4b7285899c1c5c47db'
-    oldFile: !uuid 'ab29b0b1f760111a13b842baa7e2cab0a19f300b'
-  /anyline_core/src/org/anyline/config:
-    newFile: !uuid '00e7a425592077f69a8fed02ebc10d00eaf37079'
-    oldFile: !uuid 'fd5a7641fa0337f9f76eeb8162b0c562e4febca8'
-  /anyline_core/src/org/anyline/config/db:
-    newFile: !uuid 'f0f659ef234c346dcd1ea42e512d174ee237c0cd'
-    oldFile: !uuid '7083847c9d7e82d045c5a38026e8e688c33f5c45'
-  /anyline_core/src/org/anyline/config/db/impl:
-    newFile: !uuid '52c888de70018d12e26b7acfd7287f520bf171e8'
-    oldFile: !uuid '81d6c33559992af37396b99921433cebd6c42c0d'
-  /anyline_core/src/org/anyline/config/db/impl/BasicSQLCreaterImpl.java:
-    newFile: !uuid 'd0572d210ed7ef1bafe1c3c76f9b6f938564546b'
-    oldFile: !uuid 'c62ffe460dd5ae0aec4158e66b25706800b56d72'
-  /anyline_core/src/org/anyline/entity:
-    newFile: !uuid 'e891536c9a5c712c5111e85b8b833593fb76fafc'
-    oldFile: !uuid '1235df47c5397fce613241a31330c827387c42cf'
-  /anyline_core/src/org/anyline/entity/DataRow.java:
-    newFile: !uuid '3528000bd474bfca69ff8fe702dd9968422550ae'
-    oldFile: !uuid '2e5d2e03a7641563ba444361be7dfc2462e56a32'
-gitCommitId: !uuid 'f0b1ed43eba4cad7ab8bd57a18decd4bd14988b6'
+    newFile: !uuid '77868485fa213e097cd25f719a4861029123ad3d'
+    oldFile: !uuid '0574a0c9dcb54ef306d9651c3c673107d51b4107'
+  /anyline_core/config:
+    newFile: !uuid 'c7cbf52fad7a59bc6d21b6b37a7746c6320e1420'
+    oldFile: !uuid '95d4f5a6152f2948826b9af229d114ef62c329eb'
+  /anyline_core/config/struts-anyline.xml:
+    newFile: !uuid 'eb5956398709af47c3f2b25f1f1f9b680f4a7588'
+    oldFile: !uuid 'b7e38a6f6fc414ad2c2e79e32531ea3884b986f2'
+gitCommitId: !uuid '5ddd2a37a9f48670a659899e84ce265acc757b06'
 renames: {
   }
-revisionId: 149
+revisionId: 150
