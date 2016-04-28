@@ -3,36 +3,15 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '1fd53ecb152575140446212efabf68e8c599cc9f'
-    oldFile: !uuid 'd13332b6f4a84a15912b9a24e6510c9fb10aa8b4'
-  /anyline_core/config:
-    newFile: !uuid '88c116dcd2ba2dc55f031530e05d79fb797b400b'
-    oldFile: !uuid 'c7cbf52fad7a59bc6d21b6b37a7746c6320e1420'
-  /anyline_core/config/struts-anyline.xml:
-    newFile: !uuid '26014fefb50f764ccb65e0205260309462aa46d1'
-    oldFile: !uuid 'eb5956398709af47c3f2b25f1f1f9b680f4a7588'
-  /anyline_core/src:
-    newFile: !uuid 'c36b22fa5f268b48c8a6dd55418c384b8adf2682'
-    oldFile: !uuid 'd01022d50937cd60afc104dd665ce58346d7385e'
-  /anyline_core/src/org:
-    newFile: !uuid 'e0e23d86e82b94cd6bca4125ebea78c79d922c74'
-    oldFile: !uuid 'df6d338cf7085a2dccf3d549ee73ead047c5aad9'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '1befcdd63fcb65b54204b79036183c5c527a68aa'
-    oldFile: !uuid 'fde65191d047aedc411097fcf05a81ebd3d1638d'
-  /anyline_core/src/org/anyline/struts:
-    newFile: !uuid '4e860c74d1a6be495c61bf47a0150ac9ccf1bad4'
-    oldFile: !uuid 'feb245a07a063219520d8af4076ac5f5a6194fab'
-  /anyline_core/src/org/anyline/struts/action:
-    newFile: !uuid 'e631632023cf320c33400be9847acae144ee1dc0'
-    oldFile: !uuid '77ef4d5488f4724f6f02af7f3eba291e8f21cb95'
-  /anyline_core/src/org/anyline/struts/action/FileAction.java:
-    newFile: !uuid '72b56c8f76157e6b474391dad92ae66cfc89e245'
+    newFile: !uuid 'a5a3083aeebb86e09707d5c5fd9d9cdcdc33d49c'
+    oldFile: !uuid '1fd53ecb152575140446212efabf68e8c599cc9f'
+  /anyline_core/help:
+    newFile: !uuid '97abf1fcff09d72eec2d604f1217429732aed311'
     oldFile: null
-  /anyline_core/src/org/anyline/struts/action/KindUploadAction.java:
-    newFile: null
-    oldFile: !uuid '79c2ffaa01c3c3bdba12b67ad433a51270f60e9b'
-gitCommitId: !uuid '06334773be9091ab9b889c48f0f3f6cbb8b8199c'
+  /anyline_core/help/fileInfo.sql:
+    newFile: !uuid 'eb74920d149f987d9a2cfe63279b4c8970c3061a'
+    oldFile: null
+gitCommitId: !uuid 'c963af54a0965038ca8d2a6e388229fd161fbe35'
 renames: {
   }
-revisionId: 157
+revisionId: 158
