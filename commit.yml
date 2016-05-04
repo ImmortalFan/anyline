@@ -3,24 +3,21 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '368a73334848900133eec3397d1d415db85c8256'
-    oldFile: !uuid '326995a0ab1069f5c3fcbade64f2cd0cc02db1df'
-  /anyline_core/src:
-    newFile: !uuid 'a28e9f540631aaf7d03beafa095cd861df6cb4ef'
-    oldFile: !uuid '90c241f7e3cf0a616b1308738e4ddbcd49179317'
-  /anyline_core/src/org:
-    newFile: !uuid 'd38a4f6b881ee7a12c00a003221e000f5959c246'
-    oldFile: !uuid 'd5ae9199894219c95d7278a6f7d85ab0d26a6e74'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '35e19af5240272e631282e76768de56c440762e2'
-    oldFile: !uuid 'e08f0995ae94e7c868129ef6f5f55bcbeea83c20'
-  /anyline_core/src/org/anyline/tag:
-    newFile: !uuid 'c6206c2ad04b7aaff85a615d70360c48c9f85d73'
-    oldFile: !uuid '2b90eff93f6a82bfbdd21e5983c6e72aeb0860b0'
-  /anyline_core/src/org/anyline/tag/SelectText.java:
-    newFile: !uuid '2d527c025fb7eae02ed246ca8b024d20dce6312a'
-    oldFile: !uuid '31011927136b65042fd6a3ffdf85cbaf4fec2b34'
-gitCommitId: !uuid 'edeff72854ec1cd50bee9da6f0ff9588dacb7b29'
+    newFile: !uuid 'a0f37f6240acd3da574d988a1c8856663dfc27a1'
+    oldFile: !uuid '368a73334848900133eec3397d1d415db85c8256'
+  /anyline_core/WebRoot:
+    newFile: !uuid '12274408ecf16588a3574bbcf2669ec7156ada52'
+    oldFile: !uuid '7db81e991a922afec76751ce98c6ef02b5e64a06'
+  /anyline_core/WebRoot/WEB-INF:
+    newFile: !uuid '11a070ee6fba700aa0fb5dc1ad5b8adc34a68fde'
+    oldFile: !uuid '026f84f336dc5bcaf2cf51e9e130469772fa0859'
+  /anyline_core/WebRoot/WEB-INF/tld:
+    newFile: !uuid '539c9ce1ddf1c01b56dcf02e957bf366c7ad0d51'
+    oldFile: !uuid '9e1e4939bb96ff518e13f3777ce1809e6d43679c'
+  /anyline_core/WebRoot/WEB-INF/tld/anyline-core.tld:
+    newFile: !uuid 'db43aba831485a40f04a7e1e5f34a7ec1e150f51'
+    oldFile: !uuid '73b4be166448fdc57bb0c637d31d1a13160c5a2d'
+gitCommitId: !uuid 'ee7761dbede2b1de227498b341ebea3802810af6'
 renames: {
   }
-revisionId: 162
+revisionId: 163
