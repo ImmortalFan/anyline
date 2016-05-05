@@ -3,36 +3,36 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'f1919561319b983af9b9e4758a5f72bcfcdc5022'
-    oldFile: !uuid 'a0f37f6240acd3da574d988a1c8856663dfc27a1'
+    newFile: !uuid 'bff6b959d731a9813546759cbd7d413f076f2d43'
+    oldFile: !uuid 'f1919561319b983af9b9e4758a5f72bcfcdc5022'
   /anyline_core/WebRoot:
-    newFile: !uuid '26765494d062f361dc4ae9595d3c911e0dd1bb68'
-    oldFile: !uuid '12274408ecf16588a3574bbcf2669ec7156ada52'
+    newFile: !uuid '70d76a264479905b77fe0cbe88d89a029d92f8b2'
+    oldFile: !uuid '26765494d062f361dc4ae9595d3c911e0dd1bb68'
   /anyline_core/WebRoot/WEB-INF:
-    newFile: !uuid 'a2b159f0620ee2ec65ed5b165b53d543115199f0'
-    oldFile: !uuid '11a070ee6fba700aa0fb5dc1ad5b8adc34a68fde'
+    newFile: !uuid '144aa5cb143c0b794d2d05df67c824ff651adf92'
+    oldFile: !uuid 'a2b159f0620ee2ec65ed5b165b53d543115199f0'
   /anyline_core/WebRoot/WEB-INF/tld:
-    newFile: !uuid '4d725840f47447808bfa0082ba8aaa8179882b42'
-    oldFile: !uuid '539c9ce1ddf1c01b56dcf02e957bf366c7ad0d51'
+    newFile: !uuid '627f5fb05e319abfba3051d7bf3d5ee860214dfa'
+    oldFile: !uuid '4d725840f47447808bfa0082ba8aaa8179882b42'
   /anyline_core/WebRoot/WEB-INF/tld/anyline-core.tld:
-    newFile: !uuid '046c0f9da6e1f57e979a40de8d14c0a7affc82c4'
-    oldFile: !uuid 'db43aba831485a40f04a7e1e5f34a7ec1e150f51'
+    newFile: !uuid '6451a11baae8430e6b326d468cb10230fe3a4e12'
+    oldFile: !uuid '046c0f9da6e1f57e979a40de8d14c0a7affc82c4'
   /anyline_core/src:
-    newFile: !uuid '6587fc35411dd1af993263ad4f77f9f47a9ac05c'
-    oldFile: !uuid 'a28e9f540631aaf7d03beafa095cd861df6cb4ef'
+    newFile: !uuid '3361244d150ea6cef3679ebe2fe627542cd5265f'
+    oldFile: !uuid '6587fc35411dd1af993263ad4f77f9f47a9ac05c'
   /anyline_core/src/org:
-    newFile: !uuid '771093f7a82b1bfa1348eb2901f8a7dd3584e665'
-    oldFile: !uuid 'd38a4f6b881ee7a12c00a003221e000f5959c246'
+    newFile: !uuid '4aaa049711e66a646f94b3d1849f19dd5dc12ddd'
+    oldFile: !uuid '771093f7a82b1bfa1348eb2901f8a7dd3584e665'
   /anyline_core/src/org/anyline:
-    newFile: !uuid '383b067893d57f2609479b1de7b51049f0657870'
-    oldFile: !uuid '35e19af5240272e631282e76768de56c440762e2'
+    newFile: !uuid '69d7299a2ff924bbe2be1f1a4fe371ca953a2eaf'
+    oldFile: !uuid '383b067893d57f2609479b1de7b51049f0657870'
   /anyline_core/src/org/anyline/tag:
-    newFile: !uuid 'f26c74f312f42946586f7eb2eebdc2e9aa45eabe'
-    oldFile: !uuid 'c6206c2ad04b7aaff85a615d70360c48c9f85d73'
-  /anyline_core/src/org/anyline/tag/Omit.java:
-    newFile: !uuid 'aa9865b54420986fc6a69942365804817f87b1fb'
+    newFile: !uuid '6f9907a5c90f4526d7ccc1949322b75e0d759193'
+    oldFile: !uuid 'f26c74f312f42946586f7eb2eebdc2e9aa45eabe'
+  /anyline_core/src/org/anyline/tag/Sum.java:
+    newFile: !uuid '5ae7db76bc4c56b44c2cd89e3f14eb8852d5e321'
     oldFile: null
-gitCommitId: !uuid '379904f97f02d02bdf5529f46d59be9b53d5d2c0'
+gitCommitId: !uuid '5e8098b0d3812bb6017a28111e80fc94dd058e0e'
 renames: {
   }
-revisionId: 164
+revisionId: 165
