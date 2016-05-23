@@ -3,24 +3,27 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'f3164afe1bbe61a1c4c28ad92263b09e8663a0c3'
-    oldFile: !uuid '3316fd820fe450b4cb312b5d8671ed912f8655b1'
+    newFile: !uuid '266b0a0b5e62a42603bbebb3ea8361a5b732084a'
+    oldFile: !uuid 'f3164afe1bbe61a1c4c28ad92263b09e8663a0c3'
   /anyline_core/src:
-    newFile: !uuid '180b8f653b5f0bc69ef4dc6b35228be8eba03cfb'
-    oldFile: !uuid 'ff8802d5db412469e577efb204f96e4857248c0c'
+    newFile: !uuid 'a696208cccd9b19acc7884cc40bb33e361406dfc'
+    oldFile: !uuid '180b8f653b5f0bc69ef4dc6b35228be8eba03cfb'
   /anyline_core/src/org:
-    newFile: !uuid '0b31ee9cbad67a4fb208d0c576ac7fc62ce32358'
-    oldFile: !uuid 'd423a69aad3b259a99f154737cff47ed7dd31a8e'
+    newFile: !uuid '158d47c5594b2b85c6b8933e419d705b3e7e0c60'
+    oldFile: !uuid '0b31ee9cbad67a4fb208d0c576ac7fc62ce32358'
   /anyline_core/src/org/anyline:
-    newFile: !uuid '109decb2da25e66aee4f990031316dee38b04466'
-    oldFile: !uuid 'eeab7fbdba74ef54669a8c03f541175e84d88540'
-  /anyline_core/src/org/anyline/util:
-    newFile: !uuid 'd5026510e12e720696ee112e1289e729e90d84bd'
-    oldFile: !uuid '53974397a892655e4ead07cd84efc7c4f634834c'
-  /anyline_core/src/org/anyline/util/BasicUtil.java:
-    newFile: !uuid 'dc5ddd68291e263bf648fb5ec72dc388fafe0bdb'
-    oldFile: !uuid '64339d3d4ce71c9e741faa89879fa4d067d59fbf'
-gitCommitId: !uuid 'e549d919e609942642fdfd5dae128695f91867af'
+    newFile: !uuid '8978fa26246178ef8e42e0f6a144e932946d4499'
+    oldFile: !uuid '109decb2da25e66aee4f990031316dee38b04466'
+  /anyline_core/src/org/anyline/service:
+    newFile: !uuid '469ada0512e86ab2e27f9bb9ac5d52d5644e49e0'
+    oldFile: !uuid '94b6d39ff8049b474a2b2f5dee4f5f93f9c5192e'
+  /anyline_core/src/org/anyline/service/impl:
+    newFile: !uuid '0d4f87217a219791ae691ab1e6f5156fe498d04c'
+    oldFile: !uuid '3147814e7b72b405d235ad55972eac0b5f38e546'
+  /anyline_core/src/org/anyline/service/impl/AnylineServiceImpl.java:
+    newFile: !uuid '867063c4308cf13c7ed31d79634add2e61eb8bf4'
+    oldFile: !uuid 'b3a52e8fdd110391b02776a27b30a1ef103a00cb'
+gitCommitId: !uuid '4686adf76d549003b2b3b942b928c89579b631ba'
 renames: {
   }
-revisionId: 186
+revisionId: 187
