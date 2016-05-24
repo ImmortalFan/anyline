@@ -3,33 +3,24 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'e76f8ced5b4f2566674c1c883b736cfebb59992d'
-    oldFile: !uuid 'b29fe6f380dccac9908fc7d5dd8fa5b30db140f6'
+    newFile: !uuid 'db47b59ec4f0625d65c911225eed256de929f6ce'
+    oldFile: !uuid 'e76f8ced5b4f2566674c1c883b736cfebb59992d'
   /anyline_core/src:
-    newFile: !uuid '02e60d93afb25e1f24ab6ea6e5e773e349ac9898'
-    oldFile: !uuid 'ac89a25963e918a1ac021d2ea8d62d039fd60998'
+    newFile: !uuid '6edbb9f49b00fd74870e11a31db1aaec82c3363e'
+    oldFile: !uuid '02e60d93afb25e1f24ab6ea6e5e773e349ac9898'
   /anyline_core/src/org:
-    newFile: !uuid '046710a2f774f1d0398176e20a1217f96a56037b'
-    oldFile: !uuid '7c8dc2053d43d362363bd21ca2c986813dd6f85c'
+    newFile: !uuid '8c800739731738eeccbc21cd9aaa5646a0e178ec'
+    oldFile: !uuid '046710a2f774f1d0398176e20a1217f96a56037b'
   /anyline_core/src/org/anyline:
-    newFile: !uuid 'ae3406ac7188f3e95cf1b9d8b7f0d86af9ef3755'
-    oldFile: !uuid '11030f3ed70a7059bf7402ccf99e7a7ec734a18d'
-  /anyline_core/src/org/anyline/controller:
-    newFile: !uuid '78066e4e61eeb77c8452629f9d90b15f41caaf43'
-    oldFile: !uuid 'b1f72bf3d7be0e2c5dfde0474c87c58a255beb39'
-  /anyline_core/src/org/anyline/controller/AbstractBasicController.java:
-    newFile: !uuid 'a591210540357bcde0e5bfcb59a18049da19940c'
-    oldFile: !uuid '2609bfbeef31dc7300d9baad34345f36dac7543a'
+    newFile: !uuid '49ed45039c0c7847cc85a0af8d558342a25dfb6d'
+    oldFile: !uuid 'ae3406ac7188f3e95cf1b9d8b7f0d86af9ef3755'
   /anyline_core/src/org/anyline/entity:
-    newFile: !uuid 'fd24880a29c39f14b9d85672564545e65ff8b3ed'
-    oldFile: !uuid '84a5003c005fa1a6de6aa5e3cf06a45425801cc3'
+    newFile: !uuid '6bab2016cc95e50665ea40b6a4860f2d38c0e018'
+    oldFile: !uuid 'fd24880a29c39f14b9d85672564545e65ff8b3ed'
   /anyline_core/src/org/anyline/entity/DataRow.java:
-    newFile: !uuid 'ee246da2a29f1a16979f9955f847d6b6e7ce6819'
-    oldFile: !uuid '47e48784270639873dc6ec8ae08fc29e3bb0979d'
-  /anyline_core/src/org/anyline/entity/DataSet.java:
-    newFile: !uuid 'a1e9f0b653c4f4259d99c1e37c8211bf9eb6e2c4'
-    oldFile: !uuid '19ab837a46e8bdae720abc9a1b28abea28b01867'
-gitCommitId: !uuid '2af0793ca4f5c77ee0b171d4f6fe73363d4e7db9'
+    newFile: !uuid 'd758e6922d112e72f9d9dd8c0204f6417cc7261d'
+    oldFile: !uuid 'ee246da2a29f1a16979f9955f847d6b6e7ce6819'
+gitCommitId: !uuid '70e7aee366d1abcffce8c150107724b650040241'
 renames: {
   }
-revisionId: 191
+revisionId: 192
