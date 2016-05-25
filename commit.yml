@@ -3,24 +3,30 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '5ea313be2ec28aed5945d321432a9454072b9733'
-    oldFile: !uuid 'e26f3fb38bcac729a283caaabccb9cf147dcdf24'
+    newFile: !uuid '666d535d4a5da56fd4f6f5d28bb5a197d8d26241'
+    oldFile: !uuid '5ea313be2ec28aed5945d321432a9454072b9733'
   /anyline_core/src:
-    newFile: !uuid 'd4fb46529b0a7bc37660bad1f087f7654c3547e1'
-    oldFile: !uuid 'a0f431ad52ecb01ed9568307b3ccd0ea9e165b66'
+    newFile: !uuid 'd0cf19d6c888426c42efb5f5a0f0b0ac1083db4e'
+    oldFile: !uuid 'd4fb46529b0a7bc37660bad1f087f7654c3547e1'
   /anyline_core/src/org:
-    newFile: !uuid '37311e3f5963263ed45bf0b5bc2c993ae3f2c7a0'
-    oldFile: !uuid '761916b346cd9739b685d5da64af802082fc6cc2'
+    newFile: !uuid '8bdebd96c493a0b5edaefee93ef4939d776fb2db'
+    oldFile: !uuid '37311e3f5963263ed45bf0b5bc2c993ae3f2c7a0'
   /anyline_core/src/org/anyline:
-    newFile: !uuid 'a79355cab243c9135dc86b91303a88dca5ede6a2'
-    oldFile: !uuid 'f5eda7f1ffd4786ea7f00d52011a40e5083ca298'
+    newFile: !uuid '7ad92e24fbbc6e88782c501003763fad637029c7'
+    oldFile: !uuid 'a79355cab243c9135dc86b91303a88dca5ede6a2'
+  /anyline_core/src/org/anyline/tag:
+    newFile: !uuid '7c8f97aef0a7d3e7226eaf68f4c8fa7cb9e7d7f9'
+    oldFile: !uuid '6f9907a5c90f4526d7ccc1949322b75e0d759193'
+  /anyline_core/src/org/anyline/tag/ShortUrl.java:
+    newFile: !uuid 'fea2824b1a398bda885a5d29b27763d458cdddae'
+    oldFile: !uuid '9ec316585cc0fa4251ff7cbaf12b944bf94b687c'
   /anyline_core/src/org/anyline/util:
-    newFile: !uuid '0a2a34df0f254086a1cd1161e4973e14daf7a3c8'
-    oldFile: !uuid 'd5026510e12e720696ee112e1289e729e90d84bd'
-  /anyline_core/src/org/anyline/util/BasicUtil.java:
-    newFile: !uuid '5531034fde005f0462f7bce5e941be4658480a43'
-    oldFile: !uuid 'dc5ddd68291e263bf648fb5ec72dc388fafe0bdb'
-gitCommitId: !uuid '9e742fd4f0fa8055aeb06f4ee7c605eb664f8c8e'
+    newFile: !uuid '1c293a67dfa94dd6387aa64d3651028c6cb62c35'
+    oldFile: !uuid '0a2a34df0f254086a1cd1161e4973e14daf7a3c8'
+  /anyline_core/src/org/anyline/util/ShortUrlUtil.java:
+    newFile: !uuid '43f90201978484ff6dd6e42269d470ad2e36e2da'
+    oldFile: !uuid '760eaed29c9817ce9f689211ba042d369ab50caf'
+gitCommitId: !uuid '484c1b0ab875f3358dc1e82145f96aa0a823c72f'
 renames: {
   }
-revisionId: 195
+revisionId: 196
