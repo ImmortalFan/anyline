@@ -2,25 +2,10 @@
 branches: {
   }
 fileChange:
-  /anyline_core:
-    newFile: !uuid '3c582b1a1098aacca127d38c2a5c28407b709035'
-    oldFile: !uuid '96457df8a3d585b4084c28ed3134a9850c4d1093'
-  /anyline_core/src:
-    newFile: !uuid 'ee93ab3bc532dd0180916453fad42c2603b1a969'
-    oldFile: !uuid '3d40675000d33dc7bdf7acf7a480a0c951a201e1'
-  /anyline_core/src/org:
-    newFile: !uuid '74933bbe3dabef66b6d0211326ade4d68d4c5064'
-    oldFile: !uuid '864daf53f2bfb72557d190b1e6be1aa6e980bbdb'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '8217817c77042050097935a6e9f6c5b629d764ac'
-    oldFile: !uuid 'aef502e36d629bb187a25e75754e3630991138da'
-  /anyline_core/src/org/anyline/tag:
-    newFile: !uuid 'f639128476068f63e949a0c6886167002e98ac33'
-    oldFile: !uuid '3bef658b58bc8b9d8f120f6ca0eb60249a7a1777'
-  /anyline_core/src/org/anyline/tag/DateFormat.java:
-    newFile: !uuid '8f2676199b1dbb5fd68f981327f4420bd08abd9f'
-    oldFile: !uuid '8995bc089b92accbde3ceb3460a6b634d3d01f3b'
-gitCommitId: !uuid '9f9aa463a5546d2427160890908716e2d405f692'
+  /README.md:
+    newFile: !uuid '349e2672f618fad92165129939a08074525aad84'
+    oldFile: !uuid '15c3439ea05e98abe1161b509bba40ed5e0e916e'
+gitCommitId: !uuid 'bd4540eeeaac9c4f00e6330fb02d5138d6e6a2f4'
 renames: {
   }
-revisionId: 206
+revisionId: 207
