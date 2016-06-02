@@ -2,10 +2,28 @@
 branches: {
   }
 fileChange:
-  /README.md:
-    newFile: !uuid 'b3bdb4635ff5a6f88c26bbdd1a4fa0129f459157'
-    oldFile: !uuid '349e2672f618fad92165129939a08074525aad84'
-gitCommitId: !uuid '0bb2d1c4dd09aeaf491a948e261aac2c25a24e14'
+  /anyline_core:
+    newFile: !uuid 'caf27afb117f7bf082340256e1f9136e125ea2eb'
+    oldFile: !uuid '3c582b1a1098aacca127d38c2a5c28407b709035'
+  /anyline_core/src:
+    newFile: !uuid '3a3b111f146911bb75f811251a33527e90f369e2'
+    oldFile: !uuid 'ee93ab3bc532dd0180916453fad42c2603b1a969'
+  /anyline_core/src/org:
+    newFile: !uuid '567f483e829feb029c77d6d1207511d149125599'
+    oldFile: !uuid '74933bbe3dabef66b6d0211326ade4d68d4c5064'
+  /anyline_core/src/org/anyline:
+    newFile: !uuid '9da21e7314fc27d6d1c46c3c69e5ce16e83e3c4f'
+    oldFile: !uuid '8217817c77042050097935a6e9f6c5b629d764ac'
+  /anyline_core/src/org/anyline/dao:
+    newFile: !uuid '18f090c8e054dfef267876398d0526af6476e053'
+    oldFile: !uuid '529a62a96514468bffaacd32a3b97f057292082b'
+  /anyline_core/src/org/anyline/dao/impl:
+    newFile: !uuid '099bab399a091b6a62eb8833105ec136c0c7515c'
+    oldFile: !uuid '112f1b4aef3ba57644ffc1121c1f02fd54c84688'
+  /anyline_core/src/org/anyline/dao/impl/BatchInsertStore.java:
+    newFile: !uuid 'a636b2e107c06229f2032da406a2bedac8523f50'
+    oldFile: !uuid 'fd580cce6b5ad21a540afa190701f28d78e0804f'
+gitCommitId: !uuid '9c969d3ab1c512b362b442af4789829b42f44cf2'
 renames: {
   }
-revisionId: 208
+revisionId: 209
