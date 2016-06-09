@@ -3,24 +3,15 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'de1353be1ee8dbb56cfa7b8dfb9150c3ac9453c7'
-    oldFile: !uuid 'd9461aef976909c3f4c559f35b6ab440e2522e37'
+    newFile: !uuid 'a9e7d2c1ff0784e5bd41debd9c2507d778aca230'
+    oldFile: !uuid 'de1353be1ee8dbb56cfa7b8dfb9150c3ac9453c7'
   /anyline_core/src:
-    newFile: !uuid '0ac45000061c8c510bb9fc6ff2bd21f02ebb61a6'
-    oldFile: !uuid 'f402f3b690dff39b4a4cb3dcad6249690c51bd99'
-  /anyline_core/src/org:
-    newFile: !uuid 'ebf45faf448b958f286ef4c1115474e56ce212f7'
-    oldFile: !uuid '1a1484935b99c3b184d8d80a2f1c34afe1ea181f'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid 'd72acf5df7c30bdde7aa3d2bcb59163975102a3b'
-    oldFile: !uuid 'f78b4aaee3080598c4914b4a6bda47036658d87c'
-  /anyline_core/src/org/anyline/entity:
-    newFile: !uuid '9149a72d60678eb02eea3c82914267479506e131'
-    oldFile: !uuid '76347a58e20cc18b83556a357557454500c7380e'
-  /anyline_core/src/org/anyline/entity/DataRow.java:
-    newFile: !uuid 'd1ac08a23792ec331d5eda95a6276a55ea67cde4'
-    oldFile: !uuid '66a34643378f43ed72ff71b7841c2cb9e22df17f'
-gitCommitId: !uuid '0cb79f8eb02daea0b68d3f5fbc3f7d0ee846d1c8'
+    newFile: !uuid 'bc8c09bf9aeebfa6791fafa152a25a460d38ee52'
+    oldFile: !uuid '0ac45000061c8c510bb9fc6ff2bd21f02ebb61a6'
+  /anyline_core/src/LicenseUtil.java:
+    newFile: !uuid '855ad29499b20179b471ec04f372f94ae6c19861'
+    oldFile: !uuid 'd75bd186d503f1b4a6881c7bc2a3655f64ba487b'
+gitCommitId: !uuid '163e45c6b31ec73d026c0cda39456c938621874b'
 renames: {
   }
-revisionId: 223
+revisionId: 224
