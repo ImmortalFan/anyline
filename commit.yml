@@ -3,51 +3,24 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '27bf1b40d22877671d0068c199b5ac40ccd2a358'
-    oldFile: !uuid '703b39b77f1e5916dd232ee6cc77ad920363047e'
-  /anyline_core/WebRoot:
-    newFile: !uuid '19f2ca4698cb9729caecc9f97fc73e058452c240'
-    oldFile: !uuid '0f145399f86bda408863453acb4272152ff06eaf'
-  /anyline_core/WebRoot/WEB-INF:
-    newFile: !uuid 'd0e3e1273ab9945baf41d24c6af27887070e6ed0'
-    oldFile: !uuid '6201e85bb7408b57967c94ab112377c984aa165b'
-  /anyline_core/WebRoot/WEB-INF/tld:
-    newFile: !uuid '9b8d53c0528663453e3fe7ee39e504eafdd3a2ae'
-    oldFile: !uuid '627f5fb05e319abfba3051d7bf3d5ee860214dfa'
-  /anyline_core/WebRoot/WEB-INF/tld/anyline-core.tld:
-    newFile: !uuid 'e7db645242678a83dd95bc2ca7490e5daa7908cb'
-    oldFile: !uuid '6451a11baae8430e6b326d468cb10230fe3a4e12'
+    newFile: !uuid '60b89b2beeec119e44ed56b67afb1b21779ed5cd'
+    oldFile: !uuid '27bf1b40d22877671d0068c199b5ac40ccd2a358'
   /anyline_core/src:
-    newFile: !uuid '972a5bffa11b338388c14bafa496cc7d34a71e4d'
-    oldFile: !uuid 'a799b620f2fb8f567b338a80de6e43ab0bcc7b4d'
+    newFile: !uuid '357bf3fb39b0be51063c84b240661dc23b3670d5'
+    oldFile: !uuid '972a5bffa11b338388c14bafa496cc7d34a71e4d'
   /anyline_core/src/org:
-    newFile: !uuid 'f32f81baed00e8af6e53a6115ad7b26adacddd13'
-    oldFile: !uuid '778b7a8b2ff6d62c1a0c996743d9272833132308'
+    newFile: !uuid '07af2b8cbaf2d27a08dd2b9e68778df89071342a'
+    oldFile: !uuid 'f32f81baed00e8af6e53a6115ad7b26adacddd13'
   /anyline_core/src/org/anyline:
-    newFile: !uuid '2abbb63b2d9897dec7f666830749ba3796233879'
-    oldFile: !uuid '260a190ee72cb40c3d67758e9beb2a5fa1f2a296'
-  /anyline_core/src/org/anyline/struts:
-    newFile: !uuid '377a128ea7c52fb9a27638ae66060e828a6e7450'
-    oldFile: !uuid 'd3fa0b85f05483213e5f2e6f0f6dcf97086915ab'
-  /anyline_core/src/org/anyline/struts/action:
-    newFile: !uuid '5a0bbb7831073f4367b2998d8d513dc913dd469c'
-    oldFile: !uuid 'b9d9086cf54cf0ce6273b2da2a8a40a2320427d7'
-  /anyline_core/src/org/anyline/struts/action/AnylineAction.java:
-    newFile: !uuid 'a98cf36cf043cc31ba3b7b0c6946e799c7b9e9c2'
-    oldFile: !uuid '344648b068cbcad1a2b02c9d8a11ff974f457def'
-  /anyline_core/src/org/anyline/tag:
-    newFile: !uuid '2f31323be37551be8fdd9785d9528564899d937e'
-    oldFile: !uuid '8f9d45ec8721f4ed8d3f3fbab72583d4a9d328cd'
-  /anyline_core/src/org/anyline/tag/Checkbox.java:
-    newFile: !uuid 'e9a20897623f318a97a3018ce739099e9c97871d'
-    oldFile: !uuid '3caafe130a06e641dbdca1f96f84fd81ca057476'
-  /anyline_core/src/org/anyline/tag/Radio.java:
-    newFile: !uuid '2b20dd4616224015a6cfc21ed36f3dcc2c17376b'
-    oldFile: !uuid '45fd9b9dec3d3dd8b74bd1ea3b1572af10bb1f1a'
-  /anyline_core/src/org/anyline/tag/Select.java:
-    newFile: !uuid '418bd7f06b270a6356ab953cc347e031f95779ab'
-    oldFile: !uuid '27d1274f6b49615da5bde3b7123eac7cf9d1f623'
-gitCommitId: !uuid 'f687f136026d0a8d4dfc890058ad59ff1fa45023'
+    newFile: !uuid '0864db63e5cf3cc3f7f81a291d73a84ef0999b9b'
+    oldFile: !uuid '2abbb63b2d9897dec7f666830749ba3796233879'
+  /anyline_core/src/org/anyline/util:
+    newFile: !uuid 'a516b9ff72b7191ae8c9d40040a156eb72ad94a1'
+    oldFile: !uuid '20b7ffc5303bb4c01f78430376c2a5d557e9ed9c'
+  /anyline_core/src/org/anyline/util/ConfigTable.java:
+    newFile: !uuid 'd32794c00a14b43335a91ef0597d88bf4bd53a34'
+    oldFile: !uuid 'c93e2a19b83dcb50ddf3fc73e201244672ce77ca'
+gitCommitId: !uuid 'a141eb22558ae2a792e9807d1cc962ebb74c6b61'
 renames: {
   }
-revisionId: 229
+revisionId: 230
