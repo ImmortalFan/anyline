@@ -3,42 +3,24 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'f9b2485610995d1d1dcb4f5215a9b6e56d52fc58'
-    oldFile: !uuid '922f92deab0eb1a8116901c14b9bcf1d0e7233fe'
+    newFile: !uuid '5e2a44cec12573247ea0efd1655a8a3088fd7674'
+    oldFile: !uuid 'f9b2485610995d1d1dcb4f5215a9b6e56d52fc58'
   /anyline_core/WebRoot:
-    newFile: !uuid 'c6fdf5fabfa65a72067c3d62b288a55f841aabb5'
-    oldFile: !uuid '19f2ca4698cb9729caecc9f97fc73e058452c240'
+    newFile: !uuid 'e3ea4b40b33eb99ce9ebfa7c957998cc2741972d'
+    oldFile: !uuid 'c6fdf5fabfa65a72067c3d62b288a55f841aabb5'
   /anyline_core/WebRoot/tmp:
-    newFile: !uuid '9ad7133e51c8d8b1d5ed967d91da1d7bb34312d7'
-    oldFile: !uuid '9ea77ff6449a05aeb83b3ad95367f14c7212c1bf'
-  /anyline_core/WebRoot/tmp/anyline.jquery.js:
-    newFile: !uuid 'f757ebdff34d63c57b025decae5576fd96c348d1'
+    newFile: !uuid '062cb07e2f89c254bc44c9577ca8c9b47837afd4'
+    oldFile: !uuid '9ad7133e51c8d8b1d5ed967d91da1d7bb34312d7'
+  /anyline_core/WebRoot/tmp/navi:
+    newFile: !uuid '7beb312313f5dd8e535713db384313dfa94e36b5'
     oldFile: null
-  /anyline_core/WebRoot/tmp/teplate_data_load.js:
-    newFile: !uuid 'dea593d41bda239f71252dfca6ff3e42d8e0991d'
+  /anyline_core/WebRoot/tmp/navi/navi.js:
+    newFile: !uuid '91991a756bcaa02117ddcb23e0bcca3b58b19403'
     oldFile: null
-  /anyline_core/src:
-    newFile: !uuid 'b91b6fee834a8dfc61021eb64040d3c054c5e68e'
-    oldFile: !uuid 'e4ac3ea182e45de1c5cc49e33069fb1dce573967'
-  /anyline_core/src/org:
-    newFile: !uuid '8ee14b633591b50516ad20789a62111a55f0cb9c'
-    oldFile: !uuid '1d71755f7a38eadc5e749212d17f8f057eff9e25'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '8dad89aaf1fd86956e265083ca438050fe7348b5'
-    oldFile: !uuid 'cdc888a85faa3c2e70552be2aec59188f2373eff'
-  /anyline_core/src/org/anyline/config:
-    newFile: !uuid 'c511994485c63edf3a87abf97a78d65bb624258a'
-    oldFile: !uuid 'edbc6cff92e644d572da158870a1d326440a544f'
-  /anyline_core/src/org/anyline/config/db:
-    newFile: !uuid '4565ee45a0ebb3dbb315adef6ca95cc933055cb2'
-    oldFile: !uuid '130d311006ad3be8eb97f8bbf0ab7d10eed2220f'
-  /anyline_core/src/org/anyline/config/db/impl:
-    newFile: !uuid '5b69a72060de65b5470744fd2a0863a9f785cf99'
-    oldFile: !uuid 'cfb0e1bfef0ed08c44e6b49c7b33afe973914a33'
-  /anyline_core/src/org/anyline/config/db/impl/PageNaviImpl.java:
-    newFile: !uuid 'd4c25ffaa9838a83f6a7585715bd128fee3bf969'
-    oldFile: !uuid '8026cb7b6aee40559c8bf2a43b392db8c3ed0b73'
-gitCommitId: !uuid 'c721ff370cb9b2f277e753fa66e888f9f4c0364e'
+  /anyline_core/WebRoot/tmp/navi/skin.css:
+    newFile: !uuid 'f5862cbaee5fd9f6158995e7c238f9af22f79d0f'
+    oldFile: null
+gitCommitId: !uuid 'b8a83b8b51d5cc43848e78c6e78845ebfabf5c27'
 renames: {
   }
-revisionId: 233
+revisionId: 234
