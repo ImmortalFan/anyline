@@ -3,24 +3,15 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'f5545f71a61df08869f075b6491b88c8dcece7f1'
-    oldFile: !uuid '5e632c15ac55121c82a119fbfb8f0ccb4c01a6c2'
-  /anyline_core/src:
-    newFile: !uuid 'a4ca7b39ca497882509a0d969564f77ca663d7dc'
-    oldFile: !uuid 'dc80fc96f7668a086f53e1fe9d573dcb197cefbc'
-  /anyline_core/src/org:
-    newFile: !uuid '0e5d640cda84cd74476b49506fe67b0384b6a178'
-    oldFile: !uuid 'c92b0f3a2c0d1cf1ebda59dc72836801050b932b'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid 'f66977ea10e150c88bc055df45f385b6b5f0f566'
-    oldFile: !uuid '8820a62d65cb73adf99259fcf0e42f570f83c546'
-  /anyline_core/src/org/anyline/util:
-    newFile: !uuid 'c314df08f324ca7130ed01a31b87d4490ebad33f'
-    oldFile: !uuid 'e7ceba1055d6185b51c5ef86d01ab1e4ec772f3c'
-  /anyline_core/src/org/anyline/util/DESUtil.java:
-    newFile: !uuid '131bbd63b36e598e4754ae02d70e25bebf38dcb2'
-    oldFile: !uuid 'a694201c117d149d75228b35e6c7caafd5b8362d'
-gitCommitId: !uuid '7056cd70a21c4ab23dd7974156b0f98c1aabe9d5'
+    newFile: !uuid 'e4ba84a5b8a9093df518cdf5e5382e6876527f7c'
+    oldFile: !uuid 'f5545f71a61df08869f075b6491b88c8dcece7f1'
+  /anyline_core/config:
+    newFile: !uuid 'b92435b67f98ef43b35af0e986a425bd0d1c70ca'
+    oldFile: !uuid '14a7f74bb4d14a007f58aec68a33d163c0d30108'
+  /anyline_core/config/anyline-config.xml:
+    newFile: !uuid '6260114cd007f45a7f0e9f7a7e91a8e27ae10015'
+    oldFile: !uuid 'de932308751c5963135f09927e67247b7a528de9'
+gitCommitId: !uuid '9c4f8538957e24a37f15d35754e9edadbe0d4a3a'
 renames: {
   }
-revisionId: 236
+revisionId: 237
