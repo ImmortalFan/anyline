@@ -3,21 +3,33 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'eaa95c86fea40a5eb7bc0dc49260096ebe9f4469'
-    oldFile: !uuid 'abd2aca7b33c046b9637aa6fd9c26e1a4bcd8d21'
-  /anyline_core/WebRoot:
-    newFile: !uuid 'a4e06f297969ab82780154d277544901ee5416cc'
-    oldFile: !uuid '533fab0820d6540d5ce62eb053a2a8085ddcebbf'
-  /anyline_core/WebRoot/tmp:
-    newFile: !uuid '1dc88e6dc255b09f10dadb765676b41040aaed08'
-    oldFile: !uuid 'a92a796a7457779bc0effa59cd47e4d313ae57eb'
-  /anyline_core/WebRoot/tmp/navi:
-    newFile: !uuid '1c53a74944eec1d855b3b12fd9d4a9fed1d52daf'
-    oldFile: !uuid '10dcb02c8bf1b580cba37f38d05746712fb2f326'
-  /anyline_core/WebRoot/tmp/navi/skin.css:
-    newFile: !uuid '9d2d6d0eb98af168ee93b07e8acfadf1af026be1'
-    oldFile: !uuid '75e214ca9ec5ce798db0ec05027c3df80ca7db19'
-gitCommitId: !uuid '6480e96ec968f30b730bad7eb4639ecf1ce2f8dc'
+    newFile: !uuid '278da5f2b938a4a2acd3a8b380b5303aaa23a3d8'
+    oldFile: !uuid 'eaa95c86fea40a5eb7bc0dc49260096ebe9f4469'
+  /anyline_core/src:
+    newFile: !uuid '3ed8b489e6ceaaf33744e08df0146b37b0e523c0'
+    oldFile: !uuid '8b171fe0458fef9fdd689b6229823908f62fc355'
+  /anyline_core/src/org:
+    newFile: !uuid 'ad273c845ff215d3d7bf3fccf4934e6f56d8d564'
+    oldFile: !uuid '0684f3fe4a575f2c698322c681b0bcab1949e662'
+  /anyline_core/src/org/anyline:
+    newFile: !uuid 'b7d042a3485b5dc99e6d291a933f5b5831345629'
+    oldFile: !uuid '52a0c9ef8fc18d958233e8e92f4da12c56a42409'
+  /anyline_core/src/org/anyline/config:
+    newFile: !uuid '1a3a1d19ccbaee24fce48960bdbbf0246f4b761e'
+    oldFile: !uuid '1d5663e4e879e930cccb498a4807069f3725a408'
+  /anyline_core/src/org/anyline/config/db:
+    newFile: !uuid 'e108d8161ce49685a762eba07d1934bc2151ac49'
+    oldFile: !uuid 'c9e680dc857d762f604b1368f3ae77401a5c265c'
+  /anyline_core/src/org/anyline/config/db/run:
+    newFile: !uuid 'e3e0ee44f5fc41e5ec5b0401b05006ef88c12d9a'
+    oldFile: !uuid 'b17e60ed98706cad18ef1d13e99deb89f7301257'
+  /anyline_core/src/org/anyline/config/db/run/TextRunSQLImpl.java:
+    newFile: !uuid '194d7fd345cdb3b2529d7a0eaadbf4e78edd4c98'
+    oldFile: !uuid '3b219b4928b4aa692248cb12c0f4c7ab6fb97e23'
+  /anyline_core/src/org/anyline/config/db/run/XMLRunSQLImpl.java:
+    newFile: !uuid 'c9d6e698bd13fd2c57a52eb64b84761db806d2a5'
+    oldFile: !uuid '995138faf3c97da04bfb59ff5168d37050cde90a'
+gitCommitId: !uuid 'a7a91db93c3f245f2f41f46c0d303934de770c93'
 renames: {
   }
-revisionId: 246
+revisionId: 247
