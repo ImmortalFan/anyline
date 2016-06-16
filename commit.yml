@@ -3,27 +3,21 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '5166b3c4fe28183d454de0ca68a0e2e6b1b56f2e'
-    oldFile: !uuid '963558e11349013efec5a106b0d072081cc6d76b'
-  /anyline_core/src:
-    newFile: !uuid 'a8e335e64d8c2f5aebd0d512d6e1ed1e4e61cf39'
-    oldFile: !uuid '81a32af6a82bd5a1293b481cee17f75f2a65d917'
-  /anyline_core/src/org:
-    newFile: !uuid '5b02c68d4ce64217849b87dfafa7cbacb5e5bec1'
-    oldFile: !uuid '5edb8db7b4c9680b1d87a6f30bb2b781fc035358'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '9c241148f1dff6c35cdb92bec19cac28da8da56d'
-    oldFile: !uuid 'aad989bbed6252d5336e9e3b9bea25cdfa6aa147'
-  /anyline_core/src/org/anyline/tag:
-    newFile: !uuid '6054c4f4aaa9aa317cfe93c2f0d70dac1a08ee88'
-    oldFile: !uuid 'c74ecd1cac8a25ca6321efad3e870b464441e258'
-  /anyline_core/src/org/anyline/tag/Checkbox.java:
-    newFile: !uuid 'e376bf9f80aee781f4c71246fef80484a9f9b215'
-    oldFile: !uuid 'e9a20897623f318a97a3018ce739099e9c97871d'
-  /anyline_core/src/org/anyline/tag/Radio.java:
-    newFile: !uuid 'c4f565db91aeea278f534c2b9a3cfe32993e9da8'
-    oldFile: !uuid '2b20dd4616224015a6cfc21ed36f3dcc2c17376b'
-gitCommitId: !uuid 'eb4e7feff48dc7adb04157f813fc76060e3871cf'
+    newFile: !uuid 'f579fd90bcb40508b0b23fc14750142794205ad3'
+    oldFile: !uuid '5166b3c4fe28183d454de0ca68a0e2e6b1b56f2e'
+  /anyline_core/WebRoot:
+    newFile: !uuid 'f8172896a1cac0f06454fce10b495af5e0bd1381'
+    oldFile: !uuid 'e3ea4b40b33eb99ce9ebfa7c957998cc2741972d'
+  /anyline_core/WebRoot/tmp:
+    newFile: !uuid 'a92a796a7457779bc0effa59cd47e4d313ae57eb'
+    oldFile: !uuid '062cb07e2f89c254bc44c9577ca8c9b47837afd4'
+  /anyline_core/WebRoot/tmp/navi:
+    newFile: !uuid '10dcb02c8bf1b580cba37f38d05746712fb2f326'
+    oldFile: !uuid '7beb312313f5dd8e535713db384313dfa94e36b5'
+  /anyline_core/WebRoot/tmp/navi/skin.css:
+    newFile: !uuid '75e214ca9ec5ce798db0ec05027c3df80ca7db19'
+    oldFile: !uuid 'f5862cbaee5fd9f6158995e7c238f9af22f79d0f'
+gitCommitId: !uuid '900c0fd23bdacda328a59ae3f39fd5746e451c75'
 renames: {
   }
-revisionId: 241
+revisionId: 242
