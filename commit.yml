@@ -3,15 +3,15 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '64f6ecd9774863dcd03387df1f046cea8cf967ca'
-    oldFile: !uuid '27f60dfd26dfa80dde0eb2c7790db05235c4133c'
+    newFile: !uuid '6d6991822db03b3e09817ea91254b0d18a04d45c'
+    oldFile: !uuid '64f6ecd9774863dcd03387df1f046cea8cf967ca'
   /anyline_core/config:
-    newFile: !uuid 'c62e65d9a172e6b4506e1f0bde4d86346ed98d1e'
-    oldFile: !uuid 'b92435b67f98ef43b35af0e986a425bd0d1c70ca'
+    newFile: !uuid '3e9eb647675d68e9408ecaa2fe22b41a7c7d8696'
+    oldFile: !uuid 'c62e65d9a172e6b4506e1f0bde4d86346ed98d1e'
   /anyline_core/config/log4j.properties:
-    newFile: !uuid '6723ba8fb425ce57090e3e11bd83ce664bf85b16'
-    oldFile: !uuid '0b1373f4380d615f1d222bdd7752f636b8acb038'
-gitCommitId: !uuid 'e673e052e99354c5c58e69583564a83d29b78bb6'
+    newFile: !uuid 'cdc7f5ab70a3257d29203e2c3f5ea39bc29cd980'
+    oldFile: !uuid '6723ba8fb425ce57090e3e11bd83ce664bf85b16'
+gitCommitId: !uuid 'd67108f6acd208494f3019eb0fb75921f4e23250'
 renames: {
   }
-revisionId: 267
+revisionId: 268
