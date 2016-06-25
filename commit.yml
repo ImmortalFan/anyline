@@ -3,27 +3,24 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '28a85a42d7ba0d362369009002a4f14ac341dfcd'
-    oldFile: !uuid 'cf710de4d9318dcf7b6eebbd1fb8f6ca49a7aaec'
-  /anyline_core/src:
-    newFile: !uuid 'df20f934cc409790a8ea92fb4fa69a24cdf7e22d'
-    oldFile: !uuid 'f5db606dbcac6f5184f14da42f66d549bedb8bec'
-  /anyline_core/src/org:
-    newFile: !uuid '1b9e7320ac6eac22e9380a264258d5e1ef0065b9'
-    oldFile: !uuid 'd4fe061e0d8ba18c4d042006da7d760b2d027e8c'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '1270adb9877c41a8d6db37f745e7431048681dd4'
-    oldFile: !uuid 'b62c08439386e4c4a4b6220bdb1de41fd4354f9b'
-  /anyline_core/src/org/anyline/controller:
-    newFile: !uuid 'b3dcc33895e91dcf836a70b793b81c118702eccc'
-    oldFile: !uuid '6fb36764a70636c18a704f55c9ea28680301e8ff'
-  /anyline_core/src/org/anyline/controller/impl:
-    newFile: !uuid 'e2bf48111273dda038fccf58854cb4a70bd03198'
-    oldFile: !uuid '1a8c7e8ca2d370752e06bcd2881611371fa08df2'
-  /anyline_core/src/org/anyline/controller/impl/AnylineController.java:
-    newFile: !uuid '76d9efa40dc6ac64f24fe5a58b2c6e0c34534c82'
-    oldFile: !uuid '42f8706641f7dbfb9f89a46b8d1d392512f1e583'
-gitCommitId: !uuid 'd31de374915fb14a8c04d0a469be52e89f771f77'
+    newFile: !uuid '300dac88503bdfd9a71693d21de793ef914d60f9'
+    oldFile: !uuid '28a85a42d7ba0d362369009002a4f14ac341dfcd'
+  /anyline_core/WebRoot:
+    newFile: !uuid 'a20b9bf6f32a955fd5a0c223ad4209b0753970dd'
+    oldFile: !uuid 'ff2bdbd910ac2a46794c527695a2ad8fa512eff5'
+  /anyline_core/WebRoot/tmp:
+    newFile: !uuid 'bfdb5a4641b7109231e62b67beba7d97a7a24cc2'
+    oldFile: !uuid '4c0f2349071519b5b37a58ce259df0253054a191'
+  /anyline_core/WebRoot/tmp/navi:
+    newFile: !uuid 'f1bff14f263e2e3b3dc57aff715fcd024b167e5b'
+    oldFile: !uuid '07bd6d4b5e213f5f19b8254918949e113e084bdb'
+  /anyline_core/WebRoot/tmp/navi/navi.js:
+    newFile: !uuid '3e4d5f7e1fae11a5aa71d005374611a7cc78eace'
+    oldFile: !uuid '9f0a0c30e8b7452ee4f7ecaaae858ec0b37cb4bd'
+  /anyline_core/WebRoot/tmp/navi/skin.css:
+    newFile: !uuid '4456963ed43a3d2939dce3876100865e7ce5468e'
+    oldFile: !uuid '9d2d6d0eb98af168ee93b07e8acfadf1af026be1'
+gitCommitId: !uuid '04966189a10fd95c5a8ce85b4320c4e95d4d5b5f'
 renames: {
   }
-revisionId: 279
+revisionId: 280
