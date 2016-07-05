@@ -3,39 +3,12 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'e5e34e866cdf3e9e37554dff1216b528008ee297'
-    oldFile: !uuid '3094380e8d4762b27d2015fb5c6fdd9497bfd574'
-  /anyline_core/WebRoot:
-    newFile: !uuid '625ec1e2a11925ce88736e807adf44a11ea25708'
-    oldFile: !uuid 'b1ee22bc4fbeb2617215c4b7976e5e857d3cb758'
-  /anyline_core/WebRoot/WEB-INF:
-    newFile: !uuid 'dba85edd8fcfbe04fb932af7b16f6c1ac82cb98f'
-    oldFile: !uuid '10c45136e9c06e3d4a08ab9b264de0c7c78f6f78'
-  /anyline_core/WebRoot/WEB-INF/lib:
-    newFile: !uuid 'ef9012eab1683dbfadeb9ed59edc1d2898fd9ef7'
-    oldFile: !uuid 'adac522128a0bc622dff28c4802b02b0f0b40b13'
-  /anyline_core/WebRoot/WEB-INF/lib/spring-aop-4.1.4.RELEASE.jar:
-    newFile: null
-    oldFile: !uuid '43d00d201e9d1471194834370f362a09579e2866'
-  /anyline_core/WebRoot/WEB-INF/lib/spring-webmvc-4.0.3.RELEASE.jar:
-    newFile: null
-    oldFile: !uuid '4f895da8213cb2e5c6d20c18aca48e9b741d64e5'
-  /anyline_core/src:
-    newFile: !uuid '731debfa054df5982feb8c11fefb7aeeef7348d9'
-    oldFile: !uuid 'f524c37a434a08fbdb9bfa0f9e3b1c789997a5ad'
-  /anyline_core/src/org:
-    newFile: !uuid 'af930f06c5e9642e225777ed32def47135599558'
-    oldFile: !uuid '5dd95b464e419c82b986d43ee6eb5e89808e4cd0'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid 'cdb5bce90b229e2c3c9fff955f6130d14fce0972'
-    oldFile: !uuid 'f3cceaebd97f83bfc4f18c33f08fe17bc9c03266'
-  /anyline_core/src/org/anyline/util:
-    newFile: !uuid '3b2b601d40bcd9bc43147e8bf4e59ea866b9f99b'
-    oldFile: !uuid 'dd892f9dff855c4e218c7564f9cb599bdd8db72d'
-  /anyline_core/src/org/anyline/util/HttpCharsetConvert.java:
-    newFile: null
-    oldFile: !uuid '8a7eb964c5cf0162c42584f014ebb30c75a91638'
-gitCommitId: !uuid '81ddd337d065b7cd969ae57a24eb0a349ff59164'
+    newFile: !uuid 'eb0c94e0aa489a4f2eb26ff481686f0a7dc43667'
+    oldFile: !uuid 'e5e34e866cdf3e9e37554dff1216b528008ee297'
+  /anyline_core/.classpath:
+    newFile: !uuid 'f265c152ef48f24899c6a676323ff47f2fd5f435'
+    oldFile: !uuid '1b5d565f6693906f94bb5ba45b5731454efb3427'
+gitCommitId: !uuid '97fa0743f87e5ba51930c2df830f1b2a72bc41da'
 renames: {
   }
-revisionId: 299
+revisionId: 300
