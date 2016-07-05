@@ -2,52 +2,31 @@
 branches: {
   }
 fileChange:
-  /anyline_mysql:
-    newFile: !uuid '773cf61d6ffcb2af7703a1f813a622d561d383aa'
+  /anyline_springmvc:
+    newFile: !uuid '54441373c42da02dcc3927975dc4b49064da8c31'
+    oldFile: !uuid '2c70467a784862ddd1d3cfe8bea7c5d93ace115c'
+  /anyline_springmvc/.classpath:
+    newFile: !uuid '11b210ea25f0ba8403dce87464d85573240f6e4c'
+    oldFile: !uuid 'ba0c7f34b36666020c22cecd2926f3ba3a03df5c'
+  /anyline_springmvc/src:
+    newFile: !uuid '8ca61c52f8b497068a1a14a4ad8e56ee42d91179'
+    oldFile: !uuid '2314b83054afea0cd5b74b52a466b3dd9fbf9c5e'
+  /anyline_springmvc/src/org:
+    newFile: !uuid '72a864b27670d53f6800989a85563b3980af5c67'
+    oldFile: !uuid '1acef51f65416f0d4bc151b23ead00da5aa7e68e'
+  /anyline_springmvc/src/org/anyline:
+    newFile: !uuid 'df3e55536a470a111263af18616a6854179a83b4'
+    oldFile: !uuid '289668c08f665d09ab9dd17fa37b69955345ef25'
+  /anyline_springmvc/src/org/anyline/plugin:
+    newFile: !uuid 'ce7c52adb186fd360dfdaf30fb3230f81b037f1e'
+    oldFile: !uuid '089c9dc7c93b07830275d1edf9b2301b6828dc4e'
+  /anyline_springmvc/src/org/anyline/plugin/springmvc:
+    newFile: !uuid 'f9cd9fb68c29fe1f8aca6e003f9ca44a1eec912f'
+    oldFile: !uuid 'b4d6db476ab4f2923fa829e15b9c0f45af3e2fb5'
+  /anyline_springmvc/src/org/anyline/plugin/springmvc/HttpCharsetConvert.java:
+    newFile: !uuid '41c5c5f7ecb2b8844a9b1af615ea9079b468ff2d'
     oldFile: null
-  /anyline_mysql/.classpath:
-    newFile: !uuid '319edf62d531c7172ce8629e8a98c4626e51bd0b'
-    oldFile: null
-  /anyline_mysql/.gitignore:
-    newFile: !uuid '5e56e040ec0902e58df8573adaec65c5da6e9304'
-    oldFile: null
-  /anyline_mysql/.project:
-    newFile: !uuid '916a5cd3ff8623c73b4f9069856ca343f661fd64'
-    oldFile: null
-  /anyline_mysql/.settings:
-    newFile: !uuid '439d63f3c7de411302a26d2cec7be7709a7883ac'
-    oldFile: null
-  /anyline_mysql/.settings/org.eclipse.jdt.core.prefs:
-    newFile: !uuid '838bd9d69424290f7e947b867a3b4381e756dad8'
-    oldFile: null
-  /anyline_mysql/src:
-    newFile: !uuid '35ef97a95e2bf12cbd8a917e77229cdc04625634'
-    oldFile: null
-  /anyline_mysql/src/org:
-    newFile: !uuid '71ec1af73501a4480cd29fa88a5913c1c9cd17bd'
-    oldFile: null
-  /anyline_mysql/src/org/anyline:
-    newFile: !uuid '8caf416b46cbd3581b2ece56a889ef11e017625a'
-    oldFile: null
-  /anyline_mysql/src/org/anyline/config:
-    newFile: !uuid 'add621be9e006354a50066137b80fbabdeea3cc8'
-    oldFile: null
-  /anyline_mysql/src/org/anyline/config/db:
-    newFile: !uuid '87d176c3ecef2de17f91e55f49dfc6958bd16c19'
-    oldFile: null
-  /anyline_mysql/src/org/anyline/config/db/impl:
-    newFile: !uuid 'a311b5ba779156648b994a63229b2c1edab0989b'
-    oldFile: null
-  /anyline_mysql/src/org/anyline/config/db/impl/mysql:
-    newFile: !uuid '4a271194ece2264e0f8f09940dcbec7bfff3b061'
-    oldFile: null
-  /anyline_mysql/src/org/anyline/config/db/impl/mysql/PrimaryCreaterImpl.java:
-    newFile: !uuid 'ba7fcfe89806d63526c3ce7ff2be70f4c8ef9613'
-    oldFile: null
-  /anyline_mysql/src/org/anyline/config/db/impl/mysql/SQLCreaterImpl.java:
-    newFile: !uuid '5e8c5fb7ca1260f1f61cfb40a21e108cb08f2c52'
-    oldFile: null
-gitCommitId: !uuid '1e693a0d096704407da1e95683907ede85c5c6f8'
+gitCommitId: !uuid 'f6ba3468c65828306212749c59f5e2ed0ca63019'
 renames: {
   }
-revisionId: 316
+revisionId: 317
