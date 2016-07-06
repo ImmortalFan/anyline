@@ -2,28 +2,31 @@
 branches: {
   }
 fileChange:
-  /anyline_springmvc:
-    newFile: !uuid 'fbd8d9e9a44ad38adf83b143ed30a57b48ec5833'
-    oldFile: !uuid '67aee81516d44bf8dd0e7351103338a26af71165'
-  /anyline_springmvc/src:
-    newFile: !uuid 'd9712e7973315fe9630b48f5f6c2f9f8df33dc5b'
-    oldFile: !uuid '5df1971d5adaae63728c4fa77d813fcd26bbc2f1'
-  /anyline_springmvc/src/org:
-    newFile: !uuid '1fba09354ba82a7ba0d0f267c95adf1716286425'
-    oldFile: !uuid '7aede4188768bcaa0e1145304936cd5d85ea4cf1'
-  /anyline_springmvc/src/org/anyline:
-    newFile: !uuid 'aeb72246ce4b9a5b3c99669fb78290f687dacf2c'
-    oldFile: !uuid '54457b9f1f8be7b24711c7fb1c82b992a0e69a1c'
-  /anyline_springmvc/src/org/anyline/controller:
-    newFile: !uuid '05ec9357dfc10539065d1bb068361a31a25a994b'
-    oldFile: !uuid 'd6c452bc395cb9dae685997d184c1f17de98ffdb'
-  /anyline_springmvc/src/org/anyline/controller/impl:
-    newFile: !uuid '8217d5565074e5afe4a7b33d51181ac2a04c27c8'
-    oldFile: !uuid 'bd9f20fba8b884b437dd0b1fae9dee7dc60db5ed'
-  /anyline_springmvc/src/org/anyline/controller/impl/TemplateController.java:
-    newFile: !uuid 'b8eb557e19a4ba0d3162a105c5e9a132f3981ada'
-    oldFile: !uuid '448e6ab579ff306e12db414ee58de5317242acdf'
-gitCommitId: !uuid '0a369af7175fa2788e71d0323cc08baec05877c2'
-renames: {
-  }
-revisionId: 321
+  /anyline_core:
+    newFile: !uuid '97b3bf4ad5004dba962be00dd7a7e152cae39b1f'
+    oldFile: !uuid '142ab90d6956ef929bfa95d920e03d94ea51e12e'
+  /anyline_core/WebRoot:
+    newFile: !uuid '18d26dfcb9ca3c6390470425720873183db19233'
+    oldFile: !uuid '94a6830336d697f2d298cbf8dd35c3f4449609a1'
+  /anyline_core/WebRoot/tmp:
+    newFile: !uuid '280312a64bbc02f7df3e1de95e44d572cd3e6c58'
+    oldFile: !uuid '5285e9c39c6e5f5cfaa646fdb5d21780e3b00d1a'
+  /anyline_core/WebRoot/tmp/anyline.jquery.js:
+    newFile: null
+    oldFile: !uuid 'f757ebdff34d63c57b025decae5576fd96c348d1'
+  /anyline_core/WebRoot/tmp/anyline.js:
+    newFile: !uuid '1f98e65e0d2c377b1d2cb12f8fe22c7e67e890fa'
+    oldFile: null
+  /anyline_core/WebRoot/tmp/anyline.zepto.js:
+    newFile: null
+    oldFile: !uuid '12ce8967bb40199d01ebdb3d350f856346241f9c'
+  /anyline_core/WebRoot/tmp/data_load.js:
+    newFile: !uuid 'bb6511829d73ec50d36d1e81bcea441af743cde1'
+    oldFile: !uuid 'ea523e1036c5fdc47f545ba013aa570f1bb5b2e6'
+  /anyline_core/WebRoot/tmp/teplate_data_load.js:
+    newFile: null
+    oldFile: !uuid '8fad828e20f8afe4938f34ae400cd17e63b1492f'
+gitCommitId: !uuid 'a25f04fdc481fb5df03df355a9019daa6278d3d9'
+renames:
+  /anyline_core/WebRoot/tmp/anyline.js: /anyline_core/WebRoot/tmp/anyline.jquery.js
+revisionId: 322
