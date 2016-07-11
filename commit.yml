@@ -3,42 +3,39 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'cbde50a184ee5669acc6680231a507999c1898c5'
-    oldFile: !uuid '7e01021c9cba302fa2c540192a45b378eb8c3199'
+    newFile: !uuid 'e6ac2e73a058bf39f497e454fa5fa8e849952105'
+    oldFile: !uuid 'cbde50a184ee5669acc6680231a507999c1898c5'
   /anyline_core/src:
-    newFile: !uuid '21ad9b871e649606945f603358067c9aaae9d36d'
-    oldFile: !uuid 'b56f3557f2e3aeeeb5ea7e500797f301c449f594'
+    newFile: !uuid 'de0c5101e893f22d26d13feee64abc91b18f154c'
+    oldFile: !uuid '21ad9b871e649606945f603358067c9aaae9d36d'
+  /anyline_core/src/SQLLogParser.java:
+    newFile: !uuid '561a6ced1c5bd34b57ee9ad0d34e5d7d037eb7ef'
+    oldFile: !uuid 'd8ccdb64c9113db4a59430676c5e808a64dc2ff2'
   /anyline_core/src/org:
-    newFile: !uuid 'b3d8262e34084c46ef5790ce44ddea8f51602dd4'
-    oldFile: !uuid '3b3196ffeb5481157a7352b202eeb1f0c341ff7c'
+    newFile: !uuid '3d844c6c00bcbe0969b946839d8905f455cdb63f'
+    oldFile: !uuid 'b3d8262e34084c46ef5790ce44ddea8f51602dd4'
   /anyline_core/src/org/anyline:
-    newFile: !uuid '8702bb823ad4b390a69d2ce861b8d9577fed4095'
-    oldFile: !uuid 'df6dab65381b2b9186815ac4d28db27a66989bd5'
-  /anyline_core/src/org/anyline/tag:
-    newFile: !uuid '9a83adffc8022f9d09b32a88e1d3958255d55089'
-    oldFile: !uuid '1165603663b99b8a740e5c3842795f4d1b1c0cad'
-  /anyline_core/src/org/anyline/tag/ComponentTag.java:
-    newFile: !uuid 'adb8d288199fcd952f23875614991be566b3685a'
-    oldFile: !uuid '8ad4129eb1eafd37339e0371d8abf23d772f3158'
-  /anyline_core/src/org/anyline/tag/Evl.java:
-    newFile: !uuid 'd556ad946549d83546cca519bc0560629b342271'
-    oldFile: !uuid '3ed698505579e68e30db4c43f89559db06f58bc6'
-  /anyline_core/src/org/anyline/tag/If.java:
-    newFile: !uuid 'e195715519a5d5d3c2ff716ebb9f86202e511522'
-    oldFile: !uuid '2fda46d057b5c2d35d0ebfaaec623ed81cc8a339'
-  /anyline_core/src/org/anyline/tag/NumberFormat.java:
-    newFile: !uuid 'b81169ace249620be9566ffea40629cc2eca134b'
-    oldFile: !uuid 'b5e8029f0a24aa8b9410b370f408120c78f380bf'
-  /anyline_core/src/org/anyline/tag/Nvl.java:
-    newFile: !uuid '525187d4586f7ee263748a159792ce570c9bdf9f'
-    oldFile: !uuid '0ffd2682ac70f692136452e49db2479b024acb10'
-  /anyline_core/src/org/anyline/tag/Strip.java:
-    newFile: !uuid 'fe485800c392249a6f128b24c3854d7cd7b8633e'
-    oldFile: !uuid '622eae232b9d43a4470102215266b4468ce910aa'
-  /anyline_core/src/org/anyline/tag/Token.java:
-    newFile: !uuid 'b69c09f5fcfe629d79c3cea60fa0081f289756f0'
-    oldFile: !uuid 'f671dca95557265e4e39d58376399d22c27b1627'
-gitCommitId: !uuid '14df29aa98f7bdf26a51450ac405a3af9e80de08'
+    newFile: !uuid 'c5260f42de912a85efda20d71647f07508a879c8'
+    oldFile: !uuid '8702bb823ad4b390a69d2ce861b8d9577fed4095'
+  /anyline_core/src/org/anyline/config:
+    newFile: !uuid 'c9c78870acfc2de1ba0a365e7c26da898517a4b5'
+    oldFile: !uuid '5520643988e0fd17d2ae7a516195fb90ceb484de'
+  /anyline_core/src/org/anyline/config/KeyValueEncryptConfig.java:
+    newFile: !uuid 'a79444321b02a6fa30076b5ad84c2f84646d8b93'
+    oldFile: !uuid '97f969279e7a8a8266fcdc3fbf10a15f065758c4'
+  /anyline_core/src/org/anyline/config/http:
+    newFile: !uuid '72e1eb51a0b90a68113ce9cdf656967db3fe0c9b'
+    oldFile: !uuid 'ec2b042af2865db0ea8de469781e136789e19a6b'
+  /anyline_core/src/org/anyline/config/http/Config.java:
+    newFile: !uuid 'cffb9bbf8058e50f1db2acf8c815804f5a2c0063'
+    oldFile: !uuid '0073bf42c12b176b08d4126d5d394b0cf6bccdd2'
+  /anyline_core/src/org/anyline/config/http/impl:
+    newFile: !uuid '660b0a7086332db2d9ffd56112dcdcda2e2f3ba4'
+    oldFile: !uuid '09dd9af57facb58d23f7deae5ee3315e282db721'
+  /anyline_core/src/org/anyline/config/http/impl/ConfigImpl.java:
+    newFile: !uuid 'bcfb9a8acfcd9ed68ba9f8a626632a46e97f3e40'
+    oldFile: !uuid 'ccd22a80f494b4d2bc5e4425290bd8f0d50f1ae4'
+gitCommitId: !uuid '5b45a3112b1d123923461db0b66b8573b7a053e0'
 renames: {
   }
-revisionId: 333
+revisionId: 334
