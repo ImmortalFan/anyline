@@ -3,24 +3,24 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '5bb3f757fda3bb00bd3299521fc79fa0c4a700d7'
-    oldFile: !uuid 'fc73f594091acfdc0e2bfec32a1db4fdb760c66d'
+    newFile: !uuid '4f98223cca4fc85eab637929cfca4e9a2ff3c99f'
+    oldFile: !uuid '5bb3f757fda3bb00bd3299521fc79fa0c4a700d7'
   /anyline_core/src:
-    newFile: !uuid '3fb749e317eac2f62a91743afc78a0496c6909ee'
-    oldFile: !uuid 'c61ef4ba5d8f45415e7841609fc13050a2997756'
+    newFile: !uuid 'da39dc4a2ab4fcd98220857488c4750ebeaa447c'
+    oldFile: !uuid '3fb749e317eac2f62a91743afc78a0496c6909ee'
   /anyline_core/src/org:
-    newFile: !uuid 'f8dfcb9216151d5b72207cbd2e4017d994caac22'
-    oldFile: !uuid 'b6d6ac3842a94f17d27e048282ae53abe17586fc'
+    newFile: !uuid 'e109e3deda1502b45636035c1bbd6812376e3707'
+    oldFile: !uuid 'f8dfcb9216151d5b72207cbd2e4017d994caac22'
   /anyline_core/src/org/anyline:
-    newFile: !uuid 'fe584f0408736ec32d2c882d3032df39187ab288'
-    oldFile: !uuid '01946ff0a1c1688bcd75e91ed89d6616c80969bd'
-  /anyline_core/src/org/anyline/util:
-    newFile: !uuid '854892fbd9d078d90b6df8107843a5cec8ab9079'
-    oldFile: !uuid 'c962da08083cfe1016134aecbb40e1462ca22e39'
-  /anyline_core/src/org/anyline/util/ConfigTable.java:
-    newFile: !uuid '8e84b300d180a2cf9f2a155c77a74185009ed72b'
-    oldFile: !uuid '60240a899211923ee8b015048d0bc6ae9efc2afa'
-gitCommitId: !uuid 'f8ce305416f7d2ef2d58e59d5cfee7473ac35e71'
+    newFile: !uuid '9a6519258e72b1af694c9205d058567ce075caa8'
+    oldFile: !uuid 'fe584f0408736ec32d2c882d3032df39187ab288'
+  /anyline_core/src/org/anyline/controller:
+    newFile: !uuid '6641e91782ce409691bdc7a95efee946411ac064'
+    oldFile: !uuid '516724e101162c441e0ced6602339e944f9b2653'
+  /anyline_core/src/org/anyline/controller/AbstractBasicController.java:
+    newFile: !uuid '47859f2ce03ddbcd322a77deaf64c6ab64fc2644'
+    oldFile: !uuid '4fbaa8e88156474ca12711fe2f19f7773a5ae0f2'
+gitCommitId: !uuid 'dabc8ed615db451f9e5e70ac1354a2cefdea0ef1'
 renames: {
   }
-revisionId: 336
+revisionId: 337
