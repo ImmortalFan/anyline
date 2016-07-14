@@ -3,36 +3,36 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'fa427a38506d3d2f6195cc91f3dec99c63aa05d1'
-    oldFile: !uuid 'b24d613ae87fefbadf87b3314d61016eefe7b8af'
-  /anyline_core/WebRoot:
-    newFile: !uuid 'ef1e1239bb4651d288fe719a1fb8297d1fb672f7'
-    oldFile: !uuid '6d661128819ccec35759518dae67c26cade953e7'
-  /anyline_core/WebRoot/WEB-INF:
-    newFile: !uuid '1bee292f88b76270565595650d17264f14f05185'
-    oldFile: !uuid 'fe716957338be2aaac6f8513c657b05f2a991f2c'
-  /anyline_core/WebRoot/WEB-INF/tld:
-    newFile: !uuid 'aef90c1dad0ad487da9effd61b3dcc976d3ef901'
-    oldFile: !uuid '2230266546a409ea35625a201b1d19a748841773'
-  /anyline_core/WebRoot/WEB-INF/tld/anyline-core.tld:
-    newFile: !uuid '6b416d42e25ee60099294d7642bbab4c7b6c75cc'
-    oldFile: !uuid 'e001c08e8223adc15a9fcda2658f33ad503b771c'
+    newFile: !uuid '48619f6aeb562af2e4a6175581c54615cd270a15'
+    oldFile: !uuid 'fa427a38506d3d2f6195cc91f3dec99c63aa05d1'
   /anyline_core/src:
-    newFile: !uuid 'c8fa7abb3ae204c32b2b66c0dfecfd1fd8e01618'
-    oldFile: !uuid '91eb9fc52d5f780d53e849310593d443708c8163'
+    newFile: !uuid 'bc5a1c25b240fcff6ac520a41f769c1e63ee4966'
+    oldFile: !uuid 'c8fa7abb3ae204c32b2b66c0dfecfd1fd8e01618'
   /anyline_core/src/org:
-    newFile: !uuid '0cb3847d68f1542e4f178fd2691cfb245dd7412e'
-    oldFile: !uuid '762927d6d67f4fbcacace7ad36e802f057e6ec77'
+    newFile: !uuid 'eea6866d00baf9d911c2cdd0eebaf427a292cfe4'
+    oldFile: !uuid '0cb3847d68f1542e4f178fd2691cfb245dd7412e'
   /anyline_core/src/org/anyline:
-    newFile: !uuid '5ba141b53b099bee374dd865e34db150a952293d'
-    oldFile: !uuid '4d2521756f7f06ec4a7e9aef9384dc64dc798dc5'
+    newFile: !uuid '11a1195bf91ddcdde936f9dadec5ecbdd64cca23'
+    oldFile: !uuid '5ba141b53b099bee374dd865e34db150a952293d'
   /anyline_core/src/org/anyline/tag:
-    newFile: !uuid '0a845b8457fcbb4e19ebf61fbb53a9197f1a3f08'
-    oldFile: !uuid '9a83adffc8022f9d09b32a88e1d3958255d55089'
-  /anyline_core/src/org/anyline/tag/Ajax.java:
-    newFile: !uuid '93ca310601f19a00a91fba62a40fd764525e22a7'
-    oldFile: null
-gitCommitId: !uuid '14a4bdcb654a83e3f6c870ff307739b61814628f'
+    newFile: !uuid 'b66d72f65157585dd441c45d4a62a8c3c909b02d'
+    oldFile: !uuid '0a845b8457fcbb4e19ebf61fbb53a9197f1a3f08'
+  /anyline_core/src/org/anyline/tag/Checkbox.java:
+    newFile: !uuid '5d89899f3864f0469b88529ad3a445ecfa6490e8'
+    oldFile: !uuid 'd25f74e12e3772d4051b3ce0f77503e8cd7180ab'
+  /anyline_core/src/org/anyline/tag/Random.java:
+    newFile: !uuid 'c9b452a0540175389963517e321a33530725c8ba'
+    oldFile: !uuid '56eaa38e6fe55d2cacf90aa124b0a5f7f095f7cd'
+  /anyline_core/src/org/anyline/util:
+    newFile: !uuid '03cd344f2517ba8cb353637db74eb5648c183ef5'
+    oldFile: !uuid '3bbf8f5a164c306ae1de8a60586668b6269b9766'
+  /anyline_core/src/org/anyline/util/BasicUtil.java:
+    newFile: !uuid 'dc12a2cc31971828b7d69c4fb0bda97d4c5eb754'
+    oldFile: !uuid '1254a36026cbada44bbd2a9c08e1e24e17d97681'
+  /anyline_core/src/org/anyline/util/ConfigTable.java:
+    newFile: !uuid '729ecb574a64bde496b13d38d87e11a1d7be3c14'
+    oldFile: !uuid 'c445cb1fa8353cca4839f431bcdb21bde6fd65a1'
+gitCommitId: !uuid '266800b03440f33297423234e5ee122d692c8b38'
 renames: {
   }
-revisionId: 346
+revisionId: 347
