@@ -2,28 +2,25 @@
 branches: {
   }
 fileChange:
-  /anyline_struts:
-    newFile: !uuid 'df648cd975fc2d27ef1f7110ef2f07cf0c9b4ec0'
-    oldFile: !uuid 'b16be30b88e20ba15d69dc7b992faff67771fca6'
-  /anyline_struts/src:
-    newFile: !uuid 'ef89574c44171484368831830889e1bc6c751aa2'
-    oldFile: !uuid '660d09c550ddb4818a6890adb0558126c1fd7fbf'
-  /anyline_struts/src/org:
-    newFile: !uuid 'd9ea916c5b94b927c90af0c3ca110e05f666208f'
-    oldFile: !uuid 'a06fc70c6b37e31c8d97742ed5dd81fbf829ff20'
-  /anyline_struts/src/org/anyline:
-    newFile: !uuid '088124b5ea7e7d97099c8faf6d7a6245e064bf60'
-    oldFile: !uuid '7391445ccbc6c3fa6d3bb5dbdae7324d5297ced9'
-  /anyline_struts/src/org/anyline/struts:
-    newFile: !uuid '3958f7a1eb3f18f365e3ab2cc0b8584be31109ef'
-    oldFile: !uuid 'c8d6d00bdecf32834ede2276f2fa4f304ecbfb9d'
-  /anyline_struts/src/org/anyline/struts/action:
-    newFile: !uuid '9ce5a08154a9f12bad50b0261cda7f98a2217587'
-    oldFile: !uuid 'a27ff6aba1e3ce1b6141a44abd5f70f0957ebcac'
-  /anyline_struts/src/org/anyline/struts/action/AnylineAction.java:
-    newFile: !uuid '6482febdcdd97aa3de9fed15969a781c47ff54a0'
-    oldFile: !uuid 'f1e0d80e6779f749f3ddeea4278811cbbbd364a7'
-gitCommitId: !uuid '0e32ae67c8d9d7c4a136bc664ddda863138a06f9'
+  /anyline_core:
+    newFile: !uuid 'e4f169f8fd4a817ec7ed2c2055197666d987cce2'
+    oldFile: !uuid 'c2786517504c4470035cc30d687539226d465877'
+  /anyline_core/WebRoot:
+    newFile: !uuid 'e69aa67387382089ebef147ec0dc6267a49d8d52'
+    oldFile: !uuid '971914f1f250bad7bc2fcc6847d3bb264ce2f064'
+  /anyline_core/WebRoot/tmp:
+    newFile: !uuid 'e60edfccbe7719c1fe3b80646596aa6752b96f15'
+    oldFile: !uuid 'fb3505537aaeb1ed248bbcde4ae9955b6c5e1789'
+  /anyline_core/WebRoot/tmp/anyline.jquery.js:
+    newFile: !uuid 'bb257b2a8fb86115353cfc2f779820829a9b9bc3'
+    oldFile: !uuid 'c3b7c3a3561248b8f822fa75e7bf6cebf360aa14'
+  /anyline_core/WebRoot/tmp/navi:
+    newFile: !uuid '5fdc0c4d3288c3d59839c6f8884562b12a0cd5c0'
+    oldFile: !uuid 'a875361c98b4941da7ebc9f3484b90830b648a41'
+  /anyline_core/WebRoot/tmp/navi/navi.js:
+    newFile: !uuid 'c6dd9d8450a0fd89c3e069ba024eafdce38e85c4'
+    oldFile: !uuid 'c0246a2fa89df32798dbc14e4205e273918cf1e9'
+gitCommitId: !uuid 'ae483ef8c844eb58b3440011351884758da2cdad'
 renames: {
   }
-revisionId: 351
+revisionId: 352
