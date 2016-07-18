@@ -3,15 +3,21 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'cbde4e11f74d71596880262f36ca6835df449213'
-    oldFile: !uuid '183b2e86ac95b62be738539ac3af9e84c8672b14'
-  /anyline_core/src:
-    newFile: !uuid 'f7421bc23f01fafae45c97c1a0d6ca0cf0c6bfb2'
-    oldFile: !uuid 'e09ea1f6b80c70838207008632e1a5fa645a32d7'
-  /anyline_core/src/SQLLogParser.java:
-    newFile: !uuid '661b8abaa3d5aa48b8da502008fb5e3ab4659b61'
-    oldFile: !uuid '3aee246035f967cb29adbbd21e0fa60cc3652cba'
-gitCommitId: !uuid 'cd9bb8e8313b913a2fca633869bc41e4ce9167de'
+    newFile: !uuid '7d3c79d0a086d0a37c31aaff780a16fcbaa3e14b'
+    oldFile: !uuid 'cbde4e11f74d71596880262f36ca6835df449213'
+  /anyline_core/WebRoot:
+    newFile: !uuid 'db17dc238913664ae54aa7c8624775ee0b31734a'
+    oldFile: !uuid '5b0b2d592f62bd4b47d6add3323813429eb6feb3'
+  /anyline_core/WebRoot/tmp:
+    newFile: !uuid 'a2487b7cdcd6e835eb0024f831faa71f625f6f7c'
+    oldFile: !uuid 'd33c8e6b7e86428efc4ea159ecd735333f98ab64'
+  /anyline_core/WebRoot/tmp/navi:
+    newFile: !uuid 'a875361c98b4941da7ebc9f3484b90830b648a41'
+    oldFile: !uuid '5fdc0c4d3288c3d59839c6f8884562b12a0cd5c0'
+  /anyline_core/WebRoot/tmp/navi/navi.js:
+    newFile: !uuid 'c0246a2fa89df32798dbc14e4205e273918cf1e9'
+    oldFile: !uuid 'c6dd9d8450a0fd89c3e069ba024eafdce38e85c4'
+gitCommitId: !uuid '9c1cc7242cedbf09f662e8777dda6fbb789c3236'
 renames: {
   }
-revisionId: 359
+revisionId: 360
