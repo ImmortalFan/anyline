@@ -3,27 +3,36 @@ branches: {
   }
 fileChange:
   /anyline_springmvc:
-    newFile: !uuid 'c8ba01b8fb00750542c5107ddf735c888d85e4db'
-    oldFile: !uuid 'c95fd0604853e23a1439e95d8a8ab9a0c641c8e9'
+    newFile: !uuid '04dd0d76d4859eb64c8d10464edadc6ea57f1f87'
+    oldFile: !uuid 'c8ba01b8fb00750542c5107ddf735c888d85e4db'
   /anyline_springmvc/src:
-    newFile: !uuid 'f2f4a4e499fcf62fe25dc7782269f1e09fa88727'
-    oldFile: !uuid '05c65971591f9025c5334cc0e30051208fea01cd'
+    newFile: !uuid '21158a068cedddbad681b28d7c3e68df68d0963a'
+    oldFile: !uuid 'f2f4a4e499fcf62fe25dc7782269f1e09fa88727'
   /anyline_springmvc/src/org:
-    newFile: !uuid 'fdbc9de49c10105f7d7754c1c1d0ff5371bbf203'
-    oldFile: !uuid 'aac6858e59d2a4d5a3af028d7e4eeb374a806c13'
+    newFile: !uuid '541c685309a5240ac80bfc3470d3492fce730e24'
+    oldFile: !uuid 'fdbc9de49c10105f7d7754c1c1d0ff5371bbf203'
   /anyline_springmvc/src/org/anyline:
-    newFile: !uuid '3cde071af03ec28652573f296c0c3fa537d9021e'
-    oldFile: !uuid '80f6c1befdfa6c5a1700bef72b585a977232e46a'
+    newFile: !uuid '08b884696b25e4862b97287ad1fedfb2daf488e7'
+    oldFile: !uuid '3cde071af03ec28652573f296c0c3fa537d9021e'
   /anyline_springmvc/src/org/anyline/controller:
-    newFile: !uuid 'd7e10532df321cb48ccdce4fe27357bcd06c10e4'
-    oldFile: !uuid '5bdbb47b07bccb6c901b37a335a3195364cd5148'
+    newFile: !uuid '5810bea6f5dd55b85a8c88f5c345176b4722c214'
+    oldFile: !uuid 'd7e10532df321cb48ccdce4fe27357bcd06c10e4'
   /anyline_springmvc/src/org/anyline/controller/impl:
-    newFile: !uuid '9686bdae60676182cb676ce4769f3be5f589eb61'
-    oldFile: !uuid '120994342dd7f37e9fd0eb044fd35cdb136d091e'
+    newFile: !uuid '84cc95f3e44ca46001b06770dfb83d8a0af50f42'
+    oldFile: !uuid '9686bdae60676182cb676ce4769f3be5f589eb61'
   /anyline_springmvc/src/org/anyline/controller/impl/TemplateController.java:
-    newFile: !uuid '2e8bf94cdc154bc726621bc8727b470e12392929'
-    oldFile: !uuid '1213239407c1e3bf414fb5599666df84c9f41e5b'
-gitCommitId: !uuid '549f8e5973a2579774f93095baca2e378ab94e02'
+    newFile: !uuid '317d20af53423436f16c9f4953b366b2ad942342'
+    oldFile: !uuid '2e8bf94cdc154bc726621bc8727b470e12392929'
+  /anyline_springmvc/src/org/anyline/plugin:
+    newFile: !uuid '56c3467d7ec2dbf10bc4b1c8a4ea70564574afad'
+    oldFile: !uuid '38561002f3994c3d4b467dff1f48c44d5294b5c8'
+  /anyline_springmvc/src/org/anyline/plugin/springmvc:
+    newFile: !uuid 'f84e9e6e517e3685a0b4ea10941f1c4a3fd35200'
+    oldFile: !uuid 'dd07d40c1d3aa7a2e25b9d18ded8371084bec46f'
+  /anyline_springmvc/src/org/anyline/plugin/springmvc/TemplateModelAndView.java:
+    newFile: !uuid '1622ade81cf6fd95035206782bda448bc992d9e2'
+    oldFile: !uuid 'a63bfc64e9ce2117cbfd9e420ad698b4cb3a42c7'
+gitCommitId: !uuid '2c30145799e4ada3dc4b9a8a43fcf5ddf067d2e4'
 renames: {
   }
-revisionId: 365
+revisionId: 366
