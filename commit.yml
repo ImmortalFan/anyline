@@ -2,19 +2,28 @@
 branches: {
   }
 fileChange:
-  /anyline_core:
-    newFile: !uuid 'cad2a2dac12a109cf12004e74f3227582de4aaa2'
-    oldFile: !uuid 'c04147842d6c60ee365fc1ded399787b745170ed'
-  /anyline_core/WebRoot:
-    newFile: !uuid 'a01e03bfc1360e794e97109f621ffe4fe0f7ad48'
-    oldFile: !uuid 'd6a4d0b4feb5e2bf108bb6abc1efb28195ea956f'
-  /anyline_core/WebRoot/tmp:
-    newFile: !uuid '3bfa876ab224eb5899ab64da0eecf45e797f11cb'
-    oldFile: !uuid '12140c4d115e911fbdfa5846ba2b2b00fe287b26'
-  /anyline_core/WebRoot/tmp/anyline.jquery.js:
-    newFile: !uuid 'f44cd5e206f09b54fb8b66e9582f5c34c82b48c5'
-    oldFile: !uuid '1336adc38b33c90f1c8e6c973d739e20195c173f'
-gitCommitId: !uuid '85c1ac63a3da571b07442870e64f7d0799f478bb'
+  /anyline_springmvc:
+    newFile: !uuid 'c8ba01b8fb00750542c5107ddf735c888d85e4db'
+    oldFile: !uuid 'c95fd0604853e23a1439e95d8a8ab9a0c641c8e9'
+  /anyline_springmvc/src:
+    newFile: !uuid 'f2f4a4e499fcf62fe25dc7782269f1e09fa88727'
+    oldFile: !uuid '05c65971591f9025c5334cc0e30051208fea01cd'
+  /anyline_springmvc/src/org:
+    newFile: !uuid 'fdbc9de49c10105f7d7754c1c1d0ff5371bbf203'
+    oldFile: !uuid 'aac6858e59d2a4d5a3af028d7e4eeb374a806c13'
+  /anyline_springmvc/src/org/anyline:
+    newFile: !uuid '3cde071af03ec28652573f296c0c3fa537d9021e'
+    oldFile: !uuid '80f6c1befdfa6c5a1700bef72b585a977232e46a'
+  /anyline_springmvc/src/org/anyline/controller:
+    newFile: !uuid 'd7e10532df321cb48ccdce4fe27357bcd06c10e4'
+    oldFile: !uuid '5bdbb47b07bccb6c901b37a335a3195364cd5148'
+  /anyline_springmvc/src/org/anyline/controller/impl:
+    newFile: !uuid '9686bdae60676182cb676ce4769f3be5f589eb61'
+    oldFile: !uuid '120994342dd7f37e9fd0eb044fd35cdb136d091e'
+  /anyline_springmvc/src/org/anyline/controller/impl/TemplateController.java:
+    newFile: !uuid '2e8bf94cdc154bc726621bc8727b470e12392929'
+    oldFile: !uuid '1213239407c1e3bf414fb5599666df84c9f41e5b'
+gitCommitId: !uuid '549f8e5973a2579774f93095baca2e378ab94e02'
 renames: {
   }
-revisionId: 364
+revisionId: 365
