@@ -3,30 +3,18 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'c04147842d6c60ee365fc1ded399787b745170ed'
-    oldFile: !uuid '41a59dec3c4257e1513fe025b664dc58482c1525'
-  /anyline_core/config:
-    newFile: !uuid '718946d11a6b3e091fedf188e17e025bfc8651a6'
-    oldFile: !uuid '6f99bcb0fc88768dad15a582bd40433ced75bf72'
-  /anyline_core/config/key.xml:
-    newFile: !uuid 'fff69e2976f2cd82c124f46f0e9530415ec0d618'
-    oldFile: !uuid '38a115e90e6722a6a0567bac64c715a9aedb1b33'
-  /anyline_core/src:
-    newFile: !uuid '1da20d51a6559a52734be4e3c885f93b8e0ec613'
-    oldFile: !uuid '6d91050a8ae5bab4254155aa497f1f6911d29999'
-  /anyline_core/src/org:
-    newFile: !uuid '00c60bef3f80999fd26af70e6c2f5c83e3e07786'
-    oldFile: !uuid 'c6ccc9876e0fc7f3e28b35c05621255480be399e'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '56f50e56b0991bfff85c378ceb82ef846ebde739'
-    oldFile: !uuid '711a301363b1b5b406ffbb39ac638efa31a76bc2'
-  /anyline_core/src/org/anyline/util:
-    newFile: !uuid 'f3b4697252f6cf61fdb3ddf6a62bca7e00a24e10'
-    oldFile: !uuid '5208636f1b42a9e7b3a0175162eae0a2016a6665'
-  /anyline_core/src/org/anyline/util/ConfigTable.java:
-    newFile: !uuid '3b52d0963c348f6f10ed7b0cf985917688039b62'
-    oldFile: !uuid '729ecb574a64bde496b13d38d87e11a1d7be3c14'
-gitCommitId: !uuid '61e7e35d2c3c80d4c573484cab46372474b2d26d'
+    newFile: !uuid 'cad2a2dac12a109cf12004e74f3227582de4aaa2'
+    oldFile: !uuid 'c04147842d6c60ee365fc1ded399787b745170ed'
+  /anyline_core/WebRoot:
+    newFile: !uuid 'a01e03bfc1360e794e97109f621ffe4fe0f7ad48'
+    oldFile: !uuid 'd6a4d0b4feb5e2bf108bb6abc1efb28195ea956f'
+  /anyline_core/WebRoot/tmp:
+    newFile: !uuid '3bfa876ab224eb5899ab64da0eecf45e797f11cb'
+    oldFile: !uuid '12140c4d115e911fbdfa5846ba2b2b00fe287b26'
+  /anyline_core/WebRoot/tmp/anyline.jquery.js:
+    newFile: !uuid 'f44cd5e206f09b54fb8b66e9582f5c34c82b48c5'
+    oldFile: !uuid '1336adc38b33c90f1c8e6c973d739e20195c173f'
+gitCommitId: !uuid '85c1ac63a3da571b07442870e64f7d0799f478bb'
 renames: {
   }
-revisionId: 363
+revisionId: 364
