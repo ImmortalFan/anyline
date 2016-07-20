@@ -3,24 +3,18 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '0ab5474c2cfc75876e27eec36d7ca11179233948'
-    oldFile: !uuid 'aa1b6475d401deacab13648ad67b42a433c46366'
+    newFile: !uuid '623cffe0184d8ed15406c06b26543bbd9d0374f0'
+    oldFile: !uuid '0ab5474c2cfc75876e27eec36d7ca11179233948'
   /anyline_core/WebRoot:
-    newFile: !uuid '4c51ea98d080deaa25f6e61bb7810ea3dc5ec17a'
-    oldFile: !uuid '438ce01a9cd98d6d247d1b7109ea4ad1a3ffe95c'
+    newFile: !uuid '8b2252e7701b7d69c23dce5cfef42bfbd61496e7'
+    oldFile: !uuid '4c51ea98d080deaa25f6e61bb7810ea3dc5ec17a'
   /anyline_core/WebRoot/tmp:
-    newFile: !uuid '4f165b60740fc3e073c36fedb4d7b7cd78400c6c'
-    oldFile: !uuid '0996077710a878f3f55b6252a74d612a530abd91'
-  /anyline_core/WebRoot/tmp/data_load.js:
     newFile: null
-    oldFile: !uuid 'bb6511829d73ec50d36d1e81bcea441af743cde1'
-  /anyline_core/help:
-    newFile: !uuid '3f6c1826e3f58082c818e0b0ad70c71f30501044'
-    oldFile: !uuid 'f7a583fe10a287cba28b51d42c60e34d3d4955d4'
-  /anyline_core/help/data_load.js:
-    newFile: !uuid 'bb6511829d73ec50d36d1e81bcea441af743cde1'
-    oldFile: null
-gitCommitId: !uuid '4a0014ef8941d6d84c34a6b289b05e6b9346a2e8'
-renames:
-  /anyline_core/help/data_load.js: /anyline_core/WebRoot/tmp/data_load.js
-revisionId: 371
+    oldFile: !uuid '4f165b60740fc3e073c36fedb4d7b7cd78400c6c'
+  /anyline_core/WebRoot/tmp/anyline.jquery.js:
+    newFile: null
+    oldFile: !uuid 'f44cd5e206f09b54fb8b66e9582f5c34c82b48c5'
+gitCommitId: !uuid '4e935011e2cb9d0a806e36afad7cd4e7680c91ae'
+renames: {
+  }
+revisionId: 372
