@@ -3,60 +3,81 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'd2d6e842b320b748bef7071eb865e79122b0927d'
-    oldFile: !uuid '623cffe0184d8ed15406c06b26543bbd9d0374f0'
+    newFile: !uuid '183bc11a4615073cac1f73dc4649819d6c02c578'
+    oldFile: !uuid 'd2d6e842b320b748bef7071eb865e79122b0927d'
   /anyline_core/src:
-    newFile: !uuid 'b53114a270c04ac9a90e1b27b03619a39612e49a'
-    oldFile: !uuid '61daec8dc560640a4b9a3b60d398a61f1d3a2fbb'
+    newFile: !uuid '919755e063deb23dc0b6427d8210be68aa3942df'
+    oldFile: !uuid 'b53114a270c04ac9a90e1b27b03619a39612e49a'
   /anyline_core/src/org:
-    newFile: !uuid 'c7c1aa18651543c981498e823c9e4ed7ec47a2ad'
-    oldFile: !uuid '9cdc37b204f42ea9831b0f4d80f3dcd4446eb365'
+    newFile: !uuid '00cc0f50655989ae94457c8cfbb89922a1073688'
+    oldFile: !uuid 'c7c1aa18651543c981498e823c9e4ed7ec47a2ad'
   /anyline_core/src/org/anyline:
-    newFile: !uuid 'efa2c9f48de2c8c2fb0930d1e8cfa0a2a061f55b'
-    oldFile: !uuid '06cea9a467f21579c70027b73807b40829ba796f'
+    newFile: !uuid '3a6b5de6ab34275b822fd9dac17557a6f67ff91c'
+    oldFile: !uuid 'efa2c9f48de2c8c2fb0930d1e8cfa0a2a061f55b'
   /anyline_core/src/org/anyline/config:
-    newFile: !uuid '44cb3c4b02a345388803fbef2844e2092df3bbd9'
-    oldFile: !uuid '892e36bb2038afc5323dc386d638755528102bbc'
+    newFile: !uuid 'c7bf5b4bd00cc27e14bac101ed217584d951d540'
+    oldFile: !uuid '44cb3c4b02a345388803fbef2844e2092df3bbd9'
   /anyline_core/src/org/anyline/config/db:
-    newFile: !uuid '5fc5d95585653ff8083ee13f0c123cacb0e605c1'
-    oldFile: !uuid 'd7ca47b295240c902b350cb18a9159f4393384ec'
+    newFile: !uuid '12e7e6d326420a0d0a840c09a0f6ebc2c14889e6'
+    oldFile: !uuid '5fc5d95585653ff8083ee13f0c123cacb0e605c1'
   /anyline_core/src/org/anyline/config/db/Condition.java:
-    newFile: !uuid '83fb5fb242bb0fad1e37fd9714bc88112ac70ea0'
-    oldFile: !uuid 'fbac4957f7eca1e5255feeb004acabdc9aa694f9'
+    newFile: !uuid '719ee331db94533b21e14ad8523fa9b15c89d50d'
+    oldFile: !uuid '83fb5fb242bb0fad1e37fd9714bc88112ac70ea0'
   /anyline_core/src/org/anyline/config/db/impl:
-    newFile: !uuid '3fe333277ee464e69aae820943f6207dbd8435e0'
-    oldFile: !uuid '1ef73e013986181e93492014173f4fd38695583f'
+    newFile: !uuid '54e64e41246dd67eaa07c0f3134cf90d128ba7b8'
+    oldFile: !uuid '3fe333277ee464e69aae820943f6207dbd8435e0'
   /anyline_core/src/org/anyline/config/db/impl/BasicCondition.java:
-    newFile: !uuid '4414fdb1d3b0d7372ff83f9688064dd99be14132'
-    oldFile: !uuid 'ee01798082ad50e69486dade96973b5831c73097'
-  /anyline_core/src/org/anyline/config/db/impl/SQLStoreImpl.java:
-    newFile: !uuid '831df4bb02e2c9660dde4c5b132c9eab8fcd5aba'
-    oldFile: !uuid 'cbaf8375aa1271a8b27bc86c2beaa3e98276b2fd'
+    newFile: !uuid '9adfd1b039dbf2c61918ae0da880c0d26852bb59'
+    oldFile: !uuid '4414fdb1d3b0d7372ff83f9688064dd99be14132'
+  /anyline_core/src/org/anyline/config/db/impl/BasicSQLCreaterImpl.java:
+    newFile: !uuid 'c2f7e7b1439a3a74c43e91f528df12ec3be12b7c'
+    oldFile: !uuid '69c4a7472da765554631200317bd57cdd0513c11'
+  /anyline_core/src/org/anyline/config/db/run:
+    newFile: !uuid '3739af3e30cf0d8bffc8f941d120c43c5e2b012e'
+    oldFile: !uuid '94ab1c849ed75c710adf22e4fdeb0d94341d167c'
+  /anyline_core/src/org/anyline/config/db/run/BasicRunSQLImpl.java:
+    newFile: null
+    oldFile: !uuid 'b8ca970124ba594d937683689c308bb1edbd11f1'
+  /anyline_core/src/org/anyline/config/db/run/TableRunSQLImpl.java:
+    newFile: null
+    oldFile: !uuid '5e565d7e4d4e85cd908b78cd4f4a2fa42c848973'
+  /anyline_core/src/org/anyline/config/db/run/TextRunSQLImpl.java:
+    newFile: null
+    oldFile: !uuid '8f1eab16605bdcf7c996607edd634137733c08a4'
+  /anyline_core/src/org/anyline/config/db/run/XMLRunSQLImpl.java:
+    newFile: null
+    oldFile: !uuid '5f0af440ccc97b44cd3d9c518359bf36b2d26112'
+  /anyline_core/src/org/anyline/config/db/run/impl:
+    newFile: !uuid '1f82e6fdd074eaf6ca15988f370635646ca5d6fa'
+    oldFile: null
+  /anyline_core/src/org/anyline/config/db/run/impl/BasicRunSQLImpl.java:
+    newFile: !uuid '1dd457c45fbb513d4fa015f92fa8a60940b5b7b7'
+    oldFile: null
+  /anyline_core/src/org/anyline/config/db/run/impl/TableRunSQLImpl.java:
+    newFile: !uuid '525c9959876457edc2ee0bf07a6feff1be09c0c8'
+    oldFile: null
+  /anyline_core/src/org/anyline/config/db/run/impl/TextRunSQLImpl.java:
+    newFile: !uuid 'ff9098b8fb54dc2b8f6a512361ff162612cca472'
+    oldFile: null
+  /anyline_core/src/org/anyline/config/db/run/impl/XMLRunSQLImpl.java:
+    newFile: !uuid '815925f268e04a076667d734d87158be6ea1c62f'
+    oldFile: null
   /anyline_core/src/org/anyline/config/db/sql:
-    newFile: !uuid '10e8c8e461d53c1f8307f6f0776aececee2640f2'
-    oldFile: !uuid '41e913ee9bb1fbd511bc6608eba48ed4957c4192'
-  /anyline_core/src/org/anyline/config/db/sql/auto:
-    newFile: !uuid 'dc71185b513e42653305b790f5bd9c30ef5827c1'
-    oldFile: !uuid '32da074fc2b30a3c6690158c2bed81ea853565da'
-  /anyline_core/src/org/anyline/config/db/sql/auto/impl:
-    newFile: !uuid 'bfc1fceac0bc93eee45f5ebedea35c7ef8026923'
-    oldFile: !uuid '89502dce21765ddac25b98e2f3875e2e8ae99751'
-  /anyline_core/src/org/anyline/config/db/sql/auto/impl/AutoConditionChainImpl.java:
-    newFile: !uuid '98c6976875c85b309a656c5b9f2ce210c378aa0c'
-    oldFile: !uuid 'a5fe07274f3131e19ef524a5516e95dc12d8a514'
-  /anyline_core/src/org/anyline/config/db/sql/auto/impl/AutoConditionImpl.java:
-    newFile: !uuid '339fbd52be75f363069e1a459737d5b84bdd7832'
-    oldFile: !uuid '2f81b21b45809d80844661e0b7c53b50b215d632'
+    newFile: !uuid '0ad868d690cd02222ebe7324af7a89aa1e9293d0'
+    oldFile: !uuid '10e8c8e461d53c1f8307f6f0776aececee2640f2'
   /anyline_core/src/org/anyline/config/db/sql/xml:
-    newFile: !uuid '19769d820883d15faebf3de9cf016fae89116492'
-    oldFile: !uuid '36a14e26aaaf3f7eb8e22998113a48cb57d3c00e'
+    newFile: !uuid '247cb2a198129fac0e875c872282a5169654c11f'
+    oldFile: !uuid '19769d820883d15faebf3de9cf016fae89116492'
   /anyline_core/src/org/anyline/config/db/sql/xml/impl:
-    newFile: !uuid '373986011db6d4016f7eea79e27c617fea6a3447'
-    oldFile: !uuid '680a0c0927994670ded1ac0c11335951c31ca25e'
+    newFile: !uuid '749bf50ff887eb8cc967ac2e5f9070bdf7a7a430'
+    oldFile: !uuid '373986011db6d4016f7eea79e27c617fea6a3447'
   /anyline_core/src/org/anyline/config/db/sql/xml/impl/XMLConditionImpl.java:
-    newFile: !uuid '274cc21034c5afbdc76df2e11a0c09aa6f1e81b9'
-    oldFile: !uuid 'ee16e2237f2b408e049cdbd906c326f904f7e7a2'
-gitCommitId: !uuid 'ec7390d85cd89fce8e10ecd7ddf18bf86f69bcb3'
-renames: {
-  }
-revisionId: 373
+    newFile: !uuid '91041252284ae6ee097ff37cd4aed2427bea8f80'
+    oldFile: !uuid '274cc21034c5afbdc76df2e11a0c09aa6f1e81b9'
+gitCommitId: !uuid 'f83a8a3a2646a454c96dd37fa3f7da8c76548d5d'
+renames:
+  /anyline_core/src/org/anyline/config/db/run/impl/BasicRunSQLImpl.java: /anyline_core/src/org/anyline/config/db/run/BasicRunSQLImpl.java
+  /anyline_core/src/org/anyline/config/db/run/impl/TableRunSQLImpl.java: /anyline_core/src/org/anyline/config/db/run/TableRunSQLImpl.java
+  /anyline_core/src/org/anyline/config/db/run/impl/TextRunSQLImpl.java: /anyline_core/src/org/anyline/config/db/run/TextRunSQLImpl.java
+  /anyline_core/src/org/anyline/config/db/run/impl/XMLRunSQLImpl.java: /anyline_core/src/org/anyline/config/db/run/XMLRunSQLImpl.java
+revisionId: 374
