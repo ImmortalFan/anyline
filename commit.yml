@@ -3,15 +3,18 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '0a1fb0f2d507262388f975f523518ed92c0cc2d1'
-    oldFile: !uuid 'cffa579bb22c8acfdddf5d3a4dadcb0a2b73e56a'
+    newFile: !uuid '4e8be16c3f7aa8745b9a36e8090777d3ba0c655a'
+    oldFile: !uuid '0a1fb0f2d507262388f975f523518ed92c0cc2d1'
   /anyline_core/help:
-    newFile: !uuid 'a7921ecef5f97faad85eee43dbe92674eaf76aa4'
-    oldFile: !uuid 'a534187ba932c582bb873cc87ca4f0cbdbced895'
-  /anyline_core/help/TestController.java:
-    newFile: !uuid '498be1b05e1352b244af510ae8a2e56f8b2d3a32'
-    oldFile: !uuid '594964f460f78a7432fb54f0589dc6f5d7da5c53'
-gitCommitId: !uuid '819c3f15e70dce7bc343bd362e4132b648bf8d6c'
+    newFile: !uuid 'a3cee0d0f0d6d7e1c59fa7b2c35153c13f4523c8'
+    oldFile: !uuid 'a7921ecef5f97faad85eee43dbe92674eaf76aa4'
+  /anyline_core/help/jar_bat:
+    newFile: !uuid '17eeb8d25612dddb378656855f6619f3eb0406b2'
+    oldFile: !uuid '09b328916191635e05d5ce2c504bb62b5c96ad5a'
+  /anyline_core/help/jar_bat/anyline_struts.bat:
+    newFile: !uuid 'f175c9f9690028db7cf3ca638e33f59e535f3c9d'
+    oldFile: !uuid '5c9fcddf3b7eee70338dc5f8a7c5469cf1a7601e'
+gitCommitId: !uuid '9fcd9feb100d3de075f528ae1f143de3db047ca6'
 renames: {
   }
-revisionId: 385
+revisionId: 386
