@@ -1,26 +1,9 @@
 !revision
 branches: {
   }
-fileChange:
-  /anyline_core:
-    newFile: !uuid 'cffa579bb22c8acfdddf5d3a4dadcb0a2b73e56a'
-    oldFile: !uuid '72b3b8d52ed80995cc2f581a2304f60d54864bec'
-  /anyline_core/src:
-    newFile: !uuid '812c3d7ea6c6fff72ffe071bfcf19a0742c4b938'
-    oldFile: !uuid '572b374c591fec854f6667652aa71fd59fe0f85d'
-  /anyline_core/src/org:
-    newFile: !uuid '4db91915843e26834eb0ee96bb5793feadb45ff7'
-    oldFile: !uuid '61f660d123fac67b35a26aaab156596582936756'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '6a0c19370b87bc18cbd4f2265d09137e9cffba76'
-    oldFile: !uuid '1b2f8a492b7a56c62d11114bddbdd5aace06c478'
-  /anyline_core/src/org/anyline/dao:
-    newFile: !uuid 'd888c3a8a1cb1b2c4dfd6b7aab30a7d687860c7a'
-    oldFile: !uuid 'd702602c4386048ea18aadc88511f3c2bcc5d670'
-  /anyline_core/src/org/anyline/dao/AnylineDao.java:
-    newFile: !uuid 'e9b55e90c55eded5c8484f3be7a7462c208f9a04'
-    oldFile: !uuid 'af22a4993b30e6b51d1ff1d5d0228a7dea5646c6'
-gitCommitId: !uuid 'de020c01e844cc97859da37d76de84932c9d9912'
+fileChange: {
+  }
+gitCommitId: !uuid '8dcfb0caf0cc714b5ca9b76d2aa7b524b57f9035'
 renames: {
   }
-revisionId: 383
+revisionId: 384
