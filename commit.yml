@@ -3,27 +3,21 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'f3f91ca8f0b916c1f9ea9e394c20810ad8b34141'
-    oldFile: !uuid '43b78e0130a449054c86e224d78b785549ba0fa5'
-  /anyline_core/src:
-    newFile: !uuid '9f8c8c82b577334d5d881bdb0095a6e2cb6e2ed8'
-    oldFile: !uuid 'cbf136514d25532540d7fad197e1bdc69002080f'
-  /anyline_core/src/org:
-    newFile: !uuid '5dcf4b6e10ca28ede2607b3b0dd24302a3aef467'
-    oldFile: !uuid '3f44d67d605fe72e50965347503e5a0369fe924a'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid 'ba6818a0b1da5273fe3856cefcb896c6ba11f81b'
-    oldFile: !uuid '7e7f88b789388e9c04c09b28f82f060caed69405'
-  /anyline_core/src/org/anyline/entity:
-    newFile: !uuid '5498e0ec7acc392eeb42b11e4b5de4d410707063'
-    oldFile: !uuid '85f5bd3672b4e61a5bdc89b19de3b2a6fd36265d'
-  /anyline_core/src/org/anyline/entity/DataRow.java:
-    newFile: !uuid '4c4bd3d1eef57427eb30497ce9e8c515e7128d10'
-    oldFile: !uuid '02cfbe1912380ed8d0e58b907057f96d44a63e62'
-  /anyline_core/src/org/anyline/entity/DataSet.java:
-    newFile: !uuid '846b9d701aa6df5e17d6f6283e54d7dc85a97958'
-    oldFile: !uuid 'e506ff0d74043c04e58bd64cd675dacf319e974b'
-gitCommitId: !uuid '8ddc019927f296057d3868cdda1e5c1b13531ec7'
-renames: {
-  }
-revisionId: 379
+    newFile: !uuid '542c75bcde8d15862abfff1034c831a45a82977d'
+    oldFile: !uuid 'f3f91ca8f0b916c1f9ea9e394c20810ad8b34141'
+  /anyline_core/help:
+    newFile: !uuid '65466ae806aebc25b329489a76489dc05bb8fc1c'
+    oldFile: !uuid '3f6c1826e3f58082c818e0b0ad70c71f30501044'
+  /anyline_core/help/TestController.java:
+    newFile: !uuid '594964f460f78a7432fb54f0589dc6f5d7da5c53'
+    oldFile: !uuid '9e1b06507acd1cfa05ecadead5849c5a979b749b'
+  /anyline_core/help/index.jsp:
+    newFile: !uuid '4c8496c158e0a26c7692d59cc7e4016dcf106fd3'
+    oldFile: null
+  /anyline_core/help/test.jsp:
+    newFile: null
+    oldFile: !uuid 'ba03dfdc32c73083b0cf75c68b0c0571dc24233f'
+gitCommitId: !uuid '1080ac99180c4df6df237985d91a230ce26c5fce'
+renames:
+  /anyline_core/help/index.jsp: /anyline_core/help/test.jsp
+revisionId: 380
