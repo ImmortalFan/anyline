@@ -3,21 +3,36 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '542c75bcde8d15862abfff1034c831a45a82977d'
-    oldFile: !uuid 'f3f91ca8f0b916c1f9ea9e394c20810ad8b34141'
+    newFile: !uuid '4f8271209e50431bdbf59bb6ead9c2a0483b1052'
+    oldFile: !uuid '542c75bcde8d15862abfff1034c831a45a82977d'
   /anyline_core/help:
-    newFile: !uuid '65466ae806aebc25b329489a76489dc05bb8fc1c'
-    oldFile: !uuid '3f6c1826e3f58082c818e0b0ad70c71f30501044'
-  /anyline_core/help/TestController.java:
-    newFile: !uuid '594964f460f78a7432fb54f0589dc6f5d7da5c53'
-    oldFile: !uuid '9e1b06507acd1cfa05ecadead5849c5a979b749b'
-  /anyline_core/help/index.jsp:
-    newFile: !uuid '4c8496c158e0a26c7692d59cc7e4016dcf106fd3'
+    newFile: !uuid 'a534187ba932c582bb873cc87ca4f0cbdbced895'
+    oldFile: !uuid '65466ae806aebc25b329489a76489dc05bb8fc1c'
+  /anyline_core/help/jar_bat:
+    newFile: !uuid '09b328916191635e05d5ce2c504bb62b5c96ad5a'
     oldFile: null
-  /anyline_core/help/test.jsp:
-    newFile: null
-    oldFile: !uuid 'ba03dfdc32c73083b0cf75c68b0c0571dc24233f'
-gitCommitId: !uuid '1080ac99180c4df6df237985d91a230ce26c5fce'
-renames:
-  /anyline_core/help/index.jsp: /anyline_core/help/test.jsp
-revisionId: 380
+  /anyline_core/help/jar_bat/anyline_core.bat:
+    newFile: !uuid 'c5af471075db1f2521fc6315c8cf4278fd422843'
+    oldFile: null
+  /anyline_core/help/jar_bat/anyline_mssql.bat:
+    newFile: !uuid '0b2f155e25afb1105ba40c9b1afe43c326292e27'
+    oldFile: null
+  /anyline_core/help/jar_bat/anyline_mysql.bat:
+    newFile: !uuid '07958de80ad839c6f7d9f242abcf2a34558de4cf'
+    oldFile: null
+  /anyline_core/help/jar_bat/anyline_springmvc.bat:
+    newFile: !uuid '73abb837b0e72587c8c9c76cdde387ea6ffed8f4'
+    oldFile: null
+  /anyline_core/help/jar_bat/anyline_struts.bat:
+    newFile: !uuid '5c9fcddf3b7eee70338dc5f8a7c5469cf1a7601e'
+    oldFile: null
+  /anyline_core/help/jar_bat/inmvc.bat:
+    newFile: !uuid '61aa1f74179bd0fe1ca05c15b644fd56705dc214'
+    oldFile: null
+  /anyline_core/help/jar_bat/zxing.bat:
+    newFile: !uuid 'a22f89100b0f0e40061a0e9a534f4d0a5deb8e42'
+    oldFile: null
+gitCommitId: !uuid '8747b197e952c4651810d3fcb25310417544007d'
+renames: {
+  }
+revisionId: 381
