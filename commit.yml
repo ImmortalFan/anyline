@@ -3,24 +3,36 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '5133293a573d1234aa7f6fdab3354796d8d46ed8'
-    oldFile: !uuid '706d56ea413632c8ec472c8f1a4ae7d2f0381233'
+    newFile: !uuid 'bc152952bea53e0cad65faafdf29504b52598c04'
+    oldFile: !uuid '5133293a573d1234aa7f6fdab3354796d8d46ed8'
   /anyline_core/src:
-    newFile: !uuid '8940d8560bca89941465c6a3f9d50f98447db5e0'
-    oldFile: !uuid 'd900883898c3f964d9cb0fe2848c1c243616a91e'
+    newFile: !uuid 'eef7269ace58e6e586b945376408531c54e624da'
+    oldFile: !uuid '8940d8560bca89941465c6a3f9d50f98447db5e0'
   /anyline_core/src/org:
-    newFile: !uuid 'e1298708fcf7ec5d8ed5096b51f5e87de9940081'
-    oldFile: !uuid '10c170c3d26849e8cf9546dc24509bf8aaeff2b9'
+    newFile: !uuid '84adc74e7c5c93c7a306bfffd8296b2582cf1f5b'
+    oldFile: !uuid 'e1298708fcf7ec5d8ed5096b51f5e87de9940081'
   /anyline_core/src/org/anyline:
-    newFile: !uuid 'f93d6e2811197fb9eee91c709c23e780327e428d'
-    oldFile: !uuid '24cdac9e552d193666bf387e6d5a854a4a6ec6fb'
-  /anyline_core/src/org/anyline/tag:
-    newFile: !uuid 'bf9120dd41a6febffb9f9ce6f10ebf40edec5b95'
-    oldFile: !uuid '67ae03ba2d0f23de141d3e9c08288a90b506deb0'
-  /anyline_core/src/org/anyline/tag/Navi.java:
-    newFile: !uuid '3154bbe563189b9bc0c2dafc435c9f4d1d061a22'
-    oldFile: !uuid 'b6295f58830d1ee0538b7f01e34a55f12658ce8c'
-gitCommitId: !uuid '342429126a2f34615c6ca673be110b66490bae55'
+    newFile: !uuid 'd2ba711fe44088416dbec3f8d8d6afb346901c3a'
+    oldFile: !uuid 'f93d6e2811197fb9eee91c709c23e780327e428d'
+  /anyline_core/src/org/anyline/util:
+    newFile: !uuid '8aed5579057cf6cae5132bb52c37d56ef66b4f9a'
+    oldFile: !uuid 'e06fb5d8b69443c2901f0396e55e54daf57d510e'
+  /anyline_core/src/org/anyline/util/FileUtil.java:
+    newFile: !uuid '33d070f63d4b69684daf0fe050ffcc8b69c12b93'
+    oldFile: !uuid 'd0e03efe1e2da472fc5e3f2c0ede7e121c7dee70'
+  /anyline_core/src/org/anyline/util/HttpUtil.java:
+    newFile: !uuid '071bd1d49f9417c3c26dac3c5cd86b692e9c3347'
+    oldFile: !uuid 'cff3bb1ab6fc259f55fee80f7b64f87b56e948a6'
+  /anyline_core/src/org/anyline/util/Watermark.java:
+    newFile: !uuid '4bb6d2efe68b848f4851e459d5969a2f168a9271'
+    oldFile: !uuid '125d5aad17a0498aeb2d609d26dc4b230524e852'
+  /anyline_core/src/org/anyline/util/WebUtil.java:
+    newFile: !uuid '00824919868926de09f3be9f0a615120ed5b2a64'
+    oldFile: !uuid '6fddc27ee02c3c1951364b376d04d95392821d6d'
+  /anyline_core/src/org/anyline/util/ZipUtil.java:
+    newFile: !uuid 'e3dbf6a47dab50d3586dc0badd228ea181af9001'
+    oldFile: !uuid '99d77abab4e68da885e1a4a5ba122f39ed481613'
+gitCommitId: !uuid '53348d7110095432ffa013797d74a5a63ae180dd'
 renames: {
   }
-revisionId: 399
+revisionId: 400
