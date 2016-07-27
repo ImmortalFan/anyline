@@ -3,36 +3,27 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '0bbf2a63a9e09a19e1f36f9fb734688f7de2b9dd'
-    oldFile: !uuid '1ab7847c20238b85b783266f4b1e2568d5df80aa'
+    newFile: !uuid '16b7273e5028e8fc80461cbc7f96aa16c6dc9e14'
+    oldFile: !uuid '0bbf2a63a9e09a19e1f36f9fb734688f7de2b9dd'
   /anyline_core/src:
-    newFile: !uuid 'fe044587a055a25cd88fc521e7908f835c264f8b'
-    oldFile: !uuid 'df20a6d5e8adc05cb3c1988aa51b5e0ee7686c67'
+    newFile: !uuid '59ef92991c9daab3cfa6648a1ef4ea49dac33e1d'
+    oldFile: !uuid 'fe044587a055a25cd88fc521e7908f835c264f8b'
   /anyline_core/src/org:
-    newFile: !uuid '11925498fcfc9d5935b08f8a0191574872a3e17e'
-    oldFile: !uuid 'c7e08dc7d45defc4508674c07f8e747e104d22ce'
+    newFile: !uuid '8f20a08e12a31b0362701e22044eeba90eb332f2'
+    oldFile: !uuid '11925498fcfc9d5935b08f8a0191574872a3e17e'
   /anyline_core/src/org/anyline:
-    newFile: !uuid '76e31e92eef02ba2cdbd9f8cefe52274f0e05e01'
-    oldFile: !uuid 'e4857ca74f53cc7b4459db6f17de46290f8e963d'
+    newFile: !uuid '704ef1e41a99046b13e8a3cd0cd6cb980b24518f'
+    oldFile: !uuid '76e31e92eef02ba2cdbd9f8cefe52274f0e05e01'
   /anyline_core/src/org/anyline/util:
-    newFile: !uuid '1c2eb431cbbfdee8b06172ae172b1e63b6de565c'
-    oldFile: !uuid 'd8aab525ae8fb6fdf30588af18a77b45c121c767'
+    newFile: !uuid 'facaaea8c3649fef1ad131888db2c8d519f494ef'
+    oldFile: !uuid '1c2eb431cbbfdee8b06172ae172b1e63b6de565c'
   /anyline_core/src/org/anyline/util/regular:
-    newFile: !uuid '37c8ae3d0df827e5a2f4b642040b74ce0e909826'
-    oldFile: !uuid '46a172ebde136eb9a6453e6c87e28b3b74b5a549'
-  /anyline_core/src/org/anyline/util/regular/RegularContain.java:
-    newFile: !uuid '558341ea792d4dcc8e224b8628983cea5d24c3b9'
-    oldFile: !uuid 'c8ced2e3edf55683b12eb64f7865c625be4e80e8'
-  /anyline_core/src/org/anyline/util/regular/RegularMatch.java:
-    newFile: !uuid 'cabe52c411dd3be9ab52b8634a5e62e81e95789b'
-    oldFile: !uuid '2b3242b50ab4c1d6ab86ea66619f7d195174b5de'
-  /anyline_core/src/org/anyline/util/regular/RegularMatchPrefix.java:
-    newFile: !uuid '0dfd5ce94a71acecbb59a759cbe80f701673cd38'
-    oldFile: !uuid '3a3699c3d87db013609bb788513960c4f6fca4a3'
+    newFile: !uuid 'd91f39e4d9aa2323999e16dafb6abc4143f8c18d'
+    oldFile: !uuid '37c8ae3d0df827e5a2f4b642040b74ce0e909826'
   /anyline_core/src/org/anyline/util/regular/RegularUtil.java:
-    newFile: !uuid 'bc81b28282bc719cced88c22fae2c24bbb239065'
-    oldFile: !uuid '6e6fc406e87c32ad3cab7bd9c01fefa2531c7e66'
-gitCommitId: !uuid '7e97b713a204e033b6d4d4048246c86b2971867d'
+    newFile: !uuid '97d2479798654771f1bac7dce146e3ea2d4747db'
+    oldFile: !uuid 'bc81b28282bc719cced88c22fae2c24bbb239065'
+gitCommitId: !uuid 'dc2c97cc8aa0b33455a75ec3eed9ddfd62d6d6af'
 renames: {
   }
-revisionId: 409
+revisionId: 410
