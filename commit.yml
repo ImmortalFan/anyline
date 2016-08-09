@@ -2,31 +2,55 @@
 branches: {
   }
 fileChange:
-  /anyline_core:
-    newFile: !uuid '633e9a95a7d1bbd0d8d12aa9042b97181d28da73'
-    oldFile: !uuid 'a8faac9327781b149c10a6fbd7402c9ff1cb8e72'
-  /anyline_core/src:
-    newFile: !uuid '215b78d2c0e883e856c38a18d91af0d4f5ff43f2'
-    oldFile: !uuid 'c00e73996777d0ec201f5b7b7168bc58e5174aa0'
-  /anyline_core/src/org:
-    newFile: !uuid 'e900f140159588f044e062260c7de917346ff77e'
-    oldFile: !uuid 'd752671301d909c8ee913a6d021ec7f096d8c633'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '34828c47a961267364b3dc6eda4a1493d5c4dfbb'
-    oldFile: !uuid 'e99420450ed77becafb099ad554d5b3e132efb77'
-  /anyline_core/src/org/anyline/dao:
-    newFile: !uuid 'd6b9b2b4d9c8526d1ff1d6d61412e0e37fafe880'
-    oldFile: !uuid '68e27c57f935fc8f092901ddfbb3f7915159e67d'
-  /anyline_core/src/org/anyline/dao/impl:
-    newFile: !uuid '6ac4833f5949828bfce560cf35cf99b39d414a7c'
-    oldFile: !uuid 'd758d2fd440011b68e1b9caf22e6a6466da7542c'
-  /anyline_core/src/org/anyline/dao/impl/springjdbc:
-    newFile: !uuid 'de42998bde0d7c1b16e919b1da5f544626ce43ad'
-    oldFile: !uuid 'a91a9b0f0a4a5e6c9df341b7b10f22db81314b77'
-  /anyline_core/src/org/anyline/dao/impl/springjdbc/AnylineDaoImpl.java:
-    newFile: !uuid 'e702b10f8df1a892e5003908c6c3aebaaefbf09d'
-    oldFile: !uuid '6c03c4854a68643c2bbb296b0a5596735e93e140'
-gitCommitId: !uuid '0eabd53374730ab75d4e14696f6cfc3b6558ee3c'
+  /anyline_public:
+    newFile: !uuid '94c2db11814d02d69b81e04e3240db1ad78f90e6'
+    oldFile: null
+  /anyline_public/.classpath:
+    newFile: !uuid '1f4426c1119ec7b2fc3336c256d702f9fbff43af'
+    oldFile: null
+  /anyline_public/.project:
+    newFile: !uuid 'a925e649a7bf068357beacbef880e1f71ea6b714'
+    oldFile: null
+  /anyline_public/.settings:
+    newFile: !uuid 'a3283ed6a06e2bb26e310d564b99722302065567'
+    oldFile: null
+  /anyline_public/.settings/.jsdtscope:
+    newFile: !uuid '34379511dcf2e2573901e42f6f7ad20861dfa59e'
+    oldFile: null
+  /anyline_public/.settings/org.eclipse.jdt.core.prefs:
+    newFile: !uuid '11f6e462df7b697da0744bef232871f1aa1b0cb3'
+    oldFile: null
+  /anyline_public/.settings/org.eclipse.wst.common.component:
+    newFile: !uuid 'fb3055d1d45c5a388b2d01319c3fe0c61d975072'
+    oldFile: null
+  /anyline_public/.settings/org.eclipse.wst.common.project.facet.core.xml:
+    newFile: !uuid '3a2993501da5989257b02dcb0b844bf6a62bd28e'
+    oldFile: null
+  /anyline_public/.settings/org.eclipse.wst.jsdt.ui.superType.container:
+    newFile: !uuid '3bd5d0a4803967bc0bf72a7dd66d7e292ed2e586'
+    oldFile: null
+  /anyline_public/.settings/org.eclipse.wst.jsdt.ui.superType.name:
+    newFile: !uuid '05bd71b6ec2c1982d1e8a5653073281994564ae8'
+    oldFile: null
+  /anyline_public/WebRoot:
+    newFile: !uuid 'fd82af96ffe01f78da6fc6a585446e5a1403e61e'
+    oldFile: null
+  /anyline_public/WebRoot/META-INF:
+    newFile: !uuid '39c9380fd9bea5059bec7dce0c817766f38477d8'
+    oldFile: null
+  /anyline_public/WebRoot/META-INF/MANIFEST.MF:
+    newFile: !uuid '5e9495128c0376427420c4189993b3851770b702'
+    oldFile: null
+  /anyline_public/WebRoot/WEB-INF:
+    newFile: !uuid 'a69c461ba5735c7651e920e4311efbca568b594d'
+    oldFile: null
+  /anyline_public/WebRoot/WEB-INF/.gitignore:
+    newFile: !uuid '8ba548b51c98b72f928cce0ceb0287eebdfa6b57'
+    oldFile: null
+  /anyline_public/WebRoot/index.jsp:
+    newFile: !uuid '4c4ef274cb2fb523d0261b4e0552f2866407ed06'
+    oldFile: null
+gitCommitId: !uuid 'c215b82d695a37252a14aa1a8fe17f72d53b5d5d'
 renames: {
   }
-revisionId: 430
+revisionId: 431
