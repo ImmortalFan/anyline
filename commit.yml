@@ -2,55 +2,40 @@
 branches: {
   }
 fileChange:
-  /anyline_public:
-    newFile: null
-    oldFile: !uuid '94c2db11814d02d69b81e04e3240db1ad78f90e6'
-  /anyline_public/.classpath:
-    newFile: null
-    oldFile: !uuid '1f4426c1119ec7b2fc3336c256d702f9fbff43af'
-  /anyline_public/.project:
-    newFile: null
-    oldFile: !uuid 'a925e649a7bf068357beacbef880e1f71ea6b714'
-  /anyline_public/.settings:
-    newFile: null
-    oldFile: !uuid 'a3283ed6a06e2bb26e310d564b99722302065567'
-  /anyline_public/.settings/.jsdtscope:
-    newFile: null
-    oldFile: !uuid '34379511dcf2e2573901e42f6f7ad20861dfa59e'
-  /anyline_public/.settings/org.eclipse.jdt.core.prefs:
-    newFile: null
-    oldFile: !uuid '11f6e462df7b697da0744bef232871f1aa1b0cb3'
-  /anyline_public/.settings/org.eclipse.wst.common.component:
-    newFile: null
-    oldFile: !uuid 'fb3055d1d45c5a388b2d01319c3fe0c61d975072'
-  /anyline_public/.settings/org.eclipse.wst.common.project.facet.core.xml:
-    newFile: null
-    oldFile: !uuid '3a2993501da5989257b02dcb0b844bf6a62bd28e'
-  /anyline_public/.settings/org.eclipse.wst.jsdt.ui.superType.container:
-    newFile: null
-    oldFile: !uuid '3bd5d0a4803967bc0bf72a7dd66d7e292ed2e586'
-  /anyline_public/.settings/org.eclipse.wst.jsdt.ui.superType.name:
-    newFile: null
-    oldFile: !uuid '05bd71b6ec2c1982d1e8a5653073281994564ae8'
-  /anyline_public/WebRoot:
-    newFile: null
-    oldFile: !uuid 'fd82af96ffe01f78da6fc6a585446e5a1403e61e'
-  /anyline_public/WebRoot/META-INF:
-    newFile: null
-    oldFile: !uuid '39c9380fd9bea5059bec7dce0c817766f38477d8'
-  /anyline_public/WebRoot/META-INF/MANIFEST.MF:
-    newFile: null
-    oldFile: !uuid '5e9495128c0376427420c4189993b3851770b702'
-  /anyline_public/WebRoot/WEB-INF:
-    newFile: null
-    oldFile: !uuid 'a69c461ba5735c7651e920e4311efbca568b594d'
-  /anyline_public/WebRoot/WEB-INF/.gitignore:
-    newFile: null
-    oldFile: !uuid '8ba548b51c98b72f928cce0ceb0287eebdfa6b57'
-  /anyline_public/WebRoot/index.jsp:
-    newFile: null
-    oldFile: !uuid '4c4ef274cb2fb523d0261b4e0552f2866407ed06'
-gitCommitId: !uuid 'b4fde896655e4f9f603985fc889c08cb393d5866'
+  /anyline_core:
+    newFile: !uuid '5426e1d323bf71f4eb7a051942ae2e6feff8b6b5'
+    oldFile: !uuid '633e9a95a7d1bbd0d8d12aa9042b97181d28da73'
+  /anyline_core/src:
+    newFile: !uuid 'e63e0d0a645cb82fa47a5db271eda2cd9ec2ad39'
+    oldFile: !uuid '215b78d2c0e883e856c38a18d91af0d4f5ff43f2'
+  /anyline_core/src/org:
+    newFile: !uuid 'a7390cc1425b3b73a696e595ba6f6f7ed503c75f'
+    oldFile: !uuid 'e900f140159588f044e062260c7de917346ff77e'
+  /anyline_core/src/org/anyline:
+    newFile: !uuid 'f477717675caf5cf8be73bb5a02f8f337956b14a'
+    oldFile: !uuid '34828c47a961267364b3dc6eda4a1493d5c4dfbb'
+  /anyline_core/src/org/anyline/config:
+    newFile: !uuid '2e114844f49dfca485563a74e21dc8870258dc20'
+    oldFile: !uuid 'abebe5145cc01ff749b189f2b7114265b43f3805'
+  /anyline_core/src/org/anyline/config/db:
+    newFile: !uuid 'a839b776fddd3185eaaf7808c4cfbb86a8ff7011'
+    oldFile: !uuid 'df77ec4dd595953bf8c1ef956bdfe9398a90e48e'
+  /anyline_core/src/org/anyline/config/db/impl:
+    newFile: !uuid 'be8bc6373e8b54e7b3f02b1db9a31fc002030f80'
+    oldFile: !uuid 'c6dd51dc477be948468bb09d44ddac9868402731'
+  /anyline_core/src/org/anyline/config/db/impl/BasicSQLCreaterImpl.java:
+    newFile: !uuid 'da5d678f4bef7c569b599a0f9bdd0d8dd9198d30'
+    oldFile: !uuid '3497f2770b11a1ffc81967dc25f1cb4fa48eb9ef'
+  /anyline_core/src/org/anyline/entity:
+    newFile: !uuid 'e544d88bcbaf6328b1d84d77f1dbf89d1a10d1d6'
+    oldFile: !uuid 'c4c0b2102da91831bcbfdbde0e839b3d48b29ac4'
+  /anyline_core/src/org/anyline/entity/DataRow.java:
+    newFile: !uuid '71788a184d8ed997ecbd9b10573b7593779d05b0'
+    oldFile: !uuid 'fecd18311df2930bd13359c33ef45f5c69ca7c17'
+  /anyline_core/src/org/anyline/entity/DataSet.java:
+    newFile: !uuid 'be69866c80d14fb73f3ae3ced48841e173d50906'
+    oldFile: !uuid 'a81f2fbf262ed08bbab494aa92b451c1ca40920c'
+gitCommitId: !uuid '64aa20f20a36f0bd2685ddd1e0c40dfd085df470'
 renames: {
   }
-revisionId: 432
+revisionId: 433
