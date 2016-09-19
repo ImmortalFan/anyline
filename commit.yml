@@ -3,24 +3,24 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'c7ecfd06cf6bf4113d38a30c636be2db4adf0554'
-    oldFile: !uuid '06ba80adb74924f85499581690103ed8406e0c85'
+    newFile: !uuid 'e1d97c1212f6e019d8cf21c924d2f47a8c0dcefe'
+    oldFile: !uuid 'c7ecfd06cf6bf4113d38a30c636be2db4adf0554'
   /anyline_core/src:
-    newFile: !uuid 'a6b65b6b3d53558e13901484a69a8484dc388352'
-    oldFile: !uuid 'f782f179e2150e5307ff11a88822a1c5bfb959c7'
+    newFile: !uuid 'bb8adbdff2601ed8381c130a64d2718da808bd54'
+    oldFile: !uuid 'a6b65b6b3d53558e13901484a69a8484dc388352'
   /anyline_core/src/org:
-    newFile: !uuid '1ed2cf975ea35eff8cf13234abcd71b2a755ebf9'
-    oldFile: !uuid 'a1ab783b931818d5b74e988617e000cb0b712c4d'
+    newFile: !uuid '7b523c2e0c4285651f709447b8a143125fbb4177'
+    oldFile: !uuid '1ed2cf975ea35eff8cf13234abcd71b2a755ebf9'
   /anyline_core/src/org/anyline:
-    newFile: !uuid 'f77c735d8fe98baa9133213d1ba6770c3823e119'
-    oldFile: !uuid '12d09249d9a9cb25803cfb3c496c43f3b30fa3d2'
+    newFile: !uuid '02ca1c40ba179567ff6d0867e8229433cb5b4fef'
+    oldFile: !uuid 'f77c735d8fe98baa9133213d1ba6770c3823e119'
   /anyline_core/src/org/anyline/tag:
-    newFile: !uuid '3d8eb7f0832d1a71009e6ad677438dfb2d734d41'
-    oldFile: !uuid 'ca5c2260eaef8d1f1b1fc6955257c6f740285b3a'
+    newFile: !uuid 'a1a1c8ae0f63f32a3ccf3c61047db75168afa192'
+    oldFile: !uuid '3d8eb7f0832d1a71009e6ad677438dfb2d734d41'
   /anyline_core/src/org/anyline/tag/Checkbox.java:
-    newFile: !uuid '9262bd8d1fe7309329cc3f85752bdba8a77e3260'
-    oldFile: !uuid 'c147b2d4d306fa6ce4e8eb9fba6f00fcd99caf43'
-gitCommitId: !uuid '9561e90b1f12f3f5cb78e954a9f465533a8b0672'
+    newFile: !uuid '885b8831ed96016b9c9c06c143644e47e9b02c9e'
+    oldFile: !uuid '9262bd8d1fe7309329cc3f85752bdba8a77e3260'
+gitCommitId: !uuid 'ced56d8260258f87eec7ea52df6f2d726933e1e1'
 renames: {
   }
-revisionId: 445
+revisionId: 446
