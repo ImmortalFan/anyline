@@ -3,24 +3,27 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '61bed8860f035db644b49a3b4348ce3c31e361f0'
-    oldFile: !uuid '12aab3c3a68af8c2787eb5a905e11a367662434b'
+    newFile: !uuid 'e000e17803b930170ab32f9fe469803d8c788a2f'
+    oldFile: !uuid '61bed8860f035db644b49a3b4348ce3c31e361f0'
   /anyline_core/src:
-    newFile: !uuid 'ac3e51a4927e02a8c86e25f11426009e63a51df8'
-    oldFile: !uuid '5bfb71336bd4ed4fbdd4ca2915f289d1af7a3229'
+    newFile: !uuid '05dad52b51c164af19dd0609c46d989914bca31f'
+    oldFile: !uuid 'ac3e51a4927e02a8c86e25f11426009e63a51df8'
   /anyline_core/src/org:
-    newFile: !uuid 'ac273d3a802542cf355cb5028fbb2dc0bfb80216'
-    oldFile: !uuid '9888c0e121eeb46db5780a807c86e3360da9ad52'
+    newFile: !uuid 'af0c441bab08a3ad85d532e71368838510818f5b'
+    oldFile: !uuid 'ac273d3a802542cf355cb5028fbb2dc0bfb80216'
   /anyline_core/src/org/anyline:
-    newFile: !uuid 'c0e009ab84ab9a6556eccb86dc5404c79cd641dc'
-    oldFile: !uuid '47dbc402e1c8a1de312d53c197fa3edc4ace4ec0'
+    newFile: !uuid '50a434a35264ae245cf485b8b644945057af02c7'
+    oldFile: !uuid 'c0e009ab84ab9a6556eccb86dc5404c79cd641dc'
   /anyline_core/src/org/anyline/util:
-    newFile: !uuid '9b004a88c4f711bea867703c829f376ef5aac826'
-    oldFile: !uuid '445a0bc8eab3dd6f46fde389fc02f895f51ce850'
+    newFile: !uuid '600e3b57e5fd93f43f689e250c40b069550b6e76'
+    oldFile: !uuid '9b004a88c4f711bea867703c829f376ef5aac826'
+  /anyline_core/src/org/anyline/util/ConfigTable.java:
+    newFile: !uuid '6097733b4ac3dd9300d85ce885daa2facb5cdbb7'
+    oldFile: !uuid '1bea7bb57dc88847a8a5dae2d00dd7aa692a0660'
   /anyline_core/src/org/anyline/util/HttpUtil.java:
-    newFile: !uuid '5c2a0fd8a383e50af7baf6cfdd38c617d5570a90'
-    oldFile: !uuid '0179cfe6af63a3ffd01b25b43b85c6ec3df58844'
-gitCommitId: !uuid 'ff5554bb49543dc348eebf9be37604f5c2406a77'
+    newFile: !uuid 'd90a9b63705cf0ca80f8eaacad02e693a56dd965'
+    oldFile: !uuid '5c2a0fd8a383e50af7baf6cfdd38c617d5570a90'
+gitCommitId: !uuid '903e1e13fd5ab61de4b1fdd34cf7e6c144fc6b3c'
 renames: {
   }
-revisionId: 457
+revisionId: 458
