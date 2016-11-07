@@ -3,24 +3,36 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '3d80745f08dca5a0db9034121537bc4706e40bd5'
-    oldFile: !uuid 'ad763085556459d85e56f6dcadc801304232c915'
+    newFile: !uuid 'af9983b89e9cf403437b0e500367e241e65618dc'
+    oldFile: !uuid '3d80745f08dca5a0db9034121537bc4706e40bd5'
   /anyline_core/src:
-    newFile: !uuid '4128ae571e04b5461dc31b5412e587ff5a383683'
-    oldFile: !uuid '1fe5fc50033d7e871553f873a60d56c6060fc7c5'
+    newFile: !uuid '84341cc99fa519171f84d67be9cbc62043842af7'
+    oldFile: !uuid '4128ae571e04b5461dc31b5412e587ff5a383683'
   /anyline_core/src/org:
-    newFile: !uuid '95e17d3c8a248d174b7ea33b4a200ebe7d9fe2f4'
-    oldFile: !uuid '31c0fed57a604268f5e49862aeb810593759f28d'
+    newFile: !uuid '25c2b40065c2fb691450bbb5b6fa4cfcb0407eeb'
+    oldFile: !uuid '95e17d3c8a248d174b7ea33b4a200ebe7d9fe2f4'
   /anyline_core/src/org/anyline:
-    newFile: !uuid '63937fd2923966cf230e80d206a812938d70aa80'
-    oldFile: !uuid '5eb64c83b4a7c3c6d57004c9964d672dbda1755b'
-  /anyline_core/src/org/anyline/entity:
-    newFile: !uuid 'ef5e5097c1e14ff2cd6758723bdee4e63ecee318'
-    oldFile: !uuid '44e6d311908a8b0ec75a60dcc974b6795ca3a28d'
-  /anyline_core/src/org/anyline/entity/DataSet.java:
-    newFile: !uuid '91b209ad0f38958698123f331cf47f161feb2349'
-    oldFile: !uuid '16bea4221858955e5057d133a511416a3961a9f1'
-gitCommitId: !uuid '33b5d9791a58236fb7c4dd1c2c995e732adefd1e'
+    newFile: !uuid 'c75f89e2772c80e410785c85591a177ba30e5391'
+    oldFile: !uuid '63937fd2923966cf230e80d206a812938d70aa80'
+  /anyline_core/src/org/anyline/tag:
+    newFile: !uuid 'd7a4437817308eacd4f64c97173c0bb4bac8a270'
+    oldFile: !uuid 'b313378281333d7da66e1c12b3a46b338e7c6630'
+  /anyline_core/src/org/anyline/tag/BaseBodyTag.java:
+    newFile: !uuid '9ef1252aabc40dfdd86603b17a916c94c3a67a9c'
+    oldFile: !uuid '607820864f1c82d9bc2c01f751454610df267d07'
+  /anyline_core/src/org/anyline/tag/Checkbox.java:
+    newFile: !uuid '5c20c628cf40cba30713716df9b9dd9859daf6f6'
+    oldFile: !uuid '5c1038a62d62b47a7b2b3b67c7e008934d29557a'
+  /anyline_core/src/org/anyline/tag/Ellipsis.java:
+    newFile: !uuid 'aff3030973ca0cf64b7d4251bc3e45c2183d4f71'
+    oldFile: !uuid '71f92ad0aa5e0fe32f7a93729872c77831c74c22'
+  /anyline_core/src/org/anyline/tag/Radio.java:
+    newFile: !uuid '5a8606dbb171ed8b9415dc7902827f2ae8a8309b'
+    oldFile: !uuid '7f53edd2da8eff65b8b3401e8a6369e5e60f3179'
+  /anyline_core/src/org/anyline/tag/Select.java:
+    newFile: !uuid 'ff2fd055cb3030c89ff4bf286c123bd425ea0d20'
+    oldFile: !uuid '5bfaf192d16437df61a994a553e04e641ae57a12'
+gitCommitId: !uuid '3af49b8b23d29faf35683eb88695907e99256fcb'
 renames: {
   }
-revisionId: 474
+revisionId: 475
