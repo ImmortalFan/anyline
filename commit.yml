@@ -2,25 +2,25 @@
 branches: {
   }
 fileChange:
-  /anyline_weixin:
-    newFile: !uuid '73ecf0651ff28ec9362bdffb263f8f005172c064'
-    oldFile: !uuid 'aafda8c5d4a48dcfd7d357012ad0a9a0846f373e'
-  /anyline_weixin/src:
-    newFile: !uuid '82ee11274ed834b770395d72267d44e1f9027430'
-    oldFile: !uuid '42e26cdf1fdbfedf16e4ed97a5ca03e014373466'
-  /anyline_weixin/src/org:
-    newFile: !uuid '24546c30389675adcd362dbf095ecb83a6744f8d'
-    oldFile: !uuid 'd61bf766448a2b46e1f60f4611d64608340abffb'
-  /anyline_weixin/src/org/anylie:
-    newFile: !uuid '44b3ece5ac664601eb0a79721b9efb0128537c99'
-    oldFile: !uuid '9a7bbf27a647b88a6066cc6add72b6f2b9ab134c'
-  /anyline_weixin/src/org/anylie/util:
-    newFile: !uuid '64e950379db443bda61c9025a99518bfdb6a0458'
-    oldFile: !uuid '0d0d5393eb9e40cbdd2de1bd8ae11e10463ad7a0'
-  /anyline_weixin/src/org/anylie/util/SHA1Util.java:
-    newFile: !uuid '818959da2169d6fc127244f620f2f2135318d7ab'
-    oldFile: !uuid '7fe134a9fc3121e8c70296dfefa9c368749c314b'
-gitCommitId: !uuid '140a61ac60c54fa65d5e0c78d07d1292bbb77e45'
+  /anyline_core:
+    newFile: !uuid '075964148cea488f3fb8ead7b15736ff2624ce33'
+    oldFile: !uuid 'abc38a5729bbe9ec537e7ce63670b98e3cf897fc'
+  /anyline_core/src:
+    newFile: !uuid 'd69b913996bdc57f915d8a5bc58b261a728f0d3e'
+    oldFile: !uuid '863ac08b9e1badd4358101a0f1714fd198500449'
+  /anyline_core/src/org:
+    newFile: !uuid '197b89a5f204c7eb76b1a542855d56fb427c4a64'
+    oldFile: !uuid '96928a212cc5697ca8441d0d21d53e7cf27a8219'
+  /anyline_core/src/org/anyline:
+    newFile: !uuid 'f093719c3f346eaf1e698518743cfa588b656481'
+    oldFile: !uuid '9161b6007806e460e011c5a4073bcdcc7882bf51'
+  /anyline_core/src/org/anyline/util:
+    newFile: !uuid '15cba03ed69815e1b1da3be1034e1c0d2c084194'
+    oldFile: !uuid 'f5936286fc1c4601076a9cd55e78caa0015a652c'
+  /anyline_core/src/org/anyline/util/SHA1Util.java:
+    newFile: !uuid '066d768520f56c66587694515c1c294d3cb62d9a'
+    oldFile: null
+gitCommitId: !uuid '7d3a4c83857887d28649674a9f888f6b63785785'
 renames: {
   }
-revisionId: 478
+revisionId: 479
