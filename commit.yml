@@ -3,27 +3,24 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid '1aa3a3ef8c23a4251f7a5c2f8e63a257aa23f236'
-    oldFile: !uuid 'af9983b89e9cf403437b0e500367e241e65618dc'
+    newFile: !uuid 'abc38a5729bbe9ec537e7ce63670b98e3cf897fc'
+    oldFile: !uuid '1aa3a3ef8c23a4251f7a5c2f8e63a257aa23f236'
   /anyline_core/src:
-    newFile: !uuid '45884419896e6c8045013051796d9a561edd154d'
-    oldFile: !uuid '84341cc99fa519171f84d67be9cbc62043842af7'
+    newFile: !uuid '863ac08b9e1badd4358101a0f1714fd198500449'
+    oldFile: !uuid '45884419896e6c8045013051796d9a561edd154d'
   /anyline_core/src/org:
-    newFile: !uuid '7fcf92d0e8f2d141fe0e76091d03d2cdeb4eef31'
-    oldFile: !uuid '25c2b40065c2fb691450bbb5b6fa4cfcb0407eeb'
+    newFile: !uuid '96928a212cc5697ca8441d0d21d53e7cf27a8219'
+    oldFile: !uuid '7fcf92d0e8f2d141fe0e76091d03d2cdeb4eef31'
   /anyline_core/src/org/anyline:
-    newFile: !uuid '10e27e00bc015e82868699bf0bd303647ae1a63e'
-    oldFile: !uuid 'c75f89e2772c80e410785c85591a177ba30e5391'
+    newFile: !uuid '9161b6007806e460e011c5a4073bcdcc7882bf51'
+    oldFile: !uuid '10e27e00bc015e82868699bf0bd303647ae1a63e'
   /anyline_core/src/org/anyline/util:
-    newFile: !uuid '529bbca3d02a51bb3ce0add90cd893a8d7094a53'
-    oldFile: !uuid '2b25a3d01518561ee72a7e926de399c88ca80929'
+    newFile: !uuid 'f5936286fc1c4601076a9cd55e78caa0015a652c'
+    oldFile: !uuid '529bbca3d02a51bb3ce0add90cd893a8d7094a53'
   /anyline_core/src/org/anyline/util/BeanUtil.java:
-    newFile: !uuid '809058561cb07129962f923027fc6a1c90008fe0'
-    oldFile: !uuid 'bf7a807933e94485f01f7894df6785e507848b2d'
-  /anyline_core/src/org/anyline/util/ConfigTable.java:
-    newFile: !uuid '224607031716792256e9eebbf5b2d5f10d4d3c65'
-    oldFile: !uuid '6097733b4ac3dd9300d85ce885daa2facb5cdbb7'
-gitCommitId: !uuid '5a19c3b0a48149c50ed157eb863424072121cfa5'
+    newFile: !uuid 'f66a73a76e9cce47f509a9abd6e8e193636c3a83'
+    oldFile: !uuid '809058561cb07129962f923027fc6a1c90008fe0'
+gitCommitId: !uuid '722fe015fe81ad95ac69596ea71f5f0af6aa34ea'
 renames: {
   }
-revisionId: 476
+revisionId: 477
