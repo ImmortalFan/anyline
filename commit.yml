@@ -2,25 +2,28 @@
 branches: {
   }
 fileChange:
-  /anyline_core:
-    newFile: !uuid '98289bbd8705a0849cc86efd19a18e9741f2b6c1'
-    oldFile: !uuid '699c92bafd7f587797a8ac1b940b6ad0dfb02978'
-  /anyline_core/src:
-    newFile: !uuid '414e4edeaa6b6b5f59e0b90d004ba44334c36563'
-    oldFile: !uuid '58d393e498b262b985f72eca79345b00fa07825a'
-  /anyline_core/src/org:
-    newFile: !uuid 'b6a7026d732c89d70ad698ccbea0e7cfc2280ccd'
-    oldFile: !uuid 'ac0666ca89b7b0c1d1a6059def049f4beb471d3d'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid 'aa0b14f747e17bbb8aa105e42f5ea6c7c4f93c0c'
-    oldFile: !uuid '6339e0f3c7380313c59d54a62ac831c02610e7c2'
-  /anyline_core/src/org/anyline/util:
-    newFile: !uuid 'c8d2bd32a52b4a5106e6da21580040f5befc413f'
-    oldFile: !uuid 'bbda749d9d2f5ed26f88d48f2024f8c3a51f9906'
-  /anyline_core/src/org/anyline/util/BeanUtil.java:
-    newFile: !uuid 'e12ea519118877cd99461a09042b6f9979e782b5'
-    oldFile: !uuid '21d8cb0cb3703f9c6c7861df59a64ff7bd320db6'
-gitCommitId: !uuid 'f4168ded0f703ede9c4228c32ede837096a30c96'
+  /anyline_weixin:
+    newFile: !uuid '9a7e72ab656c5a1dd082ed24b40eda608364cf95'
+    oldFile: !uuid '028ae9d7710d9ef2edc4f0241c9051ad080dc187'
+  /anyline_weixin/src:
+    newFile: !uuid '241088d34689d1b6e3845e5dd2c262eea4d846b3'
+    oldFile: !uuid '54d60ce96df59c779cd4e7bad036736b92ff6630'
+  /anyline_weixin/src/org:
+    newFile: !uuid '9f69af256b47a06780c4c424201d86d225d44749'
+    oldFile: !uuid '258d7b01b8e815be0dc5506bb09785cf309e4f6e'
+  /anyline_weixin/src/org/anyline:
+    newFile: !uuid 'fd09fae67ab506ef1fdf0b909b60bfe092339202'
+    oldFile: !uuid '6440ca594210e6451fbb33e677cec45c3f7276bd'
+  /anyline_weixin/src/org/anyline/weixin:
+    newFile: !uuid 'b2b66573932a211f67619308d812197116791304'
+    oldFile: !uuid '22534dc782e495933a68ff188ed2df15c8ee6b1c'
+  /anyline_weixin/src/org/anyline/weixin/entity:
+    newFile: !uuid '13af1530b6eaba5715172d5059e52372aa3f687c'
+    oldFile: !uuid 'd08e55a465ebb1edbe816e2696a034bb29735a19'
+  /anyline_weixin/src/org/anyline/weixin/entity/PayOrder.java:
+    newFile: !uuid 'a13cea8b86e8af56b3d4bba7a6d5160c8681bc4b'
+    oldFile: !uuid 'a6e4dd7deb6c160b7e40bd3aa3745defc282db57'
+gitCommitId: !uuid 'd592ab970ffe046c61eab580014d39bdc61d40f3'
 renames: {
   }
-revisionId: 491
+revisionId: 492
