@@ -2,28 +2,31 @@
 branches: {
   }
 fileChange:
-  /anyline_core:
-    newFile: !uuid '699c92bafd7f587797a8ac1b940b6ad0dfb02978'
-    oldFile: !uuid 'c3a019855df69463f0d230d1d058f1c02dccaefc'
-  /anyline_core/src:
-    newFile: !uuid '58d393e498b262b985f72eca79345b00fa07825a'
-    oldFile: !uuid 'dec71f2416bd4261d7711cc75ede0b522b76f92e'
-  /anyline_core/src/org:
-    newFile: !uuid 'ac0666ca89b7b0c1d1a6059def049f4beb471d3d'
-    oldFile: !uuid '54d06883825309bf4325acc989441ea6b2181d59'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '6339e0f3c7380313c59d54a62ac831c02610e7c2'
-    oldFile: !uuid 'a65c2d615febf747a89396bcc07634ac4a6f895e'
-  /anyline_core/src/org/anyline/util:
-    newFile: !uuid 'bbda749d9d2f5ed26f88d48f2024f8c3a51f9906'
-    oldFile: !uuid '809478daf9407cd8b1b89db4d21849f4cb33887e'
-  /anyline_core/src/org/anyline/util/MD5Util.java:
-    newFile: !uuid '212d7cee134a292ae466637d450b458f85cd575d'
-    oldFile: !uuid '170be7b37d9fd8fdb078e60e77f3db0c5ecb14a1'
-  /anyline_core/src/org/anyline/util/SHA1Util.java:
-    newFile: !uuid 'dcc720df61be7ffb3e90ffea2d0d0a39c479069a'
-    oldFile: !uuid 'd41ac8e99f9dcee1ece6a4d00a5b932ca7ebc521'
-gitCommitId: !uuid 'c1628d0261e2b81c079a61e2239610f5a148d363'
+  /anyline_weixin:
+    newFile: !uuid '5b7d9ce92c55d04d8844e97db4d10af893804bc3'
+    oldFile: !uuid 'ae4e7a5e35bae9a749b17da48cc0c6bf4382111e'
+  /anyline_weixin/src:
+    newFile: !uuid '659fe40c89ff211f77117ecacbd3d37780810e94'
+    oldFile: !uuid '289d67eab59ee9626805863c1bfc69691d773bb4'
+  /anyline_weixin/src/org:
+    newFile: !uuid '80c7f4ab3c50da1d6ebbd448a04d9e25a859327a'
+    oldFile: !uuid '386fbd031ec20b68afed7e437ebb92568268c610'
+  /anyline_weixin/src/org/anyline:
+    newFile: !uuid 'd281e3110e1eecdd292f9e9be977b6a53e3f350a'
+    oldFile: !uuid '08d9aff95166823c5ae9fb95af9ce78c3e7de700'
+  /anyline_weixin/src/org/anyline/weixin:
+    newFile: !uuid 'a86cf6b5470f4e0dd4f5d4e9d823102b98e0f4b6'
+    oldFile: !uuid 'd5590a67b04b1ac3053f99b59c9b719c394ac01f'
+  /anyline_weixin/src/org/anyline/weixin/util:
+    newFile: !uuid '9652c5c4613cee35c6088fb1926252ecc36b3d00'
+    oldFile: !uuid 'add2f48b6272a0cae31c0444fc5231be3ce10ec2'
+  /anyline_weixin/src/org/anyline/weixin/util/SignUtil.java:
+    newFile: null
+    oldFile: !uuid 'a88c7ebb63a6314e48209a0485e0bd8e70c8fdd1'
+  /anyline_weixin/src/org/anyline/weixin/util/WXUtil.java:
+    newFile: !uuid 'b529726e605142cafed30da01de7630da9f947d0'
+    oldFile: !uuid 'b107fe45a2459b5761464b94f7e05c070f88d4a4'
+gitCommitId: !uuid '8229ce37ff3c58ff887f902ec38420abaa00e72d'
 renames: {
   }
-revisionId: 487
+revisionId: 488
