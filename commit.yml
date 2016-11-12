@@ -2,28 +2,25 @@
 branches: {
   }
 fileChange:
-  /anyline_weixin:
-    newFile: !uuid '028ae9d7710d9ef2edc4f0241c9051ad080dc187'
-    oldFile: !uuid 'dca329b4ca737d3a52846b3bcae4b8c2af7150dc'
-  /anyline_weixin/src:
-    newFile: !uuid '54d60ce96df59c779cd4e7bad036736b92ff6630'
-    oldFile: !uuid '506452e90a121026953b1833159873fb0cfa288f'
-  /anyline_weixin/src/org:
-    newFile: !uuid '258d7b01b8e815be0dc5506bb09785cf309e4f6e'
-    oldFile: !uuid '3b525d7a2b6bdf1bad6d060ef1619acfa25ec134'
-  /anyline_weixin/src/org/anyline:
-    newFile: !uuid '6440ca594210e6451fbb33e677cec45c3f7276bd'
-    oldFile: !uuid 'b3fa1b40dbe281663dd15f760e6344d9e6de6830'
-  /anyline_weixin/src/org/anyline/weixin:
-    newFile: !uuid '22534dc782e495933a68ff188ed2df15c8ee6b1c'
-    oldFile: !uuid '56f8e37583c1da7955f19184e820a2e5d37226ef'
-  /anyline_weixin/src/org/anyline/weixin/entity:
-    newFile: !uuid 'd08e55a465ebb1edbe816e2696a034bb29735a19'
-    oldFile: !uuid '15be8b68a399090b9d57034c65d7d07d186134c8'
-  /anyline_weixin/src/org/anyline/weixin/entity/PayNotify.java:
-    newFile: !uuid 'a0310b2380492bf4dd6791d9feec33a94c10eca5'
-    oldFile: null
-gitCommitId: !uuid 'b38595952a01cc411f9bdd7d706da64bddf1e92a'
+  /anyline_core:
+    newFile: !uuid '98289bbd8705a0849cc86efd19a18e9741f2b6c1'
+    oldFile: !uuid '699c92bafd7f587797a8ac1b940b6ad0dfb02978'
+  /anyline_core/src:
+    newFile: !uuid '414e4edeaa6b6b5f59e0b90d004ba44334c36563'
+    oldFile: !uuid '58d393e498b262b985f72eca79345b00fa07825a'
+  /anyline_core/src/org:
+    newFile: !uuid 'b6a7026d732c89d70ad698ccbea0e7cfc2280ccd'
+    oldFile: !uuid 'ac0666ca89b7b0c1d1a6059def049f4beb471d3d'
+  /anyline_core/src/org/anyline:
+    newFile: !uuid 'aa0b14f747e17bbb8aa105e42f5ea6c7c4f93c0c'
+    oldFile: !uuid '6339e0f3c7380313c59d54a62ac831c02610e7c2'
+  /anyline_core/src/org/anyline/util:
+    newFile: !uuid 'c8d2bd32a52b4a5106e6da21580040f5befc413f'
+    oldFile: !uuid 'bbda749d9d2f5ed26f88d48f2024f8c3a51f9906'
+  /anyline_core/src/org/anyline/util/BeanUtil.java:
+    newFile: !uuid 'e12ea519118877cd99461a09042b6f9979e782b5'
+    oldFile: !uuid '21d8cb0cb3703f9c6c7861df59a64ff7bd320db6'
+gitCommitId: !uuid 'f4168ded0f703ede9c4228c32ede837096a30c96'
 renames: {
   }
-revisionId: 490
+revisionId: 491
