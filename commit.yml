@@ -2,55 +2,25 @@
 branches: {
   }
 fileChange:
-  /anyline_struts:
-    newFile: !uuid 'c4d1f0b1edd200ec1fd8202855fb8e70f0a1c1c0'
-    oldFile: !uuid 'ea503d10963f478cf462daa95893f4778ae5aaae'
-  /anyline_struts/src:
-    newFile: !uuid '7e5ea427336443bb2806fa8dca094091fa2a150a'
-    oldFile: !uuid 'ce41bb0db7f8d42f4232f5cada5e6ce771e5585f'
-  /anyline_struts/src/org:
-    newFile: !uuid '693b96aa65bdfd7493634f662c40b8c2b8f4fa21'
-    oldFile: !uuid 'db558026cc205785d1e822ed47e6596eba32e266'
-  /anyline_struts/src/org/anyline:
-    newFile: !uuid 'd8f4f6fffdc6a90dfb6424f7003694bdc5533142'
-    oldFile: !uuid '440219c87627de3a5b4575b300ed486da525ca31'
-  /anyline_struts/src/org/anyline/struts:
-    newFile: !uuid '4ac07d7dc2c0d54cde5fbfd9b99e71e0ad7e3f04'
-    oldFile: !uuid '760fecc4ed5c7b1afb642d93364a675970981e6d'
-  /anyline_struts/src/org/anyline/struts/action:
-    newFile: !uuid 'f883a7738b764865f681b01391c7b60eca137962'
-    oldFile: !uuid 'fe8c1038408d96d6898866eaff6158d81936f309'
-  /anyline_struts/src/org/anyline/struts/action/FileAction.java:
-    newFile: !uuid '3e8f0ab13d062cd348300f7ba2330369915b11e6'
-    oldFile: !uuid '0c2ad38519a4347de44f792f29f7bf11f66fc191'
-  /anyline_weixin:
-    newFile: !uuid '5bccd2ed12b6ae955c61680c1b0d5ca2742ebd03'
-    oldFile: !uuid '9a7e72ab656c5a1dd082ed24b40eda608364cf95'
-  /anyline_weixin/src:
-    newFile: !uuid 'f530bd9b7b082973f6358e4e283cc4d0f9e389b2'
-    oldFile: !uuid '241088d34689d1b6e3845e5dd2c262eea4d846b3'
-  /anyline_weixin/src/org:
-    newFile: !uuid 'cb86c6f95cba2ce84adca261a408d95183894061'
-    oldFile: !uuid '9f69af256b47a06780c4c424201d86d225d44749'
-  /anyline_weixin/src/org/anyline:
-    newFile: !uuid 'a9fe9aebbfa0ef571bc726f6b5ffeb6dcbee80c4'
-    oldFile: !uuid 'fd09fae67ab506ef1fdf0b909b60bfe092339202'
-  /anyline_weixin/src/org/anyline/weixin:
-    newFile: !uuid '22e28aac978ba2927eab56bf5766f9865e7e3734'
-    oldFile: !uuid 'b2b66573932a211f67619308d812197116791304'
-  /anyline_weixin/src/org/anyline/weixin/entity:
-    newFile: !uuid 'd08e55a465ebb1edbe816e2696a034bb29735a19'
-    oldFile: !uuid '13af1530b6eaba5715172d5059e52372aa3f687c'
-  /anyline_weixin/src/org/anyline/weixin/entity/PayOrder.java:
-    newFile: !uuid 'a6e4dd7deb6c160b7e40bd3aa3745defc282db57'
-    oldFile: !uuid 'a13cea8b86e8af56b3d4bba7a6d5160c8681bc4b'
-  /anyline_weixin/src/org/anyline/weixin/util:
-    newFile: !uuid 'e16ce47c436f1ac7b6e1e8327bd123d5ee14222f'
-    oldFile: !uuid 'd682769b94fb1fd0b5b3ab492f366c42748a4547'
-  /anyline_weixin/src/org/anyline/weixin/util/WXConfig.java:
-    newFile: !uuid '3e70f852df57e80d5c44bfb1a6418da361c2f436'
-    oldFile: !uuid '0a078e848ae59abb6350abb37b05af48ffe328c7'
-gitCommitId: !uuid 'a1308fdc2863003ee0b3cbda882df6543abdfdc1'
+  /anyline_core:
+    newFile: !uuid '83f4c3f62175b31fed838885463c9ce46bf7e41a'
+    oldFile: !uuid '98289bbd8705a0849cc86efd19a18e9741f2b6c1'
+  /anyline_core/src:
+    newFile: !uuid '3d962986914c2fa4e203acbd03a7cd85dcba47f5'
+    oldFile: !uuid '414e4edeaa6b6b5f59e0b90d004ba44334c36563'
+  /anyline_core/src/org:
+    newFile: !uuid 'e63a1967a8edce180b337e83add87046355294be'
+    oldFile: !uuid 'b6a7026d732c89d70ad698ccbea0e7cfc2280ccd'
+  /anyline_core/src/org/anyline:
+    newFile: !uuid '796b244415adecbb288cb9797312f2fff987bc26'
+    oldFile: !uuid 'aa0b14f747e17bbb8aa105e42f5ea6c7c4f93c0c'
+  /anyline_core/src/org/anyline/service:
+    newFile: !uuid '633753a9a13c523523f31eb27eafdd47d5763334'
+    oldFile: !uuid '1d2327381345f18246bb368f2430ee3ce5e588e4'
+  /anyline_core/src/org/anyline/service/AnylineService.java:
+    newFile: !uuid 'a765a217948e8832786026b8f6f3b30b143b81ea'
+    oldFile: !uuid 'c4d0bbcb3ddc556918c4e5e620783ae3e388bcc6'
+gitCommitId: !uuid '4a6363e30bcd22679863b9c4b7d5c04c5317e228'
 renames: {
   }
-revisionId: 493
+revisionId: 494
