@@ -2,25 +2,31 @@
 branches: {
   }
 fileChange:
-  /anyline_core:
-    newFile: !uuid '83f4c3f62175b31fed838885463c9ce46bf7e41a'
-    oldFile: !uuid '98289bbd8705a0849cc86efd19a18e9741f2b6c1'
-  /anyline_core/src:
-    newFile: !uuid '3d962986914c2fa4e203acbd03a7cd85dcba47f5'
-    oldFile: !uuid '414e4edeaa6b6b5f59e0b90d004ba44334c36563'
-  /anyline_core/src/org:
-    newFile: !uuid 'e63a1967a8edce180b337e83add87046355294be'
-    oldFile: !uuid 'b6a7026d732c89d70ad698ccbea0e7cfc2280ccd'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '796b244415adecbb288cb9797312f2fff987bc26'
-    oldFile: !uuid 'aa0b14f747e17bbb8aa105e42f5ea6c7c4f93c0c'
-  /anyline_core/src/org/anyline/service:
-    newFile: !uuid '633753a9a13c523523f31eb27eafdd47d5763334'
-    oldFile: !uuid '1d2327381345f18246bb368f2430ee3ce5e588e4'
-  /anyline_core/src/org/anyline/service/AnylineService.java:
-    newFile: !uuid 'a765a217948e8832786026b8f6f3b30b143b81ea'
-    oldFile: !uuid 'c4d0bbcb3ddc556918c4e5e620783ae3e388bcc6'
-gitCommitId: !uuid '4a6363e30bcd22679863b9c4b7d5c04c5317e228'
+  /anyline_struts:
+    newFile: !uuid '96fae72bafb977509530e38a3e6ac05bd7fdcca4'
+    oldFile: !uuid 'c4d1f0b1edd200ec1fd8202855fb8e70f0a1c1c0'
+  /anyline_struts/src:
+    newFile: !uuid 'c2a1dc2777b3f67ea36c317ae185dae9dfb36b9c'
+    oldFile: !uuid '7e5ea427336443bb2806fa8dca094091fa2a150a'
+  /anyline_struts/src/org:
+    newFile: !uuid '310bad203d4a7d5214ccd84fbb6fea6074fd2710'
+    oldFile: !uuid '693b96aa65bdfd7493634f662c40b8c2b8f4fa21'
+  /anyline_struts/src/org/anyline:
+    newFile: !uuid '0dfa2eb5e51e1cfdd7a2d26fb3a6b787eac845a4'
+    oldFile: !uuid 'd8f4f6fffdc6a90dfb6424f7003694bdc5533142'
+  /anyline_struts/src/org/anyline/struts:
+    newFile: !uuid 'd79946f20e453906743f3fab69a37687955d38da'
+    oldFile: !uuid '4ac07d7dc2c0d54cde5fbfd9b99e71e0ad7e3f04'
+  /anyline_struts/src/org/anyline/struts/action:
+    newFile: !uuid '4567594625fb44154e3bf4d0e0dae380f7f38898'
+    oldFile: !uuid 'f883a7738b764865f681b01391c7b60eca137962'
+  /anyline_struts/src/org/anyline/struts/action/AnylineAction.java:
+    newFile: !uuid '4d26b37142839c73d35f73f26103267ce6486b20'
+    oldFile: !uuid '9ebf4af7ccb7a47ab07a1332dab8b510d7757e4a'
+  /anyline_struts/src/org/anyline/struts/action/TemplateAction.java:
+    newFile: !uuid '340fdfe816d63ea48c6f983cfb1c592a67678596'
+    oldFile: !uuid '1078aeb99c45ab7a018d4f0e46e7fba615663511'
+gitCommitId: !uuid '06e32ca1caa87c4932f9de72eb78f0b50be5af99'
 renames: {
   }
-revisionId: 494
+revisionId: 495
