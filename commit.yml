@@ -3,51 +3,18 @@ branches: {
   }
 fileChange:
   /anyline_core:
-    newFile: !uuid 'a909044b068a04f110b7d1ddda444e880501f539'
-    oldFile: !uuid '47d4a690d74ecf3edd15faa2a95ee672e6ebf75b'
-  /anyline_core/src:
-    newFile: !uuid '62d3ef2f08fbf2f369d109988b7942bffccdd4b1'
-    oldFile: !uuid 'fc84d38f421d4c93cfc4f637571eb3a5a21b2407'
-  /anyline_core/src/org:
-    newFile: !uuid '7c387c3ac9fe2a0bcb04e7172ad75097bfe317b6'
-    oldFile: !uuid '3f93294dd4d3e34d9c22417fd4bae80e7a27eb7e'
-  /anyline_core/src/org/anyline:
-    newFile: !uuid '3e7d996c20f5c8b218dfa7d4cf5aaba962dd072c'
-    oldFile: !uuid '9bc62d56ce77e1af4ca5c7b246ca37fd7ecac9cc'
-  /anyline_core/src/org/anyline/dao:
-    newFile: !uuid '58fdb74df5fa1279e59dbb20b650a7718610ac69'
-    oldFile: !uuid '5ab2106f2092479711db028fd8b7ad546ad94ead'
-  /anyline_core/src/org/anyline/dao/impl:
-    newFile: !uuid '8e9bef0d5842747493d5f1f30f90c3485cb08a9c'
-    oldFile: !uuid '99a9e9c4599e2ba20d95e4027a3c14f546493076'
-  /anyline_core/src/org/anyline/dao/impl/springjdbc:
-    newFile: !uuid '7ff3c4c6d9fe7693ff7adb3bf6b93c16af741c8b'
-    oldFile: !uuid '21ff525998ab8488e97d438f4c7ada87525956ca'
-  /anyline_core/src/org/anyline/dao/impl/springjdbc/AnylineDaoImpl.java:
-    newFile: !uuid '586884641e014b588cb6f3255bdb81c5c64d811b'
-    oldFile: !uuid 'ae10a7af001406bdcc85d0f0dd9718309592c8b0'
-  /anyline_springmvc:
-    newFile: !uuid '835d68d7b96d4e7e126a08ab329fd891ffe00e58'
-    oldFile: !uuid 'a5320c5e3b3864637b6ee018d211010082d60453'
-  /anyline_springmvc/src:
-    newFile: !uuid '6636ddfd0f29f793d78f2be910d71418a1ce7adf'
-    oldFile: !uuid '24dc9d055986d5f97389f39ce3300c1c08761c76'
-  /anyline_springmvc/src/org:
-    newFile: !uuid '271c2a8a4a1a2443a4f4248985917727080dba01'
-    oldFile: !uuid 'b984fe7fe31299b848790150025269f6166de449'
-  /anyline_springmvc/src/org/anyline:
-    newFile: !uuid 'a483f675d5595dfdd0ba4377275ca0a127dd6c56'
-    oldFile: !uuid 'c0922678f3510713b4132540f55e084b1e47dc95'
-  /anyline_springmvc/src/org/anyline/controller:
-    newFile: !uuid 'f65863a9ff06a279c3d2259be42271b24ccd7f42'
-    oldFile: !uuid '69a79b3e42bfee4e1b058faf1478779769c447a4'
-  /anyline_springmvc/src/org/anyline/controller/impl:
-    newFile: !uuid '36a46181095ecd8ab40460743c2e1dec3c7de87d'
-    oldFile: !uuid '2b110e68e757c18f2def6438e89ae37c3052c010'
-  /anyline_springmvc/src/org/anyline/controller/impl/AnylineController.java:
-    newFile: !uuid 'f62f156c28abe7d096d7a715b710ccec05d939bd'
-    oldFile: !uuid 'd0336b3c3e5323e08a0290730dad038a7cabd34d'
-gitCommitId: !uuid 'edd096e07b05590933c051216cea9125b580f4c7'
+    newFile: !uuid 'f881ad22d013b254a108489ef861342e62de508d'
+    oldFile: !uuid 'a909044b068a04f110b7d1ddda444e880501f539'
+  /anyline_core/help:
+    newFile: !uuid 'c3896cde685c0652df5cb3827ef323338bb88917'
+    oldFile: !uuid '6cf1d84094c21d95a8deee9e6fbc48d353b97016'
+  /anyline_core/help/navi:
+    newFile: !uuid '6621845742ced2e26d626566e011e60593f0c54d'
+    oldFile: !uuid 'faa80afbb56f0da776a4bb8b99f587f981dd223e'
+  /anyline_core/help/navi/navi.js:
+    newFile: !uuid '34a38aee661fd5c683b0a81747244741745d4d75'
+    oldFile: !uuid '13e97a882f24ca04e38ed6754f1bb0b99d417834'
+gitCommitId: !uuid '06509680d7d7bd0ba162123ee9e6e19f702aa516'
 renames: {
   }
-revisionId: 497
+revisionId: 498
