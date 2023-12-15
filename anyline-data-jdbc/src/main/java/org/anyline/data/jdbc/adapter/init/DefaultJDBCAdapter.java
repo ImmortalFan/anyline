@@ -480,7 +480,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			}
 			delimiter(builder, key);
 
-			if(null != str && str.startsWith("${") && str.endsWith("}")){
+			//if (str.startsWith("${") && str.endsWith("}")) {
+			if (BasicUtil.checkEl(str)) {
 				value = str.substring(2, str.length()-1);
 				valuesBuilder.append(value);
 			}else if(null != value && value instanceof SQL_BUILD_IN_VALUE){
@@ -1402,7 +1403,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 				if(BasicUtil.isEmpty(column)){
 					continue;
 				}
-				if(column.startsWith("${") && column.endsWith("}")){
+				//if (column.startsWith("${") && column.endsWith("}")) {
+				if (BasicUtil.checkEl(column)) {
 					column = column.substring(2, column.length()-1);
 					builder.append(column);
 				}else{
@@ -3018,14 +3020,12 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			table.setCatalog(_catalog);
 			table.setSchema(_schema);
 			table.setName(name);
-			table.setObjectId(row.getLong("OBJECT_ID", (Long)null));
-			table.setEngine(row.getString("ENGINE"));
-			table.setComment(row.getString("TABLE_COMMENT", "COMMENTS", "COMMENT"));
+			init(table, row);
 			tables.put(name.toUpperCase(), table);
+
 		}
 		return tables;
 	}
-
 	/**
 	 * table[结果集封装] <br/>
 	 *  根据查询结果集构造Table
@@ -3073,14 +3073,48 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			table.setCatalog(_catalog);
 			table.setSchema(_schema);
 			table.setName(name);
-			table.setObjectId(row.getLong("OBJECT_ID", (Long)null));
-			table.setEngine(row.getString("ENGINE"));
-			table.setComment(row.getString("TABLE_COMMENT", "COMMENTS", "COMMENT"));
+			init(table, row);
 			if(!conains) {
 				tables.add(table);
 			}
 		}
 		return tables;
+	}
+	private void init(Table table, DataRow row){
+		table.setObjectId(row.getLong("OBJECT_ID", (Long)null));
+		table.setEngine(row.getString("ENGINE"));
+		table.setComment(row.getString("TABLE_COMMENT", "COMMENTS", "COMMENT"));
+		table.setDataRows(row.getLong("TABLE_ROWS", (Long)null));
+		table.setCollate(row.getString("TABLE_COLLATION"));
+		table.setDataLength(row.getLong("DATA_LENGTH", (Long)null));
+		table.setDataFree(row.getLong("DATA_FREE", (Long)null));
+		table.setIncrement(row.getLong("AUTO_INCREMENT", (Long)null));
+		table.setIndexLength(row.getLong("INDEX_LENGTH", (Long)null));
+		table.setCreateTime(row.getDate("CREATE_TIME", (Date)null));
+		table.setUpdateTime(row.getDate("UPDATE_TIME", (Date)null));
+		table.setType(row.getString("TABLE_TYPE"));
+		table.setEngine(row.getString("ENGINE"));
+	}
+	protected void init(Table table, ResultSet set, Map<String,Integer> keys){
+		try {
+			table.setType(BasicUtil.evl(string(keys, "TABLE_TYPE", set), table.getType()));
+		}catch (Exception e){}
+		try {
+			table.setComment(BasicUtil.evl(string(keys, "REMARKS", set), table.getComment()));
+		}catch (Exception e){}
+		try {
+			table.setTypeCat(BasicUtil.evl(string(keys, "TYPE_CAT", set), table.getTypeCat()));
+		}catch (Exception e){}
+		try {
+			table.setTypeName(BasicUtil.evl(string(keys, "TYPE_NAME", set), table.getTypeName()));
+		}catch (Exception e){}
+		try {
+			table.setSelfReferencingColumn(BasicUtil.evl(string(keys, "SELF_REFERENCING_COL_NAME", set), table.getSelfReferencingColumn()));
+		}catch (Exception e){}
+		try {
+			table.setRefGeneration(BasicUtil.evl(string(keys, "REF_GENERATION", set), table.getRefGeneration()));
+		}catch (Exception e){}
+
 	}
 	/**
 	 * table[结果集封装] <br/>
@@ -3113,7 +3147,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			if(null != schema){
 				schemaName = schema.getName();
 			}
-			ResultSet set = dbmd.getTables(catalogName, schemaName, pattern, types);
+			String[] tmp = checkSchema(catalogName, schemaName);
+			ResultSet set = dbmd.getTables(tmp[0], tmp[1], pattern, types);
 			if(null == tables){
 				tables = new LinkedHashMap<>();
 			}
@@ -3136,15 +3171,11 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 						continue;
 					}
 				}
-				table.setCatalog(BasicUtil.evl(string(keys, "TABLE_CAT", set), catalogName));
-				table.setSchema(BasicUtil.evl(string(keys, "TABLE_SCHEM", set), schemaName));
+				catalogName = string(keys, "TABLE_CAT", set);
+				schemaName = string(keys, "TABLE_SCHEM", set);
+				checkSchema(table, catalogName, schemaName);
 				table.setName(tableName);
-				table.setType(BasicUtil.evl(string(keys, "TABLE_TYPE", set), table.getType()));
-				table.setComment(BasicUtil.evl(string(keys, "REMARKS", set), table.getComment()));
-				table.setTypeCat(BasicUtil.evl(string(keys, "TYPE_CAT", set), table.getTypeCat()));
-				table.setTypeName(BasicUtil.evl(string(keys, "TYPE_NAME", set), table.getTypeName()));
-				table.setSelfReferencingColumn(BasicUtil.evl(string(keys, "SELF_REFERENCING_COL_NAME", set), table.getSelfReferencingColumn()));
-				table.setRefGeneration(BasicUtil.evl(string(keys, "REF_GENERATION", set), table.getRefGeneration()));
+				init(table, set, keys);
 				tables.put(tableName.toUpperCase(), table);
 
 				// table_map.put(table.getType().toUpperCase()+"_"+tableName.toUpperCase(), tableName);
@@ -3188,7 +3219,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 				schemaName = schema.getName();
 			}
 
-			ResultSet set = dbmd.getTables(catalogName, schemaName, pattern, types);
+			String[] tmp = checkSchema(catalogName, schemaName);
+			ResultSet set = dbmd.getTables(tmp[0], tmp[1], pattern, types);
 			if(null == tables){
 				tables = new ArrayList<>();
 			}
@@ -3202,9 +3234,11 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 				if(BasicUtil.isEmpty(tableName)){
 					continue;
 				}
-				catalogName = BasicUtil.evl(string(keys, "TABLE_CATALOG", set), string(keys, "TABLE_CAT", set), catalogName);
-				schemaName = BasicUtil.evl(string(keys, "TABLE_SCHEM", set), schemaName);
-				T table = table(tables, catalog, schema, tableName);
+				catalogName = BasicUtil.evl(string(keys, "TABLE_CATALOG", set), string(keys, "TABLE_CAT", set));
+				schemaName = BasicUtil.evl(string(keys, "TABLE_SCHEMA", set), string(keys, "TABLE_SCHEM", set));
+				Table chk = new Table();
+				checkSchema(chk, catalogName, schemaName);
+				T table = table(tables, chk.getCatalog(), chk.getSchema(), tableName);
 				boolean contains = true;
 				if(null == table){
 					if(create){
@@ -3214,15 +3248,10 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 						continue;
 					}
 				}
-				table.setCatalog(catalog);
+				checkSchema(table, catalogName, schemaName);
 				table.setSchema(schema);
 				table.setName(tableName);
-				table.setType(BasicUtil.evl(string(keys, "TABLE_TYPE", set), table.getType()));
-				table.setComment(BasicUtil.evl(string(keys, "REMARKS", set), table.getComment()));
-				table.setTypeCat(BasicUtil.evl(string(keys, "TYPE_CAT", set), table.getTypeCat()));
-				table.setTypeName(BasicUtil.evl(string(keys, "TYPE_NAME", set), table.getTypeName()));
-				table.setSelfReferencingColumn(BasicUtil.evl(string(keys, "SELF_REFERENCING_COL_NAME", set), table.getSelfReferencingColumn()));
-				table.setRefGeneration(BasicUtil.evl(string(keys, "REF_GENERATION", set), table.getRefGeneration()));
+				init(table, set, keys);
 				if(!contains) {
 					tables.add(table);
 				}
@@ -3454,7 +3483,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			if(null != schema){
 				schemaName = schema.getName();
 			}
-			ResultSet set = dbmd.getTables(catalogName, schemaName, pattern, new String[]{"VIEW"});
+			String[] tmp = checkSchema(catalogName, schemaName);
+			ResultSet set = dbmd.getTables(tmp[0], tmp[1], pattern, new String[]{"VIEW"});
 
 			if (null == views) {
 				views = new LinkedHashMap<>();
@@ -3481,15 +3511,12 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 						continue;
 					}
 				}
-				view.setCatalog(BasicUtil.evl(string(keys, "TABLE_CAT", set), catalogName));
-				view.setSchema(BasicUtil.evl(string(keys, "TABLE_SCHEM", set), schemaName));
+
+				catalogName = BasicUtil.evl(string(keys, "TABLE_CATALOG", set), string(keys, "TABLE_CAT", set));
+				schemaName = BasicUtil.evl(string(keys, "TABLE_SCHEMA", set), string(keys, "TABLE_SCHEM", set));
+				checkSchema(view, catalogName, schemaName);
 				view.setName(viewName);
-				view.setType(BasicUtil.evl(string(keys, "TABLE_TYPE", set), view.getType()));
-				view.setComment(BasicUtil.evl(string(keys, "REMARKS", set), view.getComment()));
-				view.setTypeCat(BasicUtil.evl(string(keys, "TYPE_CAT", set), view.getTypeCat()));
-				view.setTypeName(BasicUtil.evl(string(keys, "TYPE_NAME", set), view.getTypeName()));
-				view.setSelfReferencingColumn(BasicUtil.evl(string(keys, "SELF_REFERENCING_COL_NAME", set), view.getSelfReferencingColumn()));
-				view.setRefGeneration(BasicUtil.evl(string(keys, "REF_GENERATION", set), view.getRefGeneration()));
+				init(view, set, keys);
 				views.put(viewName.toUpperCase(), view);
 			}
 		}finally {
@@ -3499,7 +3526,26 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		}
 		return  views;
 	}
-
+	protected void init(View view, ResultSet set, Map<String, Integer> keys){
+		try {
+			view.setType(BasicUtil.evl(string(keys, "TABLE_TYPE", set), view.getType()));
+		}catch (Exception e){}
+		try {
+			view.setComment(BasicUtil.evl(string(keys, "REMARKS", set), view.getComment()));
+		}catch (Exception e){}
+		try {
+			view.setTypeCat(BasicUtil.evl(string(keys, "TYPE_CAT", set), view.getTypeCat()));
+		}catch (Exception e){}
+		try {
+			view.setTypeName(BasicUtil.evl(string(keys, "TYPE_NAME", set), view.getTypeName()));
+		}catch (Exception e){}
+		try {
+			view.setSelfReferencingColumn(BasicUtil.evl(string(keys, "SELF_REFERENCING_COL_NAME", set), view.getSelfReferencingColumn()));
+		}catch (Exception e){}
+		try {
+			view.setRefGeneration(BasicUtil.evl(string(keys, "REF_GENERATION", set), view.getRefGeneration()));
+		}catch (Exception e){}
+	}
 	/**
 	 * view[调用入口]
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
@@ -3870,6 +3916,9 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 					qty_total=columns.size();
 				}
 			} catch (Exception e) {
+				if(ConfigTable.IS_PRINT_EXCEPTION_STACK_TRACE){
+					e.printStackTrace();
+				}
 				if(primary) {
 					e.printStackTrace();
 				} if (ConfigTable.IS_LOG_SQL && log.isWarnEnabled()) {
@@ -3883,13 +3932,20 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 					List<Run> runs = buildQueryColumnRun(runtime, table, true);
 					if (null != runs) {
 						for (Run run  : runs) {
-							SqlRowSet set = ((JDBCRuntime)runtime).jdbc().queryForRowSet(run.getFinalQuery());
-							columns = columns(runtime, true, columns, table, set);
+							String sql = run.getFinalQuery();
+							if(BasicUtil.isNotEmpty(sql)) {
+								SqlRowSet set = ((JDBCRuntime) runtime).jdbc().queryForRowSet(sql);
+								columns = columns(runtime, true, columns, table, set);
+							}
 						}
 					}
 				} catch (Exception e) {
-					if (ConfigTable.IS_LOG_SQL && log.isWarnEnabled()) {
-						log.warn("{}[columns][{}][catalog:{}][schema:{}][table:{}][msg:{}]", random, LogUtil.format("根据metadata解析失败", 33), catalog, schema, table, e.toString());
+					if(ConfigTable.IS_PRINT_EXCEPTION_STACK_TRACE){
+						e.printStackTrace();
+					}else {
+						if (ConfigTable.IS_LOG_SQL && log.isWarnEnabled()) {
+							log.warn("{}[columns][{}][catalog:{}][schema:{}][table:{}][msg:{}]", random, LogUtil.format("根据metadata解析失败", 33), catalog, schema, table, e.toString());
+						}
 					}
 				}
 				if(null != columns) {
@@ -4092,7 +4148,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			String catalog = table.getCatalogName();
 			String schema = table.getSchemaName();
 			DatabaseMetaData dbmd = con.getMetaData();
-			ResultSet set = dbmd.getColumns(catalog, schema, table.getName(), pattern);
+			String[] tmp = checkSchema(catalog, schema);
+			ResultSet set = dbmd.getColumns(tmp[0], tmp[1], table.getName(), pattern);
 			Map<String,Integer> keys = keys(set);
 			while (set.next()){
 				String name = set.getString("COLUMN_NAME");
@@ -4126,8 +4183,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 				if("TAG".equals(remark)){
 					column = (T)new Tag();
 				}
-				column.setCatalog(columnCatalog);
-				column.setSchema(columnSchema);
+				checkSchema(column, catalog, schema);
 				column.setComment(remark);
 				column.setTable(BasicUtil.evl(string(keys,"TABLE_NAME", set, table.getName()), column.getTableName(true)));
 				column.setType(integer(keys, "DATA_TYPE", set, column.getType()));
@@ -4150,7 +4206,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 				column.setName(name);
 			}
 			// 主键
-			ResultSet rs = dbmd.getPrimaryKeys(table.getCatalogName(), table.getSchemaName(), table.getName());
+
+			ResultSet rs = dbmd.getPrimaryKeys(tmp[0], tmp[1], table.getName());
 			while (rs.next()) {
 				String name = rs.getString(4);
 				Column column = columns.get(name.toUpperCase());
@@ -4536,7 +4593,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			ds = jdbc.getDataSource();
 			con = DataSourceUtils.getConnection(ds);
 			DatabaseMetaData dbmd = con.getMetaData();
-			ResultSet set = dbmd.getIndexInfo(table.getCatalogName(), table.getSchemaName(), table.getName(), unique, approximate);
+			String[] tmp = checkSchema(table.getCatalogName(), table.getSchemaName());
+			ResultSet set = dbmd.getIndexInfo(tmp[0], tmp[1], table.getName(), unique, approximate);
 			Map<String, Integer> keys = keys(set);
 			LinkedHashMap<String, Column> columns = null;
 			while (set.next()) {
@@ -4555,8 +4613,12 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 					index.setName(string(keys, "INDEX_NAME", set));
 					//index.setType(integer(keys, "TYPE", set, null));
 					index.setUnique(!bool(keys, "NON_UNIQUE", set, false));
-					index.setCatalog(BasicUtil.evl(string(keys, "TABLE_CAT", set), table.getCatalogName()));
-					index.setSchema(BasicUtil.evl(string(keys, "TABLE_SCHEM", set), table.getSchemaName()));
+					String catalog = BasicUtil.evl(string(keys, "TABLE_CATALOG", set), string(keys, "TABLE_CAT", set));
+					String schema = BasicUtil.evl(string(keys, "TABLE_SCHEMA", set), string(keys, "TABLE_SCHEM", set));
+					checkSchema(index, catalog, schema);
+					if(!BasicUtil.equals(table.getCatalogName(), index.getCatalogName()) || !BasicUtil.equals(table.getSchemaName(), index.getSchemaName())){
+						continue;
+					}
 					index.setTable(string(keys, "TABLE_NAME", set));
 					indexs.put(name.toUpperCase(), index);
 					columns = new LinkedHashMap<>();
@@ -5701,7 +5763,10 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		name(runtime, builder, master);
 		builder.append(" FOR VALUES");
 		Partition partition = meta.getPartitionFor();
-		Partition.TYPE type = partition.getType();
+		Partition.TYPE type = null;
+		if(null != partition){
+			type = partition.getType();
+		}
 		if(null == type && null != master.getPartitionBy()){
 			type = master.getPartitionBy().getType();
 		}
@@ -6643,14 +6708,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 
 	/**
 	 * column[命令合成-子流程]<br/>
-	 * 添加表备注(表创建完成后调用,创建过程能添加备注的不需要实现)
+	 * 添加列备注(表创建完成后调用,创建过程能添加备注的不需要实现)
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-	 * @param column 列
-	 * @return sql
-	 * @throws Exception 异常
-	 */
-	/**
-	 * 添加表备注(表创建完成后调用,创建过程能添加备注的不需要实现)
 	 * @param meta 列
 	 * @return sql
 	 * @throws Exception 异常
@@ -7050,7 +7109,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 	 */
 	@Override
 	public boolean alter(DataRuntime runtime, Table table, Tag meta, boolean trigger) throws Exception{
-		return super.alter(runtime, table, meta);
+		return super.alter(runtime, table, meta, trigger);
 	}
 
 
@@ -7338,6 +7397,19 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 	 * primary[调用入口]<br/>
 	 * 修改主键
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+	 * @param origin 原主键
+	 * @param meta 新主键
+	 * @return 是否执行成功
+	 * @throws Exception 异常
+	 */
+	@Override
+	public boolean alter(DataRuntime runtime, Table table, PrimaryKey origin, PrimaryKey meta) throws Exception{
+		return super.alter(runtime, table, origin, meta);
+	}
+	/**
+	 * primary[调用入口]<br/>
+	 * 修改主键
+	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
 	 * @param meta 主键
 	 * @return 是否执行成功
 	 * @throws Exception 异常
@@ -7378,33 +7450,67 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 	 * 添加主键
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
 	 * @param meta 主键
+	 * @param slice 是否只生成片段(不含alter table部分，用于DDL合并)
 	 * @return String
 	 */
 	@Override
-	public List<Run> buildAddRun(DataRuntime runtime, PrimaryKey meta) throws Exception{
-		return super.buildAddRun(runtime, meta);
+	public List<Run> buildAddRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception{
+		return super.buildAddRun(runtime, meta, slice);
 	}
 	/**
 	 * primary[命令合成]<br/>
 	 * 修改主键
 	 * 有可能生成多条SQL
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-	 * @param meta 主键
+	 * @param origin 原主键
+	 * @param meta 新主键
 	 * @return List
 	 */
 	@Override
-	public List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey meta) throws Exception{
-		return super.buildAlterRun(runtime, meta);
+	public List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey origin, PrimaryKey meta) throws Exception{
+		List<Run> runs = new ArrayList<>();
+		if(null != meta) {//没有新主键的就不执行了
+			Table table = null;
+			if(null != meta){
+				table = meta.getTable();
+			}else{
+				table = origin.getTable();
+			}
+			List<Run> slices = new ArrayList<>();
+			if (null != origin) {
+				slices.addAll(buildDropRun(runtime, origin, true));
+			}
+			if (null != meta) {
+				slices.addAll(buildAddRun(runtime, meta, true));
+			}
+			if(!slices.isEmpty()){
+				Run run = new SimpleRun(runtime);
+				runs.add(run);
+				StringBuilder builder = run.getBuilder();
+				builder.append("ALTER TABLE ");
+				name(runtime, builder, table);
+				boolean first = true;
+				for(Run item:slices){
+					if(!first){
+						builder.append(",");
+					}
+					builder.append(item.getBuilder());
+					first = false;
+				}
+			}
+		}
+		return runs;
 	}
 	/**
 	 * primary[命令合成]<br/>
 	 * 删除主键
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
 	 * @param meta 主键
+	 * @param slice 是否只生成片段(不含alter table部分，用于DDL合并)
 	 * @return String
 	 */
 	@Override
-	public List<Run> buildDropRun(DataRuntime runtime, PrimaryKey meta) throws Exception{
+	public List<Run> buildDropRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception{
 		List<Run> runs = new ArrayList<>();
 		Run run = new SimpleRun(runtime);
 		runs.add(run);
@@ -8675,8 +8781,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		if(null != schema){
 			schema = schema.trim();
 		}
-		column.setCatalog(catalog);
-		column.setSchema(schema);
+		checkSchema(column, catalog, schema);
 		if(null != table.getName()) {//查询全部表
 			column.setTable(table);
 		}
@@ -8783,16 +8888,19 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		if(null == column){
 			column = new Column();
 		}
+		String catalog = null;
+		String schema = null;
 		try{
-			column.setCatalog(BasicUtil.evl(rsm.getCatalogName(index)));
+			catalog = BasicUtil.evl(rsm.getCatalogName(index));
 		}catch (Exception e){
 			log.debug("[获取MetaData失败][驱动未实现:getCatalogName]");
 		}
 		try{
-			column.setSchema(BasicUtil.evl(rsm.getSchemaName(index)));
+			schema = BasicUtil.evl(rsm.getSchemaName(index));
 		}catch (Exception e){
 			log.debug("[获取MetaData失败][驱动未实现:getSchemaName]");
 		}
+		checkSchema(column, catalog, schema);
 		try{
 			column.setClassName(rsm.getColumnClassName(index));
 		}catch (Exception e){
@@ -8897,7 +9005,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		if(null != schema){
 			schemaName = schema.getName();
 		}
-		ResultSet set = dbmd.getColumns(catalogName, schemaName, table.getName(), pattern);
+		String[] tmp = checkSchema(catalogName, schemaName);
+		ResultSet set = dbmd.getColumns(tmp[0], tmp[1], table.getName(), pattern);
 		Map<String,Integer> keys = keys(set);
 		while (set.next()){
 			String name = set.getString("COLUMN_NAME");
@@ -8912,12 +9021,6 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			if(null != columnSchema){
 				columnSchema = columnSchema.trim();
 			}
-			if(!BasicUtil.equalsIgnoreCase(catalog, columnCatalog)){
-				continue;
-			}
-			if(!BasicUtil.equalsIgnoreCase(schema, columnSchema)){
-				continue;
-			}
 
 
 			T column = columns.get(name.toUpperCase());
@@ -8929,12 +9032,20 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 					continue;
 				}
 			}
+
+			checkSchema(column, columnCatalog, columnSchema);
+			if(!BasicUtil.equalsIgnoreCase(catalog, column.getCatalogName())){
+				continue;
+			}
+			if(!BasicUtil.equalsIgnoreCase(schema, column.getSchemaName())){
+				continue;
+			}
+
+
 			String remark = string(keys, "REMARKS", set, column.getComment());
 			if("TAG".equals(remark)){
 				column = (T)new Tag();
 			}
-			column.setCatalog(columnCatalog);
-			column.setSchema(columnSchema);
 			column.setComment(remark);
 			column.setTable(BasicUtil.evl(string(keys,"TABLE_NAME", set, table.getName()), column.getTableName(true)));
 			column.setType(integer(keys, "DATA_TYPE", set, column.getType()));
@@ -8958,7 +9069,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		}
 
 		// 主键
-		ResultSet rs = dbmd.getPrimaryKeys(table.getCatalogName(), table.getSchemaName(), table.getName());
+		ResultSet rs = dbmd.getPrimaryKeys(tmp[0], tmp[1], table.getName());
 		while (rs.next()) {
 			String name = rs.getString(4);
 			Column column = columns.get(name.toUpperCase());
@@ -9087,16 +9198,19 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 	public Column column(DataRuntime runtime, Column column, SqlRowSetMetaData rsm, int index){
 		if(null == column) {
 			column = new Column();
+			String catalog = null;
+			String schema = null;
 			try {
-				column.setCatalog(BasicUtil.evl(rsm.getCatalogName(index)));
+				catalog = BasicUtil.evl(rsm.getCatalogName(index));
 			} catch (Exception e) {
 				log.debug("[获取MetaData失败][驱动未实现:getCatalogName]");
 			}
 			try {
-				column.setSchema(BasicUtil.evl(rsm.getSchemaName(index)));
+				schema = BasicUtil.evl(rsm.getSchemaName(index));
 			} catch (Exception e) {
 				log.debug("[获取MetaData失败][驱动未实现:getSchemaName]");
 			}
+			checkSchema(column, catalog, schema);
 			try {
 				column.setClassName(rsm.getColumnClassName(index));
 			} catch (Exception e) {
@@ -9458,12 +9572,15 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 	@Override
 	public <T extends BaseMetadata> void checkSchema(DataRuntime runtime, Connection con, T meta){
 		try {
+			String catalog = null;
+			String schema = null;
 			if (null == meta.getCatalog()) {
-				meta.setCatalog(con.getCatalog());
+				catalog = con.getCatalog();
 			}
 			if (null == meta.getSchema()) {
-				meta.setSchema(con.getSchema());
+				schema = con.getSchema();
 			}
+			checkSchema(meta, catalog, schema);
 		}catch (Exception e){
 		}
 		meta.setCheckSchemaTime(new Date());
@@ -9570,7 +9687,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 					place = false;
 				}else if(value instanceof String){
 					String str = (String)value;
-					if(str.startsWith("${") && str.endsWith("}")){
+					//if(str.startsWith("${") && str.endsWith("}")){
+					if(BasicUtil.checkEl(str)){
 						src = true;
 						place = false;
 						value = str.substring(2, str.length()-1);

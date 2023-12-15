@@ -152,7 +152,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
                 if(value instanceof String) {
                     String str = (String) value;
                     if (str.toUpperCase().contains(".NEXTVAL")) {
-                        if (str.startsWith("${") && str.endsWith("}")) {
+                        //if(str.startsWith("${") && str.endsWith("}")){
+                        if(BasicUtil.checkEl(str)){
                             str = str.substring(2, str.length() - 1);
                         }
                         sequens.put(key, new Sequence(str));
@@ -227,7 +228,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
                     if(value instanceof String) {
                         String str = (String) value;
                         if (str.toUpperCase().contains(".NEXTVAL")) {
-                            if (str.startsWith("${") && str.endsWith("}")) {
+                            //if(str.startsWith("${") && str.endsWith("}")){
+                            if(BasicUtil.checkEl(str)){
                                 str = str.substring(2, str.length() - 1);
                             }
                             sequens.put(key, new Sequence(str));
@@ -4356,7 +4358,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
                 delimiter(builder, uname);
                 builder.append(" = ");
                 delimiter(builder, tmp_name);
-                runs.add(new SimpleRun(builder));
+                runs.add(new SimpleRun(runtime, builder));
 
                 meta.setName(tmp_name);
                 List<Run> drop = buildDropRun(runtime, meta);
@@ -4374,7 +4376,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
                 delimiter(builder, meta.getName()).append(" ");
                 type(runtime, builder, meta.getUpdate());
                 builder.append(")");
-                runs.add(new SimpleRun(builder));
+                runs.add(new SimpleRun(runtime, builder));
             }
         }
         // column.setName(name);
@@ -4865,7 +4867,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      */
     @Override
     public boolean alter(DataRuntime runtime, Table table, Tag meta, boolean trigger) throws Exception{
-        return super.alter(runtime, table, meta);
+        return super.alter(runtime, table, meta, trigger);
     }
 
 
@@ -5122,18 +5124,21 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * 添加主键
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param meta 主键
+     * @param slice 是否只生成片段(不含alter table部分，用于DDL合并)
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, PrimaryKey meta) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception{
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
         StringBuilder builder = run.getBuilder();
         Map<String,Column> columns = meta.getColumns();
         if(columns.size()>0) {
-            builder.append("ALTER TABLE ");
-            name(runtime, builder, meta.getTable(true));
+            if(!slice) {
+                builder.append("ALTER TABLE ");
+                name(runtime, builder, meta.getTable(true));
+            }
             builder.append(" ADD CONSTRAINT ").append(meta.getTableName(true)).append("_PK").append(" PRIMARY KEY(");
             boolean first = true;
             for(Column column:columns.values()){
@@ -5153,22 +5158,24 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * 修改主键
      * 有可能生成多条SQL
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param meta 主键
+     * @param origin 原主键
+     * @param meta 新主键
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey meta) throws Exception{
-        return super.buildAlterRun(runtime, meta);
+    public List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey origin, PrimaryKey meta) throws Exception{
+        return super.buildAlterRun(runtime, origin, meta);
     }
     /**
      * primary[命令合成]<br/>
      * 删除主键
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param meta 主键
+     * @param slice 是否只生成片段(不含alter table部分，用于DDL合并)
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, PrimaryKey meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception{
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -6016,10 +6023,44 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
     public <T extends BaseMetadata> void checkSchema(DataRuntime runtime, Connection con, T meta){
         super.checkSchema(runtime, con, meta);
     }
-    @Override
+    /**
+     * 根据运行环境识别 catalog与schema
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta BaseMetadata
+     * @param <T> BaseMetadata
+     */
+	@Override
     public <T extends BaseMetadata> void checkSchema(DataRuntime runtime, T meta){
         super.checkSchema(runtime, meta);
     }
+
+	/**
+	 * 识别根据jdbc返回的catalog与schema,部分数据库(如mysql)系统表与jdbc标准可能不一致根据实际情况处理<br/>
+	 * 注意一定不要处理从SQL中返回的，应该在SQL中处理好
+	 * @param meta BaseMetadata
+	 * @param catalog catalog
+	 * @param schema schema
+	 * @param override 如果meta中有值，是否覆盖
+	 * @param <T> BaseMetadata
+	 */
+	@Override
+    public <T extends BaseMetadata> void checkSchema(T meta, String catalog, String schema, boolean override){
+        super.checkSchema(meta, catalog, schema, override);
+    }
+	@Override
+	public <T extends BaseMetadata> void checkSchema(T meta, String catalog, String schema){
+		super.checkSchema(meta, catalog, schema);
+	}
+	/**
+	 * 在调用jdbc接口前处理业务中的catalog,schema,部分数据库(如mysql)业务系统与dbc标准可能不一致根据实际情况处理<br/>
+	 * @param catalog catalog
+	 * @param schema schema
+	 * @return String[]
+	 */
+	@Override
+	public String[] checkSchema(String catalog, String schema){
+		return super.checkSchema(catalog, schema);
+	}
     /**
      * insert[命令执行后]
      * insert执行后 通过KeyHolder获取主键值赋值给data

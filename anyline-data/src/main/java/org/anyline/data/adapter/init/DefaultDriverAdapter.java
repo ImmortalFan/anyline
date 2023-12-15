@@ -782,7 +782,8 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 				}else {
 					value = BeanUtil.getFieldValue(obj, key);
 				}
-				if(null != value && value.toString().startsWith("${") && value.toString().endsWith("}")){
+				//if(null != value && value.toString().startsWith("${") && value.toString().endsWith("}")){
+				if(BasicUtil.checkEl(value+"")){
 					String str = value.toString();
 					value = str.substring(2, str.length()-1);
 
@@ -900,7 +901,8 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 					builder.append(",");
 				}
 				first = false;
-				if(null != value && value.toString().startsWith("${") && value.toString().endsWith("}") ){
+				//if(null != value && value.toString().startsWith("${") && value.toString().endsWith("}") ){
+				if(BasicUtil.checkEl(value+"")){
 					String str = value.toString();
 					value = str.substring(2, str.length()-1);
 					delimiter(builder, key).append(" = ").append(value).append(BR_TAB);
@@ -1013,7 +1015,8 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 			for(Column col:cols.values()){
 				String key = col.getName();
 				Object value = BeanUtil.getFieldValue(item, key);
-				if(null != value && value.toString().startsWith("${") && value.toString().endsWith("}") ){
+				//if(null != value && value.toString().startsWith("${") && value.toString().endsWith("}") ){
+				if(BasicUtil.checkEl(value+"")){
 					String str = value.toString();
 					value = str.substring(2, str.length()-1);
 				}else{
@@ -5961,6 +5964,12 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 		Table update = (Table)meta.getUpdate();
 		LinkedHashMap<String, Column> columns = meta.getColumns();
 		LinkedHashMap<String, Column> ucolumns = update.getColumns();
+		for(Column col:columns.values()){
+			col.setColumnType(type(col.getTypeName()));
+		}
+		for(Column col:ucolumns.values()){
+			col.setColumnType(type(col.getTypeName()));
+		}
 		String name = meta.getName();
 		String uname = update.getName();
 		String random = random(runtime);
@@ -6053,7 +6062,6 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 					//上一步已删除
 					continue;
 				}
-
 				Column ucolumn = ucolumns.get(column.getName().toUpperCase());
 				if (null == ucolumn) {
 					column.setTable(update);
@@ -6063,6 +6071,12 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 					column.setAction(ACTION.DDL.COLUMN_DROP);
 					cols.put(column.getName().toUpperCase(), column);
 				}
+			}
+		}
+		//删除不存的的列
+		for(Column column:cols.values()){
+			if(!columns.containsKey(column.getName().toUpperCase())){
+				column.setAction(ACTION.DDL.IGNORE);
 			}
 		}
 
@@ -6081,21 +6095,25 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 		if(null != src_primary){
 			//如果主键有更新 先删除主键 避免alters中把原主键列的非空取消时与主键约束冲突
 			if(change_pk){
-				LinkedHashMap<String,Column> pks = src_primary.getColumns();
-				LinkedHashMap<String,Column> npks = cur_primary.getColumns();
-				for(String k:pks.keySet()){
-					Column auto = columns.get(k.toUpperCase());
-					if(null != auto && auto.isAutoIncrement() == 1){//原主键科自增
-						if(!npks.containsKey(auto.getName().toUpperCase())){ //当前不是主键
-							auto.primary(false);
-							runs = buildDropAutoIncrement(runtime, auto);
-							result = execute(runtime, random, meta, ACTION.DDL.TABLE_ALTER, runs) && result;
+				LinkedHashMap<String,Column> pks = null;
+				if(null != src_primary) {
+					pks = src_primary.getColumns();
+				}
+				LinkedHashMap<String,Column> npks = null;
+				if(null != cur_primary) {
+					npks = cur_primary.getColumns();
+				}
+				if(null != pks) {
+					for (String k : pks.keySet()) {
+						Column auto = columns.get(k.toUpperCase());
+						if (null != auto && auto.isAutoIncrement() == 1) {//原主键科自增
+							if (null != npks && !npks.containsKey(auto.getName().toUpperCase())) { //当前不是主键
+								auto.primary(false);
+								runs = buildDropAutoIncrement(runtime, auto);
+								result = execute(runtime, random, meta, ACTION.DDL.TABLE_ALTER, runs) && result;
+							}
 						}
 					}
-				}
-				//删除主键
-				if(null != src_primary){
-					drop(runtime, src_primary);
 				}
 			}
 		}
@@ -6105,10 +6123,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 		}
 		//在alters执行完成后 添加主键 避免主键中存在alerts新添加的列
 		if(change_pk){
-			//添加主键
-			if(null != cur_primary) {
-				add(runtime, cur_primary);
-			}
+			alter(runtime, meta, src_primary, cur_primary);
 		}
 		return result;
 	}
@@ -6273,6 +6288,9 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 			CMD cmd = null;
 			if(null != action){
 				cmd = action.getCmd();
+			}
+			if(CMD.IGNORE == cmd){
+				continue;
 			}
 			if(CMD.CREATE == cmd){
 				runs.addAll(buildAddRun(runtime, column, false));
@@ -8771,16 +8789,17 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 		}
 		return alter(runtime, table, meta);
 	}
-
 	/**
 	 * primary[调用入口]<br/>
 	 * 修改主键
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-	 * @param meta 主键
+	 * @param table 表
+	 * @param origin 原主键
+	 * @param meta 新主键
 	 * @return 是否执行成功
 	 * @throws Exception 异常
 	 */
-	public boolean alter(DataRuntime runtime, Table table, PrimaryKey meta) throws Exception{
+	public boolean alter(DataRuntime runtime, Table table, PrimaryKey origin, PrimaryKey meta) throws Exception{
 		boolean result = false;
 		ACTION.DDL action = ACTION.DDL.PRIMARY_ALTER;
 		String random = random(runtime);
@@ -8792,7 +8811,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 			return false;
 		}
 		checkSchema(runtime, meta);
-		List<Run> runs = buildAlterRun(runtime, meta);
+		List<Run> runs = buildAlterRun(runtime, origin, meta);
 		swt = InterceptorProxy.before(runtime, random, action, meta, runs);
 		if(null != ddListener && swt == ACTION.SWITCH.CONTINUE){
 			swt = ddListener.beforeAlter(runtime, random, meta, runs);
@@ -8920,12 +8939,13 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 	 * 添加主键
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
 	 * @param meta 主键
+	 * @param slice 是否只生成片段(不含alter table部分，用于DDL合并)
 	 * @return String
 	 */
 	@Override
-	public List<Run> buildAddRun(DataRuntime runtime, PrimaryKey meta) throws Exception{
+	public List<Run> buildAddRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception{
 		if(log.isDebugEnabled()) {
-			log.debug(LogUtil.format("子类(" + this.getClass().getSimpleName() + ")未实现 List<Run> buildAddRun(DataRuntime runtime, PrimaryKey meta)", 37));
+			log.debug(LogUtil.format("子类(" + this.getClass().getSimpleName() + ")未实现 List<Run> buildAddRun(DataRuntime runtime, PrimaryKey meta,  boolean slice)", 37));
 		}
 		return new ArrayList<>();
 	}
@@ -8934,13 +8954,14 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 	 * 修改主键
 	 * 有可能生成多条SQL
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-	 * @param meta 主键
+	 * @param origin 原主键
+	 * @param meta 新主键
 	 * @return List
 	 */
 	@Override
-	public List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey meta) throws Exception{
+	public List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey origin, PrimaryKey meta) throws Exception{
 		if(log.isDebugEnabled()) {
-			log.debug(LogUtil.format("子类(" + this.getClass().getSimpleName() + ")未实现 List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey meta)", 37));
+			log.debug(LogUtil.format("子类(" + this.getClass().getSimpleName() + ")未实现 List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey origin, PrimaryKey meta)", 37));
 		}
 		return new ArrayList<>();
 	}
@@ -8949,12 +8970,13 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 	 * 删除主键
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
 	 * @param meta 主键
+	 * @param slice 是否只生成片段(不含alter table部分，用于DDL合并)
 	 * @return String
 	 */
 	@Override
-	public List<Run> buildDropRun(DataRuntime runtime, PrimaryKey meta) throws Exception{
+	public List<Run> buildDropRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception{
 		if(log.isDebugEnabled()) {
-			log.debug(LogUtil.format("子类(" + this.getClass().getSimpleName() + ")未实现 List<Run> buildDropRun(DataRuntime runtime, PrimaryKey meta)", 37));
+			log.debug(LogUtil.format("子类(" + this.getClass().getSimpleName() + ")未实现 List<Run> buildDropRun(DataRuntime runtime, PrimaryKey meta, boolean slice)", 37));
 		}
 		return new ArrayList<>();
 	}

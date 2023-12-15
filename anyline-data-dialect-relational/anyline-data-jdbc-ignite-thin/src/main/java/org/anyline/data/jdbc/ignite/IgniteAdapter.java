@@ -1812,7 +1812,7 @@ public class IgniteAdapter extends DefaultJDBCAdapter implements JDBCAdapter, In
 			ddls = new ArrayList<>();
 		}
 		for(DataRow row:set){
-			ddls.add(row.getString("Create View"));
+			ddls.add(row.getString("CREATE VIEW"));
 		}
 		return ddls;
 	}
@@ -2332,12 +2332,12 @@ public class IgniteAdapter extends DefaultJDBCAdapter implements JDBCAdapter, In
 	@Override
 	public PrimaryKey primary(DataRuntime runtime, int index, Table table, DataSet set) throws Exception{
 		PrimaryKey primary = null;
-		set = set.getRows("Key_name", "PRIMARY");
+		set = set.getRows("KEY_NAME", "PRIMARY");
 		if(set.size() > 0){
 			primary = new PrimaryKey();
 			for(DataRow row:set){
-				primary.setName(row.getString("Key_name"));
-				Column column = new Column(row.getString("Column_name"));
+				primary.setName(row.getString("KEY_NAME"));
+				Column column = new Column(row.getString("COLUMN_NAME"));
 				primary.addColumn(column);
 			}
 		}
@@ -4247,14 +4247,8 @@ public class IgniteAdapter extends DefaultJDBCAdapter implements JDBCAdapter, In
 
 	/**
 	 * column[命令合成-子流程]<br/>
-	 * 添加表备注(表创建完成后调用,创建过程能添加备注的不需要实现)
+	 * 添加列备注(表创建完成后调用,创建过程能添加备注的不需要实现)
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-	 * @param column 列
-	 * @return sql
-	 * @throws Exception 异常
-	 */
-	/**
-	 * 添加表备注(表创建完成后调用,创建过程能添加备注的不需要实现)
 	 * @param meta 列
 	 * @return sql
 	 * @throws Exception 异常
@@ -4592,7 +4586,7 @@ public class IgniteAdapter extends DefaultJDBCAdapter implements JDBCAdapter, In
 	 */
 	@Override
 	public boolean alter(DataRuntime runtime, Table table, Tag meta, boolean trigger) throws Exception{
-		return super.alter(runtime, table, meta);
+		return super.alter(runtime, table, meta, trigger);
 	}
 
 
@@ -4799,6 +4793,19 @@ public class IgniteAdapter extends DefaultJDBCAdapter implements JDBCAdapter, In
 	 * primary[调用入口]<br/>
 	 * 修改主键
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+	 * @param origin 原主键
+	 * @param meta 新主键
+	 * @return 是否执行成功
+	 * @throws Exception 异常
+	 */
+	@Override
+	public boolean alter(DataRuntime runtime, Table table, PrimaryKey origin, PrimaryKey meta) throws Exception{
+		return super.alter(runtime, table, origin, meta);
+	}
+	/**
+	 * primary[调用入口]<br/>
+	 * 修改主键
+	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
 	 * @param meta 主键
 	 * @return 是否执行成功
 	 * @throws Exception 异常
@@ -4839,18 +4846,21 @@ public class IgniteAdapter extends DefaultJDBCAdapter implements JDBCAdapter, In
 	 * 添加主键
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
 	 * @param meta 主键
+	 * @param slice 是否只生成片段(不含alter table部分，用于DDL合并)
 	 * @return String
 	 */
 	@Override
-	public List<Run> buildAddRun(DataRuntime runtime, PrimaryKey meta) throws Exception{
+	public List<Run> buildAddRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception{
 		List<Run> runs = new ArrayList<>();
 		Run run = new SimpleRun(runtime);
 		runs.add(run);
 		StringBuilder builder = run.getBuilder();
 		Map<String,Column> columns = meta.getColumns();
 		if(columns.size()>0) {
-			builder.append("ALTER TABLE ");
-			name(runtime, builder, meta.getTable(true));
+			if(!slice) {
+				builder.append("ALTER TABLE ");
+				name(runtime, builder, meta.getTable(true));
+			}
 			builder.append(" ADD PRIMARY KEY (");
 			boolean first = true;
 			for(Column column:columns.values()){
@@ -4869,22 +4879,24 @@ public class IgniteAdapter extends DefaultJDBCAdapter implements JDBCAdapter, In
 	 * 修改主键
 	 * 有可能生成多条SQL
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-	 * @param meta 主键
+	 * @param origin 原主键
+	 * @param meta 新主键
 	 * @return List
 	 */
 	@Override
-	public List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey meta) throws Exception{
-		return super.buildAlterRun(runtime, meta);
+	public List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey origin, PrimaryKey meta) throws Exception{
+		return super.buildAlterRun(runtime, origin, meta);
 	}
 	/**
 	 * primary[命令合成]<br/>
 	 * 删除主键
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
 	 * @param meta 主键
+	 * @param slice 是否只生成片段(不含alter table部分，用于DDL合并)
 	 * @return String
 	 */
 	@Override
-	public List<Run> buildDropRun(DataRuntime runtime, PrimaryKey meta) throws Exception{
+	public List<Run> buildDropRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception{
 		List<Run> runs = new ArrayList<>();
 		Run run = new SimpleRun(runtime);
 		runs.add(run);
@@ -5771,9 +5783,43 @@ public class IgniteAdapter extends DefaultJDBCAdapter implements JDBCAdapter, In
 	public <T extends BaseMetadata> void checkSchema(DataRuntime runtime, Connection con, T meta){
 		super.checkSchema(runtime, con, meta);
 	}
+    /**
+     * 根据运行环境识别 catalog与schema
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta BaseMetadata
+     * @param <T> BaseMetadata
+     */
 	@Override
-	public <T extends BaseMetadata> void checkSchema(DataRuntime runtime, T meta){
-		super.checkSchema(runtime, meta);
+    public <T extends BaseMetadata> void checkSchema(DataRuntime runtime, T meta){
+        super.checkSchema(runtime, meta);
+    }
+
+	/**
+	 * 识别根据jdbc返回的catalog与schema,部分数据库(如mysql)系统表与jdbc标准可能不一致根据实际情况处理<br/>
+	 * 注意一定不要处理从SQL中返回的，应该在SQL中处理好
+	 * @param meta BaseMetadata
+	 * @param catalog catalog
+	 * @param schema schema
+	 * @param override 如果meta中有值，是否覆盖
+	 * @param <T> BaseMetadata
+	 */
+	@Override
+    public <T extends BaseMetadata> void checkSchema(T meta, String catalog, String schema, boolean override){
+        super.checkSchema(meta, catalog, schema, override);
+    }
+	@Override
+	public <T extends BaseMetadata> void checkSchema(T meta, String catalog, String schema){
+		super.checkSchema(meta, catalog, schema);
+	}
+	/**
+	 * 在调用jdbc接口前处理业务中的catalog,schema,部分数据库(如mysql)业务系统与dbc标准可能不一致根据实际情况处理<br/>
+	 * @param catalog catalog
+	 * @param schema schema
+	 * @return String[]
+	 */
+	@Override
+	public String[] checkSchema(String catalog, String schema){
+		return super.checkSchema(catalog, schema);
 	}
 	/**
 	 * insert[命令执行后]

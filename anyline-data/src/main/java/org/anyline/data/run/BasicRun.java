@@ -85,8 +85,9 @@ public abstract class BasicRun implements Run {
 	}
 
 	@Override
-	public void setRuntime(DataRuntime runtime){
+	public Run setRuntime(DataRuntime runtime){
 		this.runtime = runtime;
+		return this;
 	}
 
 	@Override
@@ -785,7 +786,8 @@ public abstract class BasicRun implements Run {
 //				}
 
 
-				if(condition.startsWith("${") && condition.endsWith("}")){
+				//if(condition.startsWith("${") && condition.endsWith("}")){
+				if(BasicUtil.checkEl(condition)){
 					// 原生SQL  不处理
 					Condition con = new DefaultAutoCondition(condition.substring(2, condition.length()-1));
 					addCondition(con);

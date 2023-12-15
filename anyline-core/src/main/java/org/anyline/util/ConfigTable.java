@@ -52,7 +52,7 @@ public class ConfigTable {
 	protected static Hashtable<String, Object> configs;
 	protected static long lastLoadTime 					= 0					;	// 最后一次加载时间
 	protected static int reload 						= 0					;	// 重新加载间隔
-	protected static final String version 				= "8.7.1-jdk17-SNAPSHOT"	;	// 版本号
+	protected static final String version 				= "8.7.1-SNAPSHOT"	;	// 版本号
 	protected static final String minVersion 			= "000"				;	// 版本号
 	protected static boolean isLoading 					= false				;	// 是否加载配置文件中
 	private static boolean listener_running 			= false				;	// 监听是否启动
@@ -84,6 +84,7 @@ public class ConfigTable {
 	public static boolean IS_IGNORE_EMPTY_HTTP_KEY						= true			;	// AnylineController.entity(String ck)是否忽略http未提交的key
 	public static int HTTP_PARAM_ENCODE									= 0				;   // http参数是否解码0:自动识别 1:确认编码 -1:确认未编码
 	public static boolean IS_MULTIPLE_SERVICE							= true			;	// 如果有多数据源为每个数据源生成独立的service
+	public static boolean IS_ENABLE_DEFAULT_JDBC_ADAPTER				= false			;   // 是否开启默认的jdbc adapter(仅支持部分标准SQL)遇到没有实现adapter的数据库时可以开启
 	public static boolean IS_AUTO_CONVERT_BYTES							= true			;   // 否将数据库中与Java bytes[]对应的类型自动转换如Point > double[](返回DataRow时受此开关景程)
 	public static boolean IS_AUTO_SPLIT_ARRAY							= true			;	// 更新数据库时，是把自动把数组/集合类型拆分
 	public static boolean IS_METADATA_IGNORE_CASE						= true			;   // 查询元数据时忽略大小写
@@ -755,6 +756,9 @@ public class ConfigTable {
 		return IS_MULTIPLE_SERVICE;
 	}
 
+	public boolean IS_ENABLE_DEFAULT_JDBC_ADAPTER(){
+		return IS_ENABLE_DEFAULT_JDBC_ADAPTER;
+	}
 	public boolean  IS_AUTO_CONVERT_BYTES() {
 		return IS_AUTO_CONVERT_BYTES;
 	}

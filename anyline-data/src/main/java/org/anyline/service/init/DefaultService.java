@@ -902,7 +902,25 @@ public class DefaultService<E> implements AnylineService<E> {
         if(null != ps[0]){
             return ServiceProxy.service(ps[0]).deletes(batch, ps[1], key, values);
         }
-        return dao.deletes(batch, table, key, values);
+        if(batch >1){
+            long qty = 0;
+            List<T> list = new ArrayList<>();
+            int vol = 0;
+            for(T value:values){
+                list.add(value);
+                vol ++;
+                if(vol >= batch){
+                    qty += dao.deletes(0, table, key, values);
+                    list.clear();
+                }
+            }
+            if(!list.isEmpty()){
+                qty += dao.deletes(0, table, key, values);
+            }
+            return qty;
+        }else {
+            return dao.deletes(batch, table, key, values);
+        }
     }
 
     
@@ -1060,7 +1078,8 @@ public class DefaultService<E> implements AnylineService<E> {
         src = src.trim();
         List<String> pks = new ArrayList<>();
         // 文本sql
-        if (src.startsWith("${") && src.endsWith("}")) {
+        //if (src.startsWith("${") && src.endsWith("}")) {
+        if(BasicUtil.checkEl(src)){
             if (ConfigTable.isSQLDebug()) {
                 log.debug("[解析SQL类型] [类型:{JAVA定义}] [src:{}]", src);
             }
@@ -1459,10 +1478,11 @@ public class DefaultService<E> implements AnylineService<E> {
                 table.setTags(tags(table));
                 PrimaryKey pk = primary(table);
                 if (null != pk) {
-                    for (String col : pk.getColumns().keySet()) {
-                        Column column = columns.get(col.toUpperCase());
+                    for (Column col : pk.getColumns().values()) {
+                        Column column = columns.get(col.getName().toUpperCase());
                         if (null != column) {
                             column.primary(true);
+                            BeanUtil.copyFieldValue(col, column);
                         }
                     }
                 }

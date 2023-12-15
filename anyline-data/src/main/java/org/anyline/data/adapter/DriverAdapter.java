@@ -1006,7 +1006,49 @@ public interface DriverAdapter {
 	 * function         : 函数
 	 ******************************************************************************************************************/
 
+	/**
+	 * 根据运行环境识别 catalog与schema
+	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+	 * @param meta BaseMetadata
+	 * @param <T> BaseMetadata
+	 */
 	<T extends BaseMetadata> void checkSchema(DataRuntime runtime, T meta);
+
+	/**
+	 * 识别根据jdbc返回的catalog与schema,部分数据库(如mysql)系统表与jdbc标准可能不一致根据实际情况处理<br/>
+	 * 注意一定不要处理从SQL中返回的，应该在SQL中处理好
+	 * @param meta BaseMetadata
+	 * @param catalog catalog
+	 * @param schema schema
+	 * @param override 如果meta中有值，是否覆盖
+	 * @param <T> BaseMetadata
+	 */
+	default <T extends BaseMetadata> void checkSchema(T meta, String catalog, String schema, boolean override){
+		if(override || BasicUtil.isEmpty(meta.getCatalogName())) {
+			meta.setCatalog(catalog);
+		}
+		if(override || BasicUtil.isEmpty(meta.getSchemaName())) {
+			meta.setSchema(schema);
+		}
+	}
+	default <T extends BaseMetadata> void checkSchema(T meta, String catalog, String schema){
+		if(BasicUtil.isEmpty(meta.getCatalogName())) {
+			meta.setCatalog(catalog);
+		}
+		if(BasicUtil.isEmpty(meta.getSchemaName())) {
+			meta.setSchema(schema);
+		}
+	}
+
+	/**
+	 * 在调用jdbc接口前处理业务中的catalog,schema,部分数据库(如mysql)业务系统与dbc标准可能不一致根据实际情况处理<br/>
+	 * @param catalog catalog
+	 * @param schema schema
+	 * @return String[]
+	 */
+	default String[] checkSchema(String catalog, String schema){
+		return new String[]{schema, null};
+	}
 
 	/**
 	 *  根据sql获取列结构,如果有表名应该调用metadata().columns(table);或metadata().table(table).getColumns()
@@ -3438,6 +3480,7 @@ public interface DriverAdapter {
 	 * -----------------------------------------------------------------------------------------------------------------
 	 * boolean add(DataRuntime runtime, PrimaryKey meta) throws Exception
 	 * boolean alter(DataRuntime runtime, PrimaryKey meta) throws Exception
+	 * boolean alter(DataRuntime runtime, Table table, PrimaryKey origin, PrimaryKey meta) throws Exception
 	 * boolean drop(DataRuntime runtime, PrimaryKey meta) throws Exception
 	 * boolean rename(DataRuntime runtime, PrimaryKey origin, String name) throws Exception;
 	 ******************************************************************************************************************/
@@ -3466,12 +3509,25 @@ public interface DriverAdapter {
 	 * primary[调用入口]<br/>
 	 * 修改主键
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+	 * @param table 表
+	 * @param origin 原主键
+	 * @param meta 新主键
+	 * @return 是否执行成功
+	 * @throws Exception 异常
+	 */
+	boolean alter(DataRuntime runtime, Table table, PrimaryKey origin, PrimaryKey meta) throws Exception;
+
+	/**
+	 * primary[调用入口]<br/>
+	 * 修改主键
+	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
 	 * @param meta 主键
 	 * @return 是否执行成功
 	 * @throws Exception 异常
 	 */
-	boolean alter(DataRuntime runtime, Table table, PrimaryKey meta) throws Exception;
-
+	default boolean alter(DataRuntime runtime, Table table, PrimaryKey meta) throws Exception{
+		return alter(runtime, table, table.getPrimaryKey(), meta);
+	}
 	/**
 	 * primary[调用入口]<br/>
 	 * 删除主键
@@ -3497,9 +3553,10 @@ public interface DriverAdapter {
 	 * 添加主键
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
 	 * @param primary 主键
+	 * @param slice 是否只生成片段(不含alter table部分，用于DDL合并)
 	 * @return String
 	 */
-	List<Run> buildAddRun(DataRuntime runtime, PrimaryKey primary) throws Exception;
+	List<Run> buildAddRun(DataRuntime runtime, PrimaryKey primary, boolean slice) throws Exception;
 	/**
 	 * primary[命令合成]<br/>
 	 * 创建完表后，添加主键，与列主键标识，表主键标识三选一<br/>
@@ -3518,19 +3575,24 @@ public interface DriverAdapter {
 	 * 修改主键
 	 * 有可能生成多条SQL
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-	 * @param primary 主键
+	 * @param origin 原主键
+	 * @param meta 新主键
 	 * @return List
 	 */
-	List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey primary) throws Exception;
+	List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey origin, PrimaryKey meta) throws Exception;
+	default List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey meta) throws Exception{
+		return buildAlterRun(runtime, null, meta);
+	}
 
 	/**
 	 * primary[命令合成]<br/>
 	 * 删除主键
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
 	 * @param primary 主键
+	 * @param slice 是否只生成片段(不含alter table部分，用于DDL合并)
 	 * @return String
 	 */
-	List<Run> buildDropRun(DataRuntime runtime, PrimaryKey primary) throws Exception;
+	List<Run> buildDropRun(DataRuntime runtime, PrimaryKey primary, boolean slice) throws Exception;
 
 	/**
 	 * primary[命令合成]<br/>
