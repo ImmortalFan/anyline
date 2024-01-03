@@ -77,13 +77,36 @@ public class Table<E extends Table> extends BaseMetadata<E> implements Serializa
     protected LinkedHashMap<String, Tag> tags       = new LinkedHashMap<>();
     protected LinkedHashMap<String, Index> indexs   = new LinkedHashMap<>();
     protected LinkedHashMap<String, Constraint> constraints = new LinkedHashMap<>();
+    protected boolean sort = false; //列是否排序
+
     protected boolean autoDropColumn = ConfigTable.IS_DDL_AUTO_DROP_COLUMN;     //执行alter时是否删除 数据库中存在 但table 中不存在的列
 
 
     public Table(){
     }
     public Table(String name){
-        this.name = name;
+        if(null != name){
+            if(name.contains(":") || name.contains(" ")){
+                //自定义XML或sql
+                this.name = name;
+            }else {
+                if (name.contains(".")) {
+                    String[] tmps = name.split("\\.");
+                    if (tmps.length == 2) {
+                        this.schema = new Schema(tmps[0]);
+                        this.name = tmps[1];
+                    } else if (tmps.length == 3) {
+                        this.catalog = new Catalog(tmps[0]);
+                        this.schema = new Schema(tmps[1]);
+                        this.name = tmps[2];
+                    }
+                } else {
+                    this.name = name;
+                }
+            }
+        }else {
+            this.name = name;
+        }
     }
     public Table(String schema, String table){
         this(null, schema, table);
@@ -190,7 +213,7 @@ public class Table<E extends Table> extends BaseMetadata<E> implements Serializa
 
     public LinkedHashMap<String, Column> primarys(){
         LinkedHashMap<String, Column> pks = new LinkedHashMap<>();
-        for(Map.Entry<String,Column> item:columns.entrySet()){
+        for(Map.Entry<String, Column> item:columns.entrySet()){
             Column column = item.getValue();
             String key = item.getKey();
             if(column.isPrimaryKey() == 1){
@@ -209,7 +232,7 @@ public class Table<E extends Table> extends BaseMetadata<E> implements Serializa
     }
     public E clone(){
         E copy = super.clone();
-        LinkedHashMap<String,Column> cols = new LinkedHashMap<>();
+        LinkedHashMap<String, Column> cols = new LinkedHashMap<>();
         for(Column column:this.columns.values()){
             Column col = column.clone();
             cols.put(col.getName().toUpperCase(), col);
@@ -289,7 +312,7 @@ public class Table<E extends Table> extends BaseMetadata<E> implements Serializa
                     column.primary(true);
                     primaryKey.addColumn(column);
                 } else {
-                    throw new AnylineException("未匹配到" + key + ",请诜添加到columns");
+                    throw new AnylineException("未匹配到" + key + ", 请诜添加到columns");
                 }
             }
         } else {
@@ -589,6 +612,9 @@ public class Table<E extends Table> extends BaseMetadata<E> implements Serializa
         }
 
         this.indexs = (LinkedHashMap<String, Index>) indexs;
+        for(Index index:indexs.values()){
+            index.setTable(this);
+        }
         return this;
     }
     public Table add(Index index){
@@ -787,6 +813,29 @@ public class Table<E extends Table> extends BaseMetadata<E> implements Serializa
         this.indexLength = indexLength;
     }
 
+    public boolean isSort() {
+        return sort;
+    }
+
+    public void setSort(boolean sort) {
+        this.sort = sort;
+    }
+
+    /**
+     * 列排序
+     * @param nullFirst 未设置位置(setPosition)的列是否排在最前
+     * @return Table
+     */
+    public Table sort(boolean nullFirst){
+        sort = true;
+        if(null != columns){
+            Column.sort(columns, nullFirst);
+        }
+        return this;
+    }
+    public Table sort(){
+        return sort(false);
+    }
     public String toString(){
         StringBuilder builder = new StringBuilder();
         builder.append(keyword).append(":");
