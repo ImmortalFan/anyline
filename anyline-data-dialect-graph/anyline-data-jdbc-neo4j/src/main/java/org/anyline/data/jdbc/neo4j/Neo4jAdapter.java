@@ -8,7 +8,7 @@
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an "AS IS" BASIS, 
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -28,13 +28,12 @@ import org.anyline.data.prepare.Variable;
 import org.anyline.data.prepare.auto.init.DefaultTablePrepare;
 import org.anyline.data.run.*;
 import org.anyline.data.runtime.DataRuntime;
-import org.anyline.data.util.DataSourceUtil;
 import org.anyline.entity.*;
 import org.anyline.entity.generator.PrimaryGenerator;
 import org.anyline.exception.SQLException;
 import org.anyline.exception.SQLUpdateException;
 import org.anyline.metadata.Column;
-import org.anyline.metadata.Database;
+import org.anyline.metadata.Table;
 import org.anyline.metadata.type.DatabaseType;
 import org.anyline.proxy.EntityAdapterProxy;
 import org.anyline.util.*;
@@ -89,11 +88,11 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
     /* *****************************************************************************************************************
      * 													INSERT
      * -----------------------------------------------------------------------------------------------------------------
-     * Run buildInsertRun(DataRuntime runtime, String dest, Object obj, LinkedHashMap<String,Column> columns)
-     * void createInsertContent(DataRuntime runtime, Run run, String dest, DataSet set, LinkedHashMap<String,Column> columns)
-     * void createInsertContent(DataRuntime runtime, Run run, String dest, Collection list, LinkedHashMap<String,Column> columns)
+     * Run buildInsertRun(DataRuntime runtime, String dest, Object obj, LinkedHashMap<String, Column> columns)
+     * void createInsertContent(DataRuntime runtime, Run run, String dest, DataSet set, LinkedHashMap<String, Column> columns)
+     * void createInsertContent(DataRuntime runtime, Run run, String dest, Collection list, LinkedHashMap<String, Column> columns)
      *
-     * protected Run createInsertRun(DataRuntime runtime, String dest, Object obj, LinkedHashMap<String,Column> columns)
+     * protected Run createInsertRun(DataRuntime runtime, String dest, Object obj, LinkedHashMap<String, Column> columns)
      * protected Run createInsertRunFromCollection(JdbcTemplate template, String dest, Collection list, List<String> columns)
      *  public long insert(DataRuntime runtime, String random, Object data, Run run, String[] pks) throws Exception
      ******************************************************************************************************************/
@@ -101,27 +100,27 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
     /**
      * 创建 insert 最终可执行命令
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param dest 表 如果不提供表名则根据data解析,表名可以事实前缀&lt;数据源名&gt;表示切换数据源
+     * @param dest 表 如果不提供表名则根据data解析, 表名可以事实前缀&lt;数据源名&gt;表示切换数据源
      * @param obj 实体
      * @param columns 需要抛入的列 如果不指定  则根据实体属性解析
      * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
      */
     @Override
-    public Run buildInsertRun(DataRuntime runtime, int batch, String dest, Object obj, List<String> columns){
+    public Run buildInsertRun(DataRuntime runtime, int batch, Table dest, Object obj, List<String> columns){
         return super.buildInsertRun(runtime, batch, dest, obj, columns);
     }
 
     /**
      * 根据DataSet创建批量INSERT RunPrepare
-     * CREATE (:Dept{name:1}),(:Dept{name:2}),(:Dept{name:3})
+     * CREATE (:Dept{name:1}), (:Dept{name:2}), (:Dept{name:3})
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param run 最终待执行的命令和参数(如果是JDBC环境就是SQL)
-     * @param dest 表 如果不提供表名则根据data解析,表名可以事实前缀&lt;数据源名&gt;表示切换数据源
+     * @param dest 表 如果不提供表名则根据data解析, 表名可以事实前缀&lt;数据源名&gt;表示切换数据源
      * @param set 集合
      * @param columns 需插入的列
      */
     @Override
-    public void fillInsertContent(DataRuntime runtime, Run run, String dest, DataSet set, ConfigStore configs, LinkedHashMap<String, Column> columns){
+    public void fillInsertContent(DataRuntime runtime, Run run, Table dest, DataSet set, ConfigStore configs, LinkedHashMap<String, Column> columns){
         StringBuilder builder = run.getBuilder();
         if(null == builder){
             builder = new StringBuilder();
@@ -135,7 +134,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
             if(null == row){
                 continue;
             }
-            insertValue("e"+i,run,  dest,  row, columns);
+            insertValue("e"+i, run, dest, row, columns);
             if(i<dataSize-1){
                 builder.append(",");
             }
@@ -152,15 +151,15 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
 
     /**
      * 根据Collection创建批量INSERT
-     * create(:Dept{name:1}),(:Dept{name:2}),(:Dept{name:3})
+     * create(:Dept{name:1}), (:Dept{name:2}), (:Dept{name:3})
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param run 最终待执行的命令和参数(如果是JDBC环境就是SQL)
-     * @param dest 表 如果不提供表名则根据data解析,表名可以事实前缀&lt;数据源名&gt;表示切换数据源
+     * @param dest 表 如果不提供表名则根据data解析, 表名可以事实前缀&lt;数据源名&gt;表示切换数据源
      * @param list 集合
      * @param columns 需插入的列
      */
     @Override
-    public void fillInsertContent(DataRuntime runtime, Run run, String dest, Collection list, ConfigStore configs, LinkedHashMap<String, Column> columns){
+    public void fillInsertContent(DataRuntime runtime, Run run, Table dest, Collection list, ConfigStore configs, LinkedHashMap<String, Column> columns){
         StringBuilder builder = run.getBuilder();
         if(null == builder){
             builder = new StringBuilder();
@@ -175,7 +174,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
         int dataSize = list.size();
         int idx = 0;
         for(Object obj:list){
-            insertValue("e"+idx,run, dest, obj, columns);
+            insertValue("e"+idx, run, dest, obj, columns);
             if(idx<dataSize-1){
                 builder.append(",");
             }
@@ -193,43 +192,43 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
     /**
      * 根据entity创建 INSERT RunPrepare
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param dest 表 如果不提供表名则根据data解析,表名可以事实前缀&lt;数据源名&gt;表示切换数据源
+     * @param dest 表 如果不提供表名则根据data解析, 表名可以事实前缀&lt;数据源名&gt;表示切换数据源
      * @param obj obj
      * @param columns 需要插入或更新的列，如果不指定则根据data或configs获取注意会受到ConfigTable中是否插入更新空值的几个配置项影响
      * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
      */
     @Override
-    protected Run createInsertRun(DataRuntime runtime, String dest, Object obj, ConfigStore configs, List<String> columns){
+    protected Run createInsertRun(DataRuntime runtime, Table dest, Object obj, ConfigStore configs, List<String> columns){
         Run run = new TableRun(runtime, dest);
         run.setPrepare(new DefaultTablePrepare());
         StringBuilder builder = run.getBuilder();
         if(BasicUtil.isEmpty(dest)){
             throw new SQLException("未指定表");
         }
-        // CREATE (emp:Employee{id:123,name:"zh"})
+        // CREATE (emp:Employee{id:123, name:"zh"})
 
-        PrimaryGenerator generator = checkPrimaryGenerator(type(),dest.replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""));
+        PrimaryGenerator generator = checkPrimaryGenerator(type(), dest.getName());
         DataRow row = null;
         if(obj instanceof DataRow){
             row = (DataRow)obj;
             if(row.hasPrimaryKeys() && null != generator){
-                generator.create(row, type(),dest.replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), row.getPrimaryKeys(), null);
-                //createPrimaryValue(row, type(),dest.replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), row.getPrimaryKeys(), null);
+                generator.create(row, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), row.getPrimaryKeys(), null);
+                //createPrimaryValue(row, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), row.getPrimaryKeys(), null);
             }
         }else{
             boolean create = EntityAdapterProxy.createPrimaryValue(obj, columns);
             if(!create && null != generator){
-                generator.create(obj, type(), dest.replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), columns,  null);
-                //createPrimaryValue(obj, type(),dest.replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), null,  null);
+                generator.create(obj, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), columns, null);
+                //createPrimaryValue(obj, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), null, null);
             }
         }
 
         /*确定需要插入的列*/
 
-        LinkedHashMap<String,Column> cols = confirmInsertColumns(runtime, dest, obj, configs, columns, false);
+        LinkedHashMap<String, Column> cols = confirmInsertColumns(runtime, dest, obj, configs, columns, false);
 
         builder.append("CREATE ");
-        insertValue("e0",run, dest, obj, cols);
+        insertValue("e0", run, dest, obj, cols);
         builder.append(" RETURN ID(e0) AS __ID0");
         return run;
     }
@@ -237,13 +236,13 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
     /**
      * 根据collection创建 INSERT RunPrepare
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param dest 表 如果不提供表名则根据data解析,表名可以事实前缀&lt;数据源名&gt;表示切换数据源
+     * @param dest 表 如果不提供表名则根据data解析, 表名可以事实前缀&lt;数据源名&gt;表示切换数据源
      * @param list 对象集合
-     * @param columns 需要插入的列,如果不指定则全部插入
+     * @param columns 需要插入的列, 如果不指定则全部插入
      * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
      */
     @Override
-    protected Run createInsertRunFromCollection(DataRuntime runtime, int batch, String dest, Collection list, ConfigStore configs, List<String> columns){
+    protected Run createInsertRunFromCollection(DataRuntime runtime, int batch, Table dest, Collection list, ConfigStore configs, List<String> columns){
         Run run = new TableRun(runtime, dest);
         if(null == list || list.isEmpty()){
             throw new SQLException("空数据");
@@ -253,15 +252,12 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
             DataSet set = (DataSet)list;
             first = set.getRow(0);
             if(BasicUtil.isEmpty(dest)){
-                dest = DataSourceUtil.parseDataSource(dest,set);
-            }
-            if(BasicUtil.isEmpty(dest)){
-                dest = DataSourceUtil.parseDataSource(dest,first);
+                dest = configs.table();
             }
         }else{
             first = list.iterator().next();
             if(BasicUtil.isEmpty(dest)) {
-                dest = EntityAdapterProxy.table(first.getClass(), true);
+                dest = EntityAdapterProxy.table(first.getClass());
             }
         }
         if(BasicUtil.isEmpty(dest)){
@@ -273,25 +269,25 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
         return run;
     }
     /**
-     * 生成insert sql的value部分,每个Entity(每行数据)调用一次
-     * (:User{name:'ZH',age:20})
+     * 生成insert sql的value部分, 每个Entity(每行数据)调用一次
+     * (:User{name:'ZH', age:20})
      * @param run 最终待执行的命令和参数(如果是JDBC环境就是SQL)
      * @param obj Entity或DataRow
      * @param columns 需要插入的列
      */
-    protected void insertValue(String alias, Run run, String dest, Object obj, LinkedHashMap<String, Column> columns){
+    protected void insertValue(String alias, Run run, Table dest, Object obj, LinkedHashMap<String, Column> columns){
         StringBuilder builder = run.getBuilder();
         if(null == builder){
             builder = new StringBuilder();
             run.setBuilder(builder);
         }
 
-        // CREATE (e:Employee{id:123,name:"zh"})
+        // CREATE (e:Employee{id:123, name:"zh"})
         builder.append("(");
         if(BasicUtil.isNotEmpty(alias)){
             builder.append(alias);
         }
-        builder.append(":").append(parseTable(dest));
+        builder.append(":").append(dest.getName());
         builder.append("{");
         List<String> insertColumns = new ArrayList<>();
         boolean first = true;
@@ -358,7 +354,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
         }
         String sql = run.getFinalInsert();
         if(BasicUtil.isEmpty(sql)){
-            log.warn("[不具备执行条件][dest:{}]",run.getTable());
+            log.warn("[不具备执行条件][dest:{}]", run.getTable());
             return -1;
         }
         if(null != configs){
@@ -409,13 +405,13 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
                 e.printStackTrace();
             }
             if(ConfigTable.IS_THROW_SQL_UPDATE_EXCEPTION){
-                SQLUpdateException ex = new SQLUpdateException("insert异常:"+e.toString(),e);
+                SQLUpdateException ex = new SQLUpdateException("insert异常:"+e.toString(), e);
                 ex.setSql(sql);
                 ex.setValues(values);
                 throw ex;
             }else{
                 if(ConfigTable.IS_LOG_SQL_WHEN_ERROR){
-                    log.error("{}[{}][sql:\n{}\n]\n[param:{}]", random, LogUtil.format("插入异常:", 33)+e.toString(), sql, LogUtil.param(run.getInsertColumns(),values));
+                    log.error("{}[{}][sql:\n{}\n]\n[param:{}]", random, LogUtil.format("插入异常:", 33)+e.toString(), sql, LogUtil.param(run.getInsertColumns(), values));
                 }
             }
         }finally {
@@ -446,7 +442,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
      * String mergeFinalQuery(DataRuntime runtime, Run run)
      * StringBuilder createConditionLike(DataRuntime runtime, StringBuilder builder, Compare compare)
      * StringBuilder createConditionIn(DataRuntime runtime, StringBuilder builder, Compare compare, Object value)
-     * List<Map<String,Object>> process(DataRuntime runtime, List<Map<String,Object>> list)
+     * List<Map<String, Object>> process(DataRuntime runtime, List<Map<String, Object>> list)
      *
      * protected void fillQueryContent(DataRuntime runtime, XMLRun run)
      * protected void fillQueryContent(DataRuntime runtime, TextRun run)
@@ -474,30 +470,33 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
             builder.append(orders.getRunText(getDelimiterFr()+getDelimiterTo()));
         }
         builder.append(" RETURN ");
-        List<String> columns = prepare.getQueryColumns();
+        LinkedHashMap<String, Column> columns = prepare.getColumns();
         if(null != columns && columns.size()>0){
             // 指定查询列
-            int size = columns.size();
-            for(int i=0; i<size; i++){
-                String column = columns.get(i);
+            boolean first = true;
+            for(Column column:columns.values()){
                 if(BasicUtil.isEmpty(column)){
                     continue;
                 }
-                //if(column.startsWith("${") && column.endsWith("}")){
-                if(BasicUtil.checkEl(column)){
-                    column = column.substring(2, column.length()-1);
-                    builder.append(column);
-                }else{
-                    if(column.toUpperCase().contains(" AS ") || column.contains("(") || column.contains(",")){
-                        builder.append(column);
-                    }else if("*".equals(column)){
-                        builder.append(alias);
-                    }else{
-                        delimiter(builder, alias+"."+column);
-                    }
-                }
-                if(i<size-1){
+
+                if(!first){
                     builder.append(",");
+                }
+                first = false;
+                String name = column.getName();
+                if(BasicUtil.checkEl(name)){
+                    name = name.substring(2, name.length()-1);
+                    builder.append(name);
+                }else{
+                    if(name.contains("(") || name.contains(",")){
+                        builder.append(name);
+                    }else if(name.toUpperCase().contains(" AS ")){
+                        builder.append(name);
+                    }else if("*".equals(name)){
+                        builder.append("*");
+                    }else{
+                        delimiter(builder, alias+"."+name);
+                    }
                 }
             }
             builder.append(JDBCAdapter.BR);
@@ -582,17 +581,17 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
      * JDBC执行结果处理
      * return e
      * 只有一个return项时执行
-     * [e:{id:1,name:''},e:{id:2,name:''}]
+     * [e:{id:1, name:''}, e:{id:2, name:''}]
      * 转换成
-     * [,{id:1,name:''},{id:2,name:''}]
+     * [, {id:1, name:''}, {id:2, name:''}]
      * @param list JDBC执行返回的结果集
      * @return List
      */
     @Override
-    public List<Map<String,Object>> process(DataRuntime runtime, List<Map<String,Object>> list){
-        List<Map<String,Object>> result = list;
+    public List<Map<String, Object>> process(DataRuntime runtime, List<Map<String, Object>> list){
+        List<Map<String, Object>> result = list;
         if(null != list && !list.isEmpty()){
-            Map<String,Object> map = list.get(0);
+            Map<String, Object> map = list.get(0);
             Set<String> keys = map.keySet();
             String id_key = "__ID";
             boolean mapHashIdKey = BasicUtil.containsString(true, true, keys, "__ID");
@@ -664,7 +663,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
                     // CD = ':CD'
                     List<Object> varValues = var.getValues();
                     String value = null;
-                    if(BasicUtil.isNotEmpty(true,varValues)){
+                    if(BasicUtil.isNotEmpty(true, varValues)){
                         value = (String)varValues.get(0);
                     }
                     if(null != value){
@@ -687,10 +686,10 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
                             String replaceSrc = ":"+var.getKey();
                             String replaceDst = "";
                             for(Object tmp:varValues){
-                                run.addValues(var.getKey(),tmp);
+                                run.addValues(var.getKey(), tmp);
                                 replaceDst += " ?";
                             }
-                            replaceDst = replaceDst.trim().replace(" ", ",");
+                            replaceDst = replaceDst.trim().replace(" ",", ");
                             result = result.replace(replaceSrc, replaceDst);
                         }else{
                             // 单个值
@@ -736,7 +735,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
             prepare.setAlias(alias);
         }
         builder.append("MATCH (").append(alias);
-        String table = run.getTable();
+        Table table = run.getTable();
         if(BasicUtil.isNotEmpty(table)) {
             builder.append(":");
             if (null != run.getSchema()) {
@@ -839,7 +838,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
      * protected Run buildDeleteRunFromTable(String table, String key, Object values)
      * protected Run buildDeleteRunFromEntity(String dest, Object obj, String ... columns)
      ******************************************************************************************************************/
-    public Run buildUpdateRunFromEntity(DataRuntime runtime, String dest, Object obj, ConfigStore configs, LinkedHashMap<String, Column> columns){
+    public Run buildUpdateRunFromEntity(DataRuntime runtime, Table dest, Object obj, ConfigStore configs, LinkedHashMap<String, Column> columns){
         TableRun run = new TableRun(runtime, dest);
         run.setFrom(2);
         StringBuilder builder = run.getBuilder();
@@ -872,7 +871,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
         List<String> updateColumns = new ArrayList<>();
         /*构造SQL*/
         if(!keys.isEmpty()){
-            builder.append("UPDATE ").append(parseTable(dest));
+            builder.append("UPDATE ").append(dest.getName());
             builder.append(" SET").append(JDBCAdapter.BR_TAB);
             boolean start = true;
             for(Column column:keys.values()){
@@ -936,15 +935,15 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
     }
 
     @Override
-    public Run buildUpdateRunFromDataRow(DataRuntime runtime, String dest, DataRow row, ConfigStore configs, LinkedHashMap<String, Column> columns){
+    public Run buildUpdateRunFromDataRow(DataRuntime runtime, Table dest, DataRow row, ConfigStore configs, LinkedHashMap<String, Column> columns){
         TableRun run = new TableRun(runtime, dest);
         StringBuilder builder = new StringBuilder();
         // List<Object> values = new ArrayList<Object>();
         /*确定需要更新的列*/
-        LinkedHashMap<String, Column> cols = confirmUpdateColumns(runtime, dest, row, configs, BeanUtil.getMapKeys(columns));
+        LinkedHashMap<String, Column> cols = confirmUpdateColumns(runtime, dest, row, configs, Column.names(columns));
         List<String> primaryKeys = row.getPrimaryKeys();
         if(primaryKeys.size() == 0){
-            throw new SQLUpdateException("[更新更新异常][更新条件为空,update方法不支持更新整表操作]");
+            throw new SQLUpdateException("[更新更新异常][更新条件为空, update方法不支持更新整表操作]");
         }
 
         // 不更新主键 除非显示指定
@@ -963,7 +962,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
         /*构造SQL*/
 
         if(!cols.isEmpty()){
-            builder.append("UPDATE ").append(parseTable(dest));
+            builder.append("UPDATE ").append(dest.getName());
             builder.append(" SET").append(JDBCAdapter.BR_TAB);
             boolean first = true;
             for(Column column:cols.values()){
@@ -1033,9 +1032,10 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
         if(null != joins) {
             for (Join join:joins) {
                 builder.append(JDBCAdapter.BR_TAB).append(join.getType().getCode()).append(" ");
-                delimiter(builder, join.getName());
-                if(BasicUtil.isNotEmpty(join.getAlias())){
-                    builder.append("  ").append(join.getAlias());
+                Table table = join.getTable();
+                delimiter(builder, table.getName());
+                if(BasicUtil.isNotEmpty(table.getAlias())){
+                    builder.append("  ").append(table.getAlias());
                 }
                 builder.append(" ON ").append(join.getCondition());
             }
@@ -1082,7 +1082,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
                     builder.append("=?");
                 }
             }else{
-                throw new SQLUpdateException("删除异常:删除条件为空,delete方法不支持删除整表操作.");
+                throw new SQLUpdateException("删除异常:删除条件为空, delete方法不支持删除整表操作.");
             }
         }else{
             delimiter(builder, key);
@@ -1094,14 +1094,13 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
         return run;
     }
 
-    public Run buildDeleteRunFromEntity(DataRuntime runtime, String dest, Object obj, String ... columns){
+    public Run buildDeleteRunFromEntity(DataRuntime runtime, Table dest, Object obj, String ... columns){
         TableRun run = new TableRun(runtime, dest);
         run.setFrom(2);
         StringBuilder builder = new StringBuilder();
         builder.append("MATCH (d");
-        String table = parseTable(dest);
-        if(BasicUtil.isNotEmpty(table)){
-            builder.append(":").append(table);
+         if(null != dest){
+            builder.append(":").append(dest.getName());
         }
         builder.append(")");
         builder.append(" WHERE ");
@@ -1136,7 +1135,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
                 run.addValues(Compare.EQUAL, new Column(key), value, ConfigTable.IS_AUTO_SPLIT_ARRAY);
             }
         }else{
-            throw new SQLUpdateException("删除异常:删除条件为空,delete方法不支持删除整表操作.");
+            throw new SQLUpdateException("删除异常:删除条件为空, delete方法不支持删除整表操作.");
         }
         builder.append(" DELETE d");
         run.setBuilder(builder);
