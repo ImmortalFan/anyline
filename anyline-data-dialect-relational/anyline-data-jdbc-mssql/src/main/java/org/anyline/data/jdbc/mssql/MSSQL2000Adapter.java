@@ -49,11 +49,19 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
 
     public String version(){return "2000";}
 
-    @Override
-    public boolean match(DataRuntime runtime) {
+	/**
+	 * 验证运行环境与当前适配器是否匹配<br/>
+	 * 默认不连接只根据连接参数<br/>
+	 * 只有同一个库区分不同版本(如mmsql2000/mssql2005)或不同模式(如kingbase的oracle/pg模式)时才需要单独实现
+	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+	 * @param compensate 是否补偿匹配，第一次失败后，会再匹配一次，第二次传入true
+	 * @return boolean
+	 */
+	@Override
+	public boolean match(DataRuntime runtime, boolean compensate) {
         List<String> keywords = type().keywords(); //关键字+jdbc-url前缀+驱动类
         String feature = runtime.getFeature();//数据源特征中包含上以任何一项都可以通过
-        boolean chk = match(feature, keywords);
+        boolean chk = match(feature, keywords, compensate);
         if(chk) {
             String version = runtime.getVersion();
             if (null != version && version.contains(".")) {
@@ -106,9 +114,9 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
                 rows = navi.getTotalRow() % navi.getPageRows();
             }
             String asc = order;
-            String desc = order.replace("ASC", "<A_ORDER>");
-            desc = desc.replace("DESC", "ASC");
-            desc = desc.replace("<A_ORDER>", "DESC");
+            String desc = order.replace("ASC","<A_ORDER>");
+            desc = desc.replace("DESC","ASC");
+            desc = desc.replace("<A_ORDER>","DESC");
             builder.append("SELECT "+cols+" FROM (\n ");
             builder.append("SELECT TOP ").append(rows).append(" * FROM (\n");
             builder.append("SELECT TOP ").append(navi.getPageRows()*navi.getCurPage()).append(" * ");
@@ -124,12 +132,12 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
      * 2000版本单独处理  insert into tab(nm) select 1 union all select 2
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param run 最终待执行的命令和参数(如果是JDBC环境就是SQL)
-     * @param dest 表 如果不提供表名则根据data解析,表名可以事实前缀&lt;数据源名&gt;表示切换数据源
+     * @param dest 表 如果不提供表名则根据data解析, 表名可以事实前缀&lt;数据源名&gt;表示切换数据源
      * @param set 集合
      * @param columns 需插入的列
      */
     @Override
-    public void fillInsertContent(DataRuntime runtime, Run run, String dest, DataSet set, ConfigStore configs, LinkedHashMap<String, Column> columns){
+    public void fillInsertContent(DataRuntime runtime, Run run, Table dest, DataSet set, ConfigStore configs, LinkedHashMap<String, Column> columns){
         //2000及以下
         StringBuilder builder = run.getBuilder();
         if(null == builder){
@@ -138,13 +146,14 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
         }
 
         LinkedHashMap<String, Column> pks = null;
-        PrimaryGenerator generator = checkPrimaryGenerator(type(),dest.replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""));
+        PrimaryGenerator generator = checkPrimaryGenerator(type(), dest.getName());
         if(null != generator){
             pks = set.getRow(0).getPrimaryColumns();
             columns.putAll(pks);
         }
 
-        builder.append("INSERT INTO ").append(parseTable(dest));
+        builder.append("INSERT INTO ");
+        name(runtime, builder, dest);
         builder.append("(");
 
         boolean start = true;
@@ -165,12 +174,12 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
             }
             if(row.hasPrimaryKeys() && BasicUtil.isEmpty(row.getPrimaryValue())){
                 if(null != generator){
-                    generator.create(row, type(),dest.replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
+                    generator.create(row, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
                 }
-                //createPrimaryValue(row, type(),dest.replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
+                //createPrimaryValue(row, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
             }
             builder.append("\n SELECT ");
-            builder.append(insertValue(runtime, run, row, true,true, false,false, columns));
+            builder.append(insertValue(runtime, run, row, true, true, false, false, columns));
             if(i<dataSize-1){
                 //多行数据之间的分隔符
                 builder.append("\n UNION ALL ");
@@ -183,12 +192,12 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
      * 2000版本单独处理  insert into tab(nm) select 1 union all select 2
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param run 最终待执行的命令和参数(如果是JDBC环境就是SQL)
-     * @param dest 表 如果不提供表名则根据data解析,表名可以事实前缀&lt;数据源名&gt;表示切换数据源
+     * @param dest 表 如果不提供表名则根据data解析, 表名可以事实前缀&lt;数据源名&gt;表示切换数据源
      * @param list 集合
      * @param columns 需插入的列
      */
     @Override
-    public void fillInsertContent(DataRuntime runtime, Run run, String dest, Collection list, LinkedHashMap<String, Column> columns){
+    public void fillInsertContent(DataRuntime runtime, Run run, Table dest, Collection list, LinkedHashMap<String, Column> columns){
         StringBuilder builder = run.getBuilder();
         if(null == builder){
             builder = new StringBuilder();
@@ -200,7 +209,7 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
             return;
         }
 
-        PrimaryGenerator generator = checkPrimaryGenerator(type(), dest.replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""));
+        PrimaryGenerator generator = checkPrimaryGenerator(type(), dest.getName());
         LinkedHashMap<String, Column> pks = null;
         if(null != generator) {
             Object entity = list.iterator().next();
@@ -208,7 +217,8 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
             columns.putAll(pks);
         }
 
-        builder.append("INSERT INTO ").append(parseTable(dest));
+        builder.append("INSERT INTO ");
+        name(runtime, builder, dest);
         builder.append("(");
         boolean start = true;
         for(Column column:columns.values()){
@@ -227,16 +237,16 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
            /* if(obj instanceof DataRow) {
                 DataRow row = (DataRow)obj;
                 if (row.hasPrimaryKeys() && BasicUtil.isEmpty(row.getPrimaryValue())) {
-                    createPrimaryValue(row, type(), dest.replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), row.getPrimaryKeys(), null);
+                    createPrimaryValue(row, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), row.getPrimaryKeys(), null);
                 }
-                insertValue(template, run, row, true, false,false, keys);
+                insertValue(template, run, row, true, false, false, keys);
             }else{*/
                 boolean create = EntityAdapterProxy.createPrimaryValue(obj, pks);
                 if(!create && null != generator){
-                    generator.create(obj, type(),dest.replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
-                    //createPrimaryValue(obj, type(),dest.replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), null, null);
+                    generator.create(obj, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
+                    //createPrimaryValue(obj, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), null, null);
                 }
-            builder.append(insertValue(runtime, run, obj, true,true, false, false, columns));
+            builder.append(insertValue(runtime, run, obj, true, true, false, false, columns));
            // }
             if(idx<dataSize-1){
                 //多行数据之间的分隔符
@@ -256,11 +266,11 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
      * @return String
      */
     @Override
-    public List<Run> buildQueryTableRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types) throws Exception{List<Run> runs = new ArrayList<>();
+    public List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types) throws Exception{List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
         StringBuilder builder = run.getBuilder();
-		builder.append("SELECT M.*, SCHEMA_NAME(M.SCHEMA_ID) AS TABLE_SCHEMA,F.VALUE AS TABLE_COMMENT FROM SYS.TABLES AS M \n")
+		builder.append("SELECT M.*, SCHEMA_NAME(M.SCHEMA_ID) AS TABLE_SCHEMA, F.VALUE AS TABLE_COMMENT FROM SYS.TABLES AS M \n")
 				.append("LEFT JOIN SYS.EXTENDED_PROPERTIES AS F ON M.OBJECT_ID = F.MAJOR_ID AND F.MINOR_ID=0\n")
 				.append("WHERE 1=1 ");
 		if(BasicUtil.isNotEmpty(pattern)){
@@ -272,7 +282,7 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
         return runs;
     }
     /**
-     * 添加表备注(表创建完成后调用,创建过程能添加备注的不需要实现)
+     * 创建表完成后追加表备注, 创建过程能添加备注的不需要实现与comment(DataRuntime runtime, StringBuilder builder, Table meta)二选一实现
      * @param table 表
      * @return sql
      * @throws Exception 异常
@@ -285,11 +295,11 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
         String comment = table.getComment();
         if(BasicUtil.isNotEmpty(comment)){
             builder.append("EXEC sp_addextendedproperty ");
-            builder.append("'MS_Description',");
-            builder.append("N'").append(comment).append("',");
-            builder.append("'USER',");
-            builder.append("'").append(table.getSchema()).append("',");
-            builder.append("'TABLE',");
+            builder.append("'MS_Description', ");
+            builder.append("N'").append(comment).append("', ");
+            builder.append("'USER', ");
+            builder.append("'").append(table.getSchema()).append("', ");
+            builder.append("'TABLE', ");
             builder.append("'").append(table.getName()).append("'");
         }
 
@@ -305,11 +315,11 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
         String comment = table.getComment();
         if(BasicUtil.isNotEmpty(comment)){
             builder.append("EXEC sp_updateextendedproperty ");
-            builder.append("'MS_Description',");
-            builder.append("N'").append(comment).append("',");
-            builder.append("'USER',");
-            builder.append("'").append(table.getSchema()).append("',");
-            builder.append("'TABLE',");
+            builder.append("'MS_Description', ");
+            builder.append("N'").append(comment).append("', ");
+            builder.append("'USER', ");
+            builder.append("'").append(table.getSchema()).append("', ");
+            builder.append("'TABLE', ");
             builder.append("'").append(table.getName()).append("'");
         }
 
@@ -317,7 +327,7 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
     }
 
     /**
-     * 添加表备注(表创建完成后调用,创建过程能添加备注的不需要实现)
+     * 创建表完成后追加表备注, 创建过程能添加备注的不需要实现与comment(DataRuntime runtime, StringBuilder builder, Table meta)二选一实现
      * @param column 列
      * @return sql
      * @throws Exception 异常
@@ -335,13 +345,13 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
                 schema = column.getTable(true).getSchema();
             }
             builder.append("EXEC sp_addextendedproperty ");
-            builder.append("'MS_Description',");
-            builder.append("N'").append(comment).append("',");
-            builder.append("'USER',");
-            builder.append("'").append(schema.getName()).append("',");
-            builder.append("'TABLE',");
-            builder.append("'").append(column.getTableName(true)).append("',");
-            builder.append("'COLUMN',");
+            builder.append("'MS_Description', ");
+            builder.append("N'").append(comment).append("', ");
+            builder.append("'USER', ");
+            builder.append("'").append(schema.getName()).append("', ");
+            builder.append("'TABLE', ");
+            builder.append("'").append(column.getTableName(true)).append("', ");
+            builder.append("'COLUMN', ");
             builder.append("'").append(column.getName()).append("'");
         }
 
@@ -352,13 +362,13 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
      * 修改备注
      *  -- 字段加注释
      * EXEC sys.sp_addextendedproperty @name=N'MS_Description'
-     * , @value=N'注释内容'
-     * , @level0type=N'SCHEMA'
-     * ,@level0name=N'dbo'
-     * , @level1type=N'TABLE'
-     * ,@level1name=N'表名'
-     * , @level2type=N'COLUMN'
-     * ,@level2name=N'字段名'
+     *, @value=N'注释内容'
+     *, @level0type=N'SCHEMA'
+     *, @level0name=N'dbo'
+     *, @level1type=N'TABLE'
+     *, @level1name=N'表名'
+     *, @level2type=N'COLUMN'
+     *, @level2name=N'字段名'
      *
      * @param column 列
      * @return String
@@ -381,13 +391,13 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
                 schema = column.getTable(true).getSchema();
             }
             builder.append("EXEC sp_updateextendedproperty ");
-            builder.append("'MS_Description',");
-            builder.append("N'").append(comment).append("',");
-            builder.append("'USER',");
-            builder.append("'").append(schema.getName()).append("',");
-            builder.append("'TABLE',");
-            builder.append("'").append(column.getTableName(true)).append("',");
-            builder.append("'COLUMN',");
+            builder.append("'MS_Description', ");
+            builder.append("N'").append(comment).append("', ");
+            builder.append("'USER', ");
+            builder.append("'").append(schema.getName()).append("', ");
+            builder.append("'TABLE', ");
+            builder.append("'").append(column.getTableName(true)).append("', ");
+            builder.append("'COLUMN', ");
             builder.append("'").append(column.getName()).append("'");
         }
 
