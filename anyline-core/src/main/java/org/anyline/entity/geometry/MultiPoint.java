@@ -78,8 +78,8 @@ public class MultiPoint extends Geometry{
     /**
      * sql格式
      * @param tag 是否包含tag<br/>
-     *             false:((1 1),(2 2))<br/>
-     *             true: MULTIPOINT((1 1),(2 2))
+     *             false:((1 1), (2 2))<br/>
+     *             true: MULTIPOINT((1 1), (2 2))
      * @param bracket 是否包含()
      * @return String
      */
