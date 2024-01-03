@@ -87,23 +87,23 @@ public abstract class AbstractMapClient implements MapClient{
     }
     @Override
     public Coordinate regeo(Double lng, Double lat){
-        return regeo(SRS.GCJ02LL,lng, lat);
+        return regeo(SRS.GCJ02LL, lng, lat);
     }
     @Override
     public Coordinate regeo(SRS srs, String[] point){
-        return regeo(srs, point[0],point[1]);
+        return regeo(srs, point[0], point[1]);
     }
     @Override
     public Coordinate regeo(String[] point){
-        return regeo(point[0],point[1]);
+        return regeo(point[0], point[1]);
     }
     @Override
     public Coordinate regeo(SRS srs, Double[] point){
-        return regeo(srs, point[0],point[1]);
+        return regeo(srs, point[0], point[1]);
     }
     @Override
     public Coordinate regeo(Double[] point){
-        return regeo(point[0],point[1]);
+        return regeo(point[0], point[1]);
     }
 
 }
