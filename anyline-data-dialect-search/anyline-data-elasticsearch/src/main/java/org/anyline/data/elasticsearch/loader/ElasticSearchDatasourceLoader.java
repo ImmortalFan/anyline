@@ -8,7 +8,7 @@
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an "AS IS" BASIS, 
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -53,15 +53,15 @@ public class ElasticSearchDatasourceLoader implements DatasourceLoader {
                 e.printStackTrace();
             }
         }
-        list.addAll(load(env,"spring.datasource", loadDefault));
-        list.addAll(load(env,"anyline.datasource", loadDefault));
+        list.addAll(load(env, "spring.datasource", loadDefault));
+        list.addAll(load(env, "anyline.datasource", loadDefault));
         //TODO 项目指定一个前缀
         return list;
     }
 
     //加载配置文件
     private List<String> load(Environment env, String head, boolean loadDefault){
-        //加载成功的前缀 crm,sso
+        //加载成功的前缀 crm, sso
         List<String> list = new ArrayList<>();
         if(loadDefault) {
             String def = ElasticSearchDatasourceHolder.reg("elasticsearch", head, env);

@@ -22,8 +22,14 @@ import org.anyline.entity.Order;
 import org.anyline.entity.OrderStore;
 import org.anyline.entity.PageNavi;
 import org.anyline.entity.Join;
+import org.anyline.metadata.Catalog;
+import org.anyline.metadata.Column;
+import org.anyline.metadata.Schema;
+import org.anyline.metadata.Table;
 
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 
@@ -39,8 +45,8 @@ public interface RunPrepare extends Cloneable {
 	// NAME = ':NM' 
 	// NM IN (:NM)
 	// LIMIT :LIMIT OFFSET :OFFSET
-    // 占位符前面的标识,中间可能有空格,占位符以字母开头(避免CODE='A:1'但避免不了'A:A1'这时应该换成$#),后面可能是 ' ) % ,
-	static final String SQL_PARAM_VARIABLE_REGEX = "(\\S+)\\s*\\(?(\\s*:+[A-Za-z]\\w+)(\\s|'|\\)|%|\\,)?";
+    // 占位符前面的标识, 中间可能有空格, 占位符以字母开头(避免CODE='A:1'但避免不了'A:A1'这时应该换成$#), 后面可能是 ' ) %,
+	static final String SQL_PARAM_VARIABLE_REGEX = "(\\S+)\\s*\\(?(\\s*:+[A-Za-z]\\w+)(\\s|'|\\)|%|\\, )?";
 	// 与上一种方式　二选一不能同时支持
 	//新版本中不要用{key} 避免与json格式冲突
 	// 以${}标识的执行时直接替换
@@ -63,26 +69,34 @@ public interface RunPrepare extends Cloneable {
 	String getId();
 	RunPrepare setId(String id);
 	/** 
-	 * 设置数据源(这里的数据源是指表)
+	 * 设置查询或操作的目标(表、存储过程、SQL等)
 	 * <p> 
 	 * 查询全部列 : setDataSource("V_ADMIN")<br> 
-	 * 查询指定列 : setDataSource(ADMIN(CD,ACCOUNT,NAME,REG_TIME))<br> 
-	 * 查询指定列 : setDataSource(ADMIN(DISTINCT CD,ACCOUNT,NAME,REG_TIME))<br> 
-	 * 查询指定列 : setDataSource(ADMIN(DISTINCT {NEWID()},{getDate()},CD,ACCOUNT,NAME,REG_TIME))<br> 
-	 * {}中内容按原样拼接到运行时SQL,其他列将添加[]以避免关键重复 
+	 * 查询指定列 : setDataSource(ADMIN(CD, ACCOUNT, NAME, REG_TIME))<br>
+	 * 查询指定列 : setDataSource(ADMIN(DISTINCT CD, ACCOUNT, NAME, REG_TIME))<br>
+	 * 查询指定列 : setDataSource(ADMIN(DISTINCT {NEWID()}, {getDate()}, CD, ACCOUNT, NAME, REG_TIME))<br>
+	 * {}中内容按原样拼接到运行时SQL, 其他列将添加[]以避免关键重复
 	 * </p> 
 	 * <p> 
 	 * 	根据XML定义SQL : setDataSource("admin.power:S_POWER")<br> 
-	 *  admin.power : XML文件路径,文件目录以.分隔<br> 
+	 *  admin.power : XML文件路径, 文件目录以.分隔<br>
 	 *  S_POWER : 自定义SQL的id 
 	 * </p>
-	 * @param ds  数据源 : 表|视图|自定义SQL.id
+	 * @param dest  数据源 : 表|视图|自定义SQL.id
 	 * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
 	 */
-	RunPrepare setDataSource(String ds);
-	String getDataSource();
-	String getSchema();
-	String getTable();
+	RunPrepare setDest(String dest);
+	RunPrepare setDest(Table dest);
+	String getDest();
+	RunPrepare setCatalog(String catalog);
+	Catalog getCatalog();
+	String getCatalogName();
+	RunPrepare setSchema(String schema);
+	Schema getSchema();
+	String getSchemaName();
+	Table getTable();
+	String getTableName();
+
 
 	/**
 	 * 用来标记运行环境key(其中关联了数据源与适配器)<br/>
@@ -93,7 +107,7 @@ public interface RunPrepare extends Cloneable {
 	RunPrepare setRuntime(String runtime);
 	String getRuntime();
 	/** 
-	 * 添加排序条件,在之前的基础上添加新排序条件,有重复条件则覆盖 
+	 * 添加排序条件, 在之前的基础上添加新排序条件, 有重复条件则覆盖
 	 * @param order  order
 	 * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
 	 */ 
@@ -102,7 +116,7 @@ public interface RunPrepare extends Cloneable {
 	RunPrepare order(Order order);
  
 	/** 
-	 * 添加分组条件,在之前的基础上添加新分组条件,有重复条件则覆盖 
+	 * 添加分组条件, 在之前的基础上添加新分组条件, 有重复条件则覆盖
 	 * @param group  group
 	 * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
 	 */ 
@@ -172,17 +186,18 @@ public interface RunPrepare extends Cloneable {
 	List<String> getFetchKeys();
 	RunPrepare setQueryColumns(String ... columns);
 	RunPrepare setQueryColumns(List<String> columns);
-	List<String> getQueryColumns();
-	List<String> getExcludeColumns();
+	LinkedHashMap<String,Column> getColumns();
+	List<String> getExcludes();
 	RunPrepare setExcludeColumns(List<String> excludeColumn);
 	RunPrepare setExcludeColumns(String... columns);
 	/**
 	 * 添加列
 	 * CD
-	 * CD,NM
+	 * CD, NM
 	 * @param columns  columns
 	 */
 	RunPrepare addColumn(String columns);
+	RunPrepare addColumn(Column column);
 	RunPrepare excludeColumn(String columns);
 
 	RunPrepare join(Join join);

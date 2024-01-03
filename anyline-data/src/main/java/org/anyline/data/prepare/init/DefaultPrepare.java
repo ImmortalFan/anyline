@@ -25,16 +25,14 @@ import org.anyline.data.prepare.auto.init.DefaultAutoCondition;
 import org.anyline.entity.*;
 import org.anyline.entity.Compare.EMPTY_VALUE_SWITCH;
 import org.anyline.entity.Join;
+import org.anyline.metadata.Column;
 import org.anyline.util.BasicUtil;
 import org.anyline.util.BeanUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Vector;
- 
+import java.util.*;
+
 public abstract class DefaultPrepare implements RunPrepare{
 
 	protected static final Logger log     = LoggerFactory.getLogger(DefaultPrepare.class);
@@ -51,8 +49,8 @@ public abstract class DefaultPrepare implements RunPrepare{
 	protected boolean strict		       = false				; // 严格格式 不能追加条件
 	protected String runtime		       = null				; //
 	protected EMPTY_VALUE_SWITCH swt       = EMPTY_VALUE_SWITCH.IGNORE;
-	protected List<String> queryColumns    = new ArrayList<>();	//查询列
-	protected List<String> excludeColumns  = new ArrayList<>();  //不查询列
+	protected LinkedHashMap<String,Column> columns = new LinkedHashMap<>();	//查询列
+	protected List<String> excludes = new ArrayList<>();  //不查询列
 
 
 	// 运行时参数值 
@@ -74,7 +72,7 @@ public abstract class DefaultPrepare implements RunPrepare{
 	 
  
 	/** 
-	 * 添加排序条件,在之前的基础上添加新排序条件,有重复条件则覆盖 
+	 * 添加排序条件, 在之前的基础上添加新排序条件, 有重复条件则覆盖
 	 * @param order  order
 	 * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
 	 */ 
@@ -108,7 +106,7 @@ public abstract class DefaultPrepare implements RunPrepare{
 		return ""; 
 	} 
 	/** 
-	 * 添加分组条件,在之前的基础上添加新分组条件,有重复条件则覆盖 
+	 * 添加分组条件, 在之前的基础上添加新分组条件, 有重复条件则覆盖
 	 * @param group  group
 	 * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
 	 */ 
@@ -131,7 +129,7 @@ public abstract class DefaultPrepare implements RunPrepare{
 	 * @param runValue  runValue
 	 * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
 	 */ 
-	@SuppressWarnings({"unchecked", "rawtypes" })
+	@SuppressWarnings({"unchecked","rawtypes" })
 	protected RunPrepare addRunValue(Object runValue){
 		if(null == runValues){
 			runValues = new Vector<Object>(); 
@@ -258,7 +256,7 @@ public abstract class DefaultPrepare implements RunPrepare{
 			return this;
 		}
 		
-		/*没有处于容器中时,设置自身主键*/
+		/*没有处于容器中时, 设置自身主键*/
 		if(null == this.primaryKeys){
 			this.primaryKeys = new ArrayList<>();
 		}
@@ -275,7 +273,7 @@ public abstract class DefaultPrepare implements RunPrepare{
 	}
 	/**
 	 * 设置主键 先清空之前设置过和主键
-	 * 当前对象处于容器中时,设置容器主键,否则设置自身主键
+	 * 当前对象处于容器中时, 设置容器主键, 否则设置自身主键
 	 * @param primaryKeys primaryKeys
 	 * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
 	 */
@@ -294,7 +292,7 @@ public abstract class DefaultPrepare implements RunPrepare{
 			return this;
 		}
 		
-		/*没有处于容器中时,设置自身主键*/
+		/*没有处于容器中时, 设置自身主键*/
 		if(null == this.primaryKeys){
 			this.primaryKeys = new ArrayList<>();
 		}else{
@@ -305,7 +303,7 @@ public abstract class DefaultPrepare implements RunPrepare{
 	}
 	/**
 	 * 读取主键
-	 * 主键为空时且容器有主键时,读取容器主键,否则返回默认主键
+	 * 主键为空时且容器有主键时, 读取容器主键, 否则返回默认主键
 	 * @return List
 	 */
 	public List<String> getPrimaryKeys(){
@@ -465,37 +463,40 @@ public abstract class DefaultPrepare implements RunPrepare{
 	@Override
 	public RunPrepare setQueryColumns(String... columns) {
 		if(null != columns) {
-			this.queryColumns = BeanUtil.array2list(columns);
+			setQueryColumns(BeanUtil.array2list(columns));
 		}
 		return this;
 	}
 
 	@Override
 	public RunPrepare setQueryColumns(List<String> columns) {
-		this.queryColumns = columns;
+		this.columns = new LinkedHashMap<>();
+		for(String column:columns){
+			this.columns.put(column.toUpperCase(), new Column(column));
+		}
 		return this;
 	}
 
 	@Override
-	public List<String> getQueryColumns() {
-		return this.queryColumns;
+	public LinkedHashMap<String,Column> getColumns() {
+		return this.columns;
 	}
 
 	@Override
-	public List<String> getExcludeColumns() {
-		return excludeColumns;
+	public List<String> getExcludes() {
+		return excludes;
 	}
 
 	@Override
 	public RunPrepare setExcludeColumns(List<String> excludeColumn) {
-		this.excludeColumns = excludeColumn;
+		this.excludes = excludeColumn;
 		return this;
 	}
 
 	@Override
 	public RunPrepare setExcludeColumns(String... columns) {
 		if(null != columns) {
-			this.queryColumns = BeanUtil.array2list(columns);
+			this.excludes = BeanUtil.array2list(columns);
 		}
 		return this;
 	}

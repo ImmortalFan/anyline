@@ -28,8 +28,7 @@ import org.anyline.data.prepare.init.DefaultGroupStore;
 import org.anyline.data.runtime.DataRuntime;
 import org.anyline.entity.*;
 import org.anyline.entity.Compare.EMPTY_VALUE_SWITCH;
-import org.anyline.metadata.ACTION;
-import org.anyline.metadata.Column;
+import org.anyline.metadata.*;
 import org.anyline.metadata.type.ColumnType;
 import org.anyline.util.*;
 import org.anyline.util.regular.RegularUtil;
@@ -45,9 +44,9 @@ public abstract class BasicRun implements Run {
 	protected int batch;
 	protected int vol;//每行多少个值
 	protected RunPrepare prepare;
-	protected String catalog;
-	protected String schema;
-	protected String table;
+	protected Catalog catalog;
+	protected Schema schema;
+	protected Table table;
 	protected List<String> keys;
 	protected List<RunValue> values;
 	protected List<RunValue> batchValues;
@@ -123,42 +122,75 @@ public abstract class BasicRun implements Run {
 		 
 	}
 	@Override
-	public String getTable(){
+	public Table getTable(){
 		return table;
 	}
 
 	@Override
-	public String getCatalog() {
+	public Catalog getCatalog() {
 		return catalog;
 	}
-
-	public void setCatalog(String catalog) {
+	public void setCatalog(Catalog catalog){
 		this.catalog = catalog;
+	}
+	public void setCatalog(String catalog) {
+		if(BasicUtil.isNotEmpty(catalog)){
+			this.catalog = new Catalog(catalog);
+		}else{
+			this.catalog = null;
+		}
 	}
 
 	@Override
-	public String getSchema() {
+	public Schema getSchema() {
 		return schema;
 	}
-
-	public void setSchema(String schema) {
+	public void setSchema(Schema schema){
 		this.schema = schema;
+	}
+	public void setSchema(String schema) {
+		if(BasicUtil.isNotEmpty(schema)){
+			this.schema = new Schema(schema);
+		}else{
+			this.schema = null;
+		}
 	}
 
 	public void setTable(String table) {
+		if(BasicUtil.isNotEmpty(table)){
+			this.table = new Table(table);
+		}else{
+			this.table = null;
+		}
+	}
+	public void setTable(Table table){
 		this.table = table;
 	}
 
 	@Override
-	public String getDataSource() {
-		String ds = table;
-		if (BasicUtil.isNotEmpty(ds) && BasicUtil.isNotEmpty(schema)) {
-			ds = schema + "." + ds;
+	public String getDest() {
+		String dest = null;
+		String catalogName = getCatalogName();
+		String schemaName = getSchemaName();
+		String tableName = getTableName();
+		if(BasicUtil.isNotEmpty(catalogName)){
+			dest = catalogName;
 		}
-		if (BasicUtil.isEmpty(ds)) {
-			ds = schema;
+		if(BasicUtil.isNotEmpty(schemaName)){
+			if(null == dest){
+				dest = schemaName;
+			}else{
+				dest += "." + schemaName;
+			}
 		}
-		return ds;
+		if(BasicUtil.isNotEmpty(tableName)){
+			if(null == dest){
+				dest = tableName;
+			}else{
+				dest += "." + tableName;
+			}
+		}
+		return dest;
 	}
 	@Override
 	public Run group(String group){
@@ -240,7 +272,7 @@ public abstract class BasicRun implements Run {
 	 * @param split  遇到集合/数组类型是否拆分处理(DataRow 并且Column不是数组类型)
 	 * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
 	 */
-	@SuppressWarnings({"rawtypes", "unchecked" })
+	@SuppressWarnings({"rawtypes","unchecked" })
 	@Override
 	public RunValue addValues(Compare compare, Column column, Object obj, boolean split){
 		RunValue rv = null;
@@ -354,7 +386,7 @@ public abstract class BasicRun implements Run {
 	 * @param run  run
 	 * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
 	 */
-	@SuppressWarnings({"rawtypes", "unchecked" })
+	@SuppressWarnings({"rawtypes","unchecked" })
 	public Run addValues(RunValue run){
 		if(null == values){
 			values = new ArrayList<>();
@@ -435,35 +467,38 @@ public abstract class BasicRun implements Run {
 	} 
 	@Override 
 	public String getFinalQuery(boolean placeholder) {
-		String text = runtime.getAdapter().mergeFinalQuery(runtime,this);
+		String text = runtime.getAdapter().mergeFinalQuery(runtime, this);
 		if(ConfigTable.IS_SQL_DELIMITER_PLACEHOLDER_OPEN){
 			text = SQLUtil.placeholder(text, delimiterFr, delimiterTo);
 		}
 		if(!placeholder){
 			text = replace(text);
 		}
+		text = format(text);
 		return text;
 	} 
 	@Override 
 	public String getTotalQuery(boolean placeholder) {
-		String text = runtime.getAdapter().mergeFinalTotal(runtime,this);
+		String text = runtime.getAdapter().mergeFinalTotal(runtime, this);
 		if(ConfigTable.IS_SQL_DELIMITER_PLACEHOLDER_OPEN){
 			text = SQLUtil.placeholder(text, delimiterFr, delimiterTo);
 		}
 		if(!placeholder){
 			text = replace(text);
 		}
+		text = format(text);
 		return text;
 	}
 	@Override
 	public String getFinalExists(boolean placeholder){
-		String text =  runtime.getAdapter().mergeFinalExists(runtime,this);
+		String text =  runtime.getAdapter().mergeFinalExists(runtime, this);
 		if(ConfigTable.IS_SQL_DELIMITER_PLACEHOLDER_OPEN){
 			text = SQLUtil.placeholder(text, delimiterFr, delimiterTo);
 		}
 		if(!placeholder){
 			text = replace(text);
 		}
+		text = format(text);
 		return text;
 	}
 	@Override 
@@ -526,7 +561,7 @@ public abstract class BasicRun implements Run {
 	 */
 	@Override
 	public Run addCondition(EMPTY_VALUE_SWITCH swt, Compare compare, String prefix, String var, Object value){
-		Condition condition = new DefaultAutoCondition(swt, compare, prefix,var, value);
+		Condition condition = new DefaultAutoCondition(swt, compare, prefix, var, value);
 		if(null == conditionChain){
 			conditionChain = new DefaultAutoConditionChain();
 		}
@@ -578,6 +613,7 @@ public abstract class BasicRun implements Run {
 		if(!placeholder){
 			text = replace(text);
 		}
+		text = format(text);
 		return text;
 	}
 	@Override
@@ -589,6 +625,7 @@ public abstract class BasicRun implements Run {
 		if(!placeholder){
 			text = replace(text);
 		}
+		text = format(text);
 		return text;
 	}
 	@Override
@@ -600,6 +637,7 @@ public abstract class BasicRun implements Run {
 		if(!placeholder){
 			text = replace(text);
 		}
+		text = format(text);
 		return text;
 	}
 
@@ -620,6 +658,7 @@ public abstract class BasicRun implements Run {
 		if(!placeholder){
 			text = replace(text);
 		}
+		text = format(text);
 		if(!supportBr()){
 			text = text.replace("\r\n"," ").replace("\n"," ");
 		}
@@ -748,7 +787,7 @@ public abstract class BasicRun implements Run {
 					continue;
 				}
 				condition = condition.trim();
-				String up = condition.toUpperCase().replaceAll("\\s+", " ").trim();
+				String up = condition.toUpperCase().replaceAll("\\s+"," ").trim();
 
 				if(up.startsWith("ORDER BY")){
 					// 排序条件
@@ -804,9 +843,9 @@ public abstract class BasicRun implements Run {
 					}
 					if(!isTime){
 						// 需要解析的SQL
-						ParseResult parser = ConfigParser.parse(condition,false);
+						ParseResult parser = ConfigParser.parse(condition, false);
 						Object value = ConfigParser.getValues(parser);
-						addCondition(parser.getSwitch(),parser.getCompare(), parser.getPrefix(),parser.getVar(),value);
+						addCondition(parser.getSwitch(), parser.getCompare(), parser.getPrefix(), parser.getVar(), value);
 						continue;
 					}
 				}
@@ -1044,9 +1083,9 @@ public abstract class BasicRun implements Run {
 				for(String col:cols){
 					if(null == result){
 
-						result = SQLUtil.delimiter(col, runtime.getAdapter().getDelimiterFr() , runtime.getAdapter().getDelimiterTo());
+						result = SQLUtil.delimiter(col, runtime.getAdapter().getDelimiterFr(), runtime.getAdapter().getDelimiterTo());
 					}else{
-						result += "," + SQLUtil.delimiter(col, runtime.getAdapter().getDelimiterFr() , runtime.getAdapter().getDelimiterTo());
+						result += "," + SQLUtil.delimiter(col, runtime.getAdapter().getDelimiterFr(), runtime.getAdapter().getDelimiterTo());
 					}
 				}
 			}
@@ -1072,7 +1111,7 @@ public abstract class BasicRun implements Run {
 				int index = result.indexOf("?");
 				String replacement = null;
 				if(null == value){
-					value = "null";
+					value = "NULL";
 				}
 				DriverAdapter adapter = adapter();
 				if(null != adapter){
@@ -1089,6 +1128,16 @@ public abstract class BasicRun implements Run {
 			}
 		}
 		return result;
+	}
+	private String format(String sql){
+		if(null != sql) {
+			sql = sql.replaceAll("\n ","\n\t")
+					.replaceAll("\n\t\n","\n")
+					.replaceAll("\n{2,}","\n")
+					.replaceAll(" {2,}"," ")
+					.trim();
+		}
+		return sql;
 	}
 	public String log(ACTION.DML action, boolean placeholder){
 		StringBuilder builder = new StringBuilder();
@@ -1121,6 +1170,35 @@ public abstract class BasicRun implements Run {
 			}
 		}
 		return builder.toString();
+	}
+
+	@Override
+	public String getTableName() {
+		if(null != table){
+			return table.getName();
+		}
+		return null;
+	}
+
+	@Override
+	public String getCatalogName() {
+		if(null != catalog){
+			return catalog.getName();
+		}
+		return null;
+	}
+
+	@Override
+	public String getSchemaName() {
+		if(null != schema){
+			return schema.getName();
+		}
+		return null;
+	}
+
+	@Override
+	public boolean checkValid() {
+		return false;
 	}
 }
  

@@ -65,7 +65,7 @@ public class CassandraAdapter extends DefaultJDBCAdapter implements JDBCAdapter,
         String cols = run.getQueryColumn();
         if(!"*".equals(cols)){
             String reg = "(?i)^select[\\s\\S]+from";
-            sql = sql.replaceAll(reg,"SELECT "+cols+" FROM ");
+            sql = sql.replaceAll(reg, "SELECT "+cols+" FROM ");
         }
         OrderStore orders = run.getOrderStore();
         if(null != orders){
@@ -79,7 +79,7 @@ public class CassandraAdapter extends DefaultJDBCAdapter implements JDBCAdapter,
             }
             sql += " LIMIT " + navi.getFirstRow() + "," + limit;
         }
-        sql = sql.replaceAll("WHERE\\s*1=1\\s*AND", "WHERE");
+        sql = sql.replaceAll("WHERE\\s*1=1\\s*AND","WHERE");
         return sql;
     }
 

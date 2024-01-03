@@ -26,6 +26,7 @@ import org.anyline.data.run.TableRun;
 import org.anyline.data.runtime.DataRuntime;
 import org.anyline.entity.DataRow;
 import org.anyline.metadata.Column;
+import org.anyline.metadata.Table;
 import org.anyline.metadata.type.DatabaseType;
 import org.anyline.util.BasicUtil;
 import org.springframework.beans.factory.InitializingBean;
@@ -74,23 +75,25 @@ public class InfluxAdapter extends DefaultJDBCAdapter implements JDBCAdapter, In
 	/**
 	 * 创建 insert Run
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-	 * @param dest 表 如果不提供表名则根据data解析,表名可以事实前缀&lt;数据源名&gt;表示切换数据源
+	 * @param dest 表 如果不提供表名则根据data解析, 表名可以事实前缀&lt;数据源名&gt;表示切换数据源
 	 * @param obj 实体
 	 * @param columns 需要抛入的列 如果不指定  则根据实体属性解析
 	 * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
 	 */
 	@Override
-	public Run buildInsertRun(DataRuntime runtime, int batch, String dest, Object obj, ConfigStore configs, List<String> columns){
+	public Run buildInsertRun(DataRuntime runtime, int batch, Table dest, Object obj, ConfigStore configs, List<String> columns){
 		Run run = null;
 		if(null != obj){
 			StringBuilder builder = new StringBuilder();
-			run = new TableRun(runtime,dest);
+			run = new TableRun(runtime, dest);
 			if(obj instanceof DataRow){
 				DataRow row = (DataRow)obj;
-				LinkedHashMap<String,Column> cols = confirmInsertColumns(runtime, dest, obj, configs, columns, false);
-				// insert al, tag1=value1 qty=1,name=5
-				builder.append("insert ").append(parseTable(dest)).append(" ");
-				Map<String,Object> tags = row.getTags();
+				LinkedHashMap<String, Column> cols = confirmInsertColumns(runtime, dest, obj, configs, columns, false);
+				// insert al, tag1=value1 qty=1, name=5
+				builder.append("insert ");
+				name(runtime, builder, dest);
+				builder.append(" ");
+				Map<String, Object> tags = row.getTags();
 				for(String tag:tags.keySet()){
 					builder.append(",").append(tag).append("=").append(tags.get(tag));
 				}

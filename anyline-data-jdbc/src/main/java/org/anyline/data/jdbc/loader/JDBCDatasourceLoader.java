@@ -77,8 +77,8 @@ public class JDBCDatasourceLoader implements DatasourceLoader {
         }else{
             loadDefault = false;
         }
-        list.addAll(load(env,"spring.datasource", loadDefault));
-        list.addAll(load(env,"anyline.datasource", loadDefault));
+        list.addAll(load(env, "spring.datasource", loadDefault));
+        list.addAll(load(env, "anyline.datasource", loadDefault));
         //TODO 项目指定一个前缀
         return list;
     }
@@ -93,7 +93,7 @@ public class JDBCDatasourceLoader implements DatasourceLoader {
      * @return keys
      */
     private List<String> load(Environment env, String head, boolean loadDefault){
-        //加载成功的前缀 crm,sso
+        //加载成功的前缀 crm, sso
         List<String> list = new ArrayList<>();
         if(loadDefault) {
             String def = JDBCDatasourceHolder.reg("default", head, env);

@@ -27,8 +27,7 @@ import org.anyline.entity.Compare.EMPTY_VALUE_SWITCH;
 import org.anyline.entity.Order;
 import org.anyline.entity.OrderStore;
 import org.anyline.entity.PageNavi;
-import org.anyline.metadata.Column;
-import org.anyline.metadata.Constraint;
+import org.anyline.metadata.*;
 import org.anyline.util.BasicUtil;
 import org.anyline.util.BeanUtil;
 import org.anyline.util.ConfigTable;
@@ -42,6 +41,64 @@ import java.util.*;
  * 
  */
 public interface ConfigStore {
+
+	/**
+	 * 设置查询或操作的数据源
+	 * @param datasource 查询或操作的数据源
+	 * @return ConfigStore
+	 */
+	ConfigStore datasource(String datasource);
+
+	/**
+	 * 查询或操作的数据源
+	 * @return String
+	 */
+	String datasource();
+	/**
+	 * 设置查询或操作的目标(表,存储过程,sql等)
+	 * @param dest 查询或操作的目标
+	 * @return ConfigStore
+	 */
+	ConfigStore dest(String dest);
+	ConfigStore table(Table table);
+	ConfigStore schema(Schema schema);
+	ConfigStore catalog(Catalog catalog);
+
+
+	ConfigStore table(String table);
+	ConfigStore schema(String schema);
+	ConfigStore catalog(String catalog);
+
+	Table table();
+	Schema schema();
+	Catalog catalog();
+	String tableName();
+	String schemaName();
+	String catalogName();
+
+	/**
+	 * 复制配置属性(不含查询条件)
+	 * @param configs  ConfigStore
+	 * @return ConfigStore
+	 */
+	ConfigStore copyProperty(ConfigStore configs);
+
+	/**
+	 * 查询或操作的目标(表,存储过程,sql等)
+	 * @return String
+	 */
+	String dest();
+	/**
+	 * 设置虚拟主键，主要是用作为更新条件
+	 * @param keys keys
+	 * @return this
+	 */
+	ConfigStore keys(String ... keys);
+	/**
+	 * 虚拟主键，主要是用作为更新条件
+	 * @return List
+	 */
+	List<String> keys();
 
 	boolean execute();
 	ConfigStore execute(boolean execute);
@@ -679,19 +736,19 @@ public interface ConfigStore {
 	}
 
 	default ConfigStore findInSetOr(EMPTY_VALUE_SWITCH swt, String id, String var, Object value, boolean overCondition, boolean overValue){
-		return and(swt, Compare.FIND_IN_SET_OR, id, var, value, overCondition, overValue);
+		return or(swt, Compare.FIND_IN_SET_OR, id, var, value, overCondition, overValue);
 	}
 	default ConfigStore findInSetOr(EMPTY_VALUE_SWITCH swt, String var, Object value, boolean overCondition, boolean overValue){
-		return and(swt, Compare.FIND_IN_SET_OR, var, value, overCondition, overValue);
+		return or(swt, Compare.FIND_IN_SET_OR, var, value, overCondition, overValue);
 	}
 	default ConfigStore findInSetOr(String id, String var, Object value, boolean overCondition, boolean overValue){
-		return and(Compare.FIND_IN_SET_OR, id, var, value, overCondition, overValue);
+		return or(Compare.FIND_IN_SET_OR, id, var, value, overCondition, overValue);
 	}
 	default ConfigStore findInSetOr(String var, Object value, boolean overCondition, boolean overValue){
-		return and(Compare.FIND_IN_SET_OR, var, value, overCondition, overValue);
+		return or(Compare.FIND_IN_SET_OR, var, value, overCondition, overValue);
 	}
 	default ConfigStore findInSetOr(String var, Object value){
-		return and(Compare.FIND_IN_SET_OR, var, value);
+		return or(Compare.FIND_IN_SET_OR, var, value);
 	}
 
 	default ConfigStore findInSetAnd(EMPTY_VALUE_SWITCH swt, String id, String var, Object value, boolean overCondition, boolean overValue){
@@ -852,10 +909,10 @@ public interface ConfigStore {
 	 * @return ConfigStore
 	 */
 	default ConfigStore param(EMPTY_VALUE_SWITCH swt, String id, String var, Object value){
-		return and(swt, Compare.NONE,  id, var, value);
+		return and(swt, Compare.NONE, id, var, value);
 	}
 	default ConfigStore param(String id, String var, Object value){
-		return and(EMPTY_VALUE_SWITCH.NONE, Compare.NONE,  id, var, value);
+		return and(EMPTY_VALUE_SWITCH.NONE, Compare.NONE, id, var, value);
 	}
 	/**
 	 * 用来给占位符或自定义SQL中的参数赋值
@@ -869,7 +926,7 @@ public interface ConfigStore {
 		return and(swt, Compare.NONE, var, value);
 	}
 	default ConfigStore param(String var, Object value){
-		return and(EMPTY_VALUE_SWITCH.NONE,  Compare.NONE, var, value);
+		return and(EMPTY_VALUE_SWITCH.NONE, Compare.NONE, var, value);
 	}
 	/**
 	 * 与ConfigStore中前一个条件合成or

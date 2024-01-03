@@ -47,7 +47,7 @@ public class VCFUtil {
 
     /**
      * 批量生成
-     * @param mobiles 手机号或手机号,姓名
+     * @param mobiles 手机号或手机号, 姓名
      * @return String
      */
     public static String format(List<String> mobiles){
@@ -61,7 +61,7 @@ public class VCFUtil {
                     builder.append(format(items[0], items[1])).append("\n");
                 }
             }else{
-                builder.append(format(mobile,mobile)).append("\n");
+                builder.append(format(mobile, mobile)).append("\n");
             }
        }
        return builder.toString();

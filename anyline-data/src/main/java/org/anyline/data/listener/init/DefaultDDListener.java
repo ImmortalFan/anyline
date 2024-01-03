@@ -52,7 +52,7 @@ public class DefaultDDListener implements DDListener {
      * @param table 表
      * @param column 修改的列
      * @param exception 异常
-     * @return boolean 如果返回true(如处理完异常数据后),dao中会再执行一次ddl
+     * @return boolean 如果返回true(如处理完异常数据后), dao中会再执行一次ddl
      */
     @Override
     public ACTION.SWITCH afterAlterColumnException(DataRuntime runtime, String random, Table table, Column column, Exception exception) {
@@ -65,7 +65,7 @@ public class DefaultDDListener implements DDListener {
         }else{
             // 根据行数
             RunPrepare prepare = new DefaultTablePrepare();
-            prepare.setDataSource(table.getName());
+            prepare.setDest(table.getName());
             long rows = runtime.getAdapter().count(runtime, random, prepare, null);
             if(rows > ConfigTable.AFTER_ALTER_COLUMN_EXCEPTION_ACTION){
                 swt = afterAlterColumnException(runtime, random, table, column, rows, exception);
@@ -101,7 +101,7 @@ public class DefaultDDListener implements DDListener {
             while (true){
                 navi.setCurPage(page);
                 RunPrepare prepare = new DefaultTablePrepare();
-                prepare.setDataSource(table.getName());
+                prepare.setDest(table.getName());
                 ConfigStore configs = new DefaultConfigStore();
                 configs.setPageNavi(navi);
                 DataSet set = runtime.getAdapter().querys(runtime, null, prepare, configs);
