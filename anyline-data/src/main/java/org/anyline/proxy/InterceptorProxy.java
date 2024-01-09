@@ -28,8 +28,8 @@ import org.anyline.metadata.ACTION.DDL;
 import org.anyline.metadata.ACTION.SWITCH;
 import org.anyline.metadata.Procedure;
 import org.anyline.metadata.Table;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.noear.solon.annotation.Component;
+import org.noear.solon.annotation.Inject;
 
 import java.util.*;
 
@@ -44,49 +44,49 @@ public class InterceptorProxy {
     private static List<DeleteInterceptor> deleteInterceptors = new ArrayList<>();
     private static List<ExecuteInterceptor> executeInterceptors = new ArrayList<>();
 
-    @Autowired(required=false)
+    @Inject(required=false)
     public void setQueryInterceptors(Map<String, QueryInterceptor> interceptors) {
         for(QueryInterceptor interceptor:interceptors.values()){
             queryInterceptors.add(interceptor);
         }
         JDBCInterceptor.sort(queryInterceptors);
     }
-    @Autowired(required=false)
+    @Inject(required=false)
     public void setCountInterceptors(Map<String, CountInterceptor> interceptors) {
         for(CountInterceptor interceptor:interceptors.values()){
             countInterceptors.add(interceptor);
         }
         JDBCInterceptor.sort(countInterceptors);
     }
-    @Autowired(required=false)
+    @Inject(required=false)
     public void setUpdateInterceptors(Map<String, UpdateInterceptor> interceptors) {
         for(UpdateInterceptor interceptor:interceptors.values()){
             updateInterceptors.add(interceptor);
         }
         JDBCInterceptor.sort(updateInterceptors);
     }
-    @Autowired(required=false)
+    @Inject(required=false)
     public void setInsertInterceptors(Map<String, InsertInterceptor> interceptors) {
         for(InsertInterceptor interceptor:interceptors.values()){
             insertInterceptors.add(interceptor);
         }
         JDBCInterceptor.sort(insertInterceptors);
     }
-    @Autowired(required=false)
+    @Inject(required=false)
     public void setDeleteInterceptors(Map<String, DeleteInterceptor> interceptors) {
         for(DeleteInterceptor interceptor:interceptors.values()){
             deleteInterceptors.add(interceptor);
         }
         JDBCInterceptor.sort(insertInterceptors);
     }
-    @Autowired(required=false)
+    @Inject(required=false)
     public void setExecuteInterceptors(Map<String, ExecuteInterceptor> interceptors) {
         for(ExecuteInterceptor interceptor:interceptors.values()){
             executeInterceptors.add(interceptor);
         }
         JDBCInterceptor.sort(executeInterceptors);
     }
-    @Autowired(required=false)
+    @Inject(required=false)
     public void setDDInterceptors(Map<String, DDInterceptor> interceptors) {
         for(DDInterceptor interceptor:interceptors.values()){
             List<DDL> actions = interceptor.actions();

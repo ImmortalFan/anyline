@@ -69,7 +69,7 @@ public class EntityAdapterProxy {
     }
 
 
-    @Autowired(required = false)
+    @Inject(required = false)
     public void setAdapter(Map<String, EntityAdapter> adapters) {
         //是否禁用默认adapter
         String defaultKey = "anyline.entity.adapter.default";

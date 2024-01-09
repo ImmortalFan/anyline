@@ -20,13 +20,11 @@ package org.anyline.data.mongodb.loader;
 import org.anyline.data.listener.DatasourceLoader;
 import org.anyline.data.mongodb.datasource.MongoDatasourceHolder;
 import org.anyline.data.mongodb.runtime.MongoRuntimeHolder;
-import org.anyline.util.SpringContextUtil;
+import org.noear.solon.annotation.Component;
+import org.noear.solon.core.AppContext;
+import org.noear.solon.core.Props;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.core.env.Environment;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,22 +33,18 @@ import java.util.List;
 public class MongoDatasourceLoader implements DatasourceLoader {
     public static Logger log = LoggerFactory.getLogger(MongoDatasourceLoader.class);
 
-    private static DefaultListableBeanFactory factory;
-    public List<String> load(ApplicationContext context){
+    public List<String> load(AppContext context){
         List<String> list = new ArrayList<>();
-        Environment env = context.getEnvironment();
-        factory = (DefaultListableBeanFactory) context.getAutowireCapableBeanFactory();
-        SpringContextUtil.init(context);
-        MongoRuntimeHolder.init(factory);
+        MongoRuntimeHolder.init(context);
         boolean loadDefault = true;
-        list.addAll(load(env, "spring.datasource", loadDefault));
-        list.addAll(load(env, "anyline.datasource", loadDefault));
+        list.addAll(load(context.cfg(), "spring.datasource", loadDefault));
+        list.addAll(load(context.cfg(), "anyline.datasource", loadDefault));
         //TODO 项目指定一个前缀
         return list;
     }
 
     //加载配置文件
-    private List<String> load(Environment env, String head, boolean loadDefault){
+    private List<String> load(Props env, String head, boolean loadDefault){
         //加载成功的前缀 crm, sso
         List<String> list = new ArrayList<>();
         if(loadDefault) {

@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.anyline</groupId>
 	<artifactId>anyline-dependency</artifactId>
-	<version>8.7.1-SNAPSHOT</version>
+	<version>8.7.1-solon-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>anyline-dependency</name>
 	<description>anyline</description>
@@ -31,9 +31,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
-		<anyline.version>8.7.1-SNAPSHOT</anyline.version>
-
-		<spring.version>5.3.23</spring.version>
+		<anyline.version>8.7.1-solon-SNAPSHOT</anyline.version>
+		<solon.version>2.6.5-SNAPSHOT</solon.version>
 		<jdbc-mssql.version>7.2.2.jre8</jdbc-mssql.version>
 		<jdbc-mysql.version>8.0.28</jdbc-mysql.version>
 		<jdbc-db2.version>11.5.0.0</jdbc-db2.version>
@@ -80,24 +79,20 @@
 		<alibaba.nacos.version>2.0.3</alibaba.nacos.version>
 		<rocketmq.version>4.6.0</rocketmq.version>
 		<redis.version>3.3.0</redis.version>
-		<spring.redis.version>2.5.6</spring.redis.version>
 		<rxtx.version>2.2</rxtx.version>
 		<pdfbox.version>2.0.25</pdfbox.version>
 		<poi.version>5.2.0</poi.version>
 		<bcprov.version>1.70</bcprov.version>
 		<common-codec.version>1.11</common-codec.version>
 
-		<taglibs.standard.version>1.1.2</taglibs.standard.version>
-		<javax.servlet.version>4.0.0</javax.servlet.version>
-		<javax.jsp.version>2.0</javax.jsp.version>
-		<javax.jstl.version>1.1.2</javax.jstl.version>
-		<!--JDK17部分-->
-		<jakarta.servlet.version>6.0.0</jakarta.servlet.version>
-		<jakarta.jsp.version>3.1.1</jakarta.jsp.version>
-		<jakarta.jstl.version>3.0.0</jakarta.jstl.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
+			<dependency>
+				<groupId>org.noear</groupId>
+				<artifactId>solon</artifactId>
+				<version>${solon.version}</version>
+			</dependency>
 			<dependency>
 				<groupId>org.anyline</groupId>
 				<artifactId>anyline-core</artifactId>
@@ -624,36 +619,6 @@
 				<version>${bcprov.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-jdbc</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-aspects</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-web</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-context</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-beans</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-webmvc</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
 				<groupId>org.bidib.jbidib.org.qbang.rxtx</groupId>
 				<artifactId>rxtxcomm</artifactId>
 				<version>${rxtx.version}</version>
@@ -788,21 +753,6 @@
 				<version>${minio.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.apache.struts</groupId>
-				<artifactId>struts2-core</artifactId>
-				<version>${apache.struts.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.struts</groupId>
-				<artifactId>struts2-spring-plugin</artifactId>
-				<version>${apache.struts.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.struts</groupId>
-				<artifactId>struts2-convention-plugin</artifactId>
-				<version>${apache.struts.version}</version>
-			</dependency>
-			<dependency>
 				<groupId>com.aliyun.oss</groupId>
 				<artifactId>aliyun-sdk-oss</artifactId>
 				<version>${aliyun.oss.version}</version>
@@ -904,12 +854,6 @@
 				<artifactId>dom4j</artifactId>
 				<version>${org.dom4j.version}</version>
 			</dependency>
-			<!-- 经常依赖失败 已复制源码到anyline-oro -->
-			<dependency>
-				<groupId>org.apache.oro</groupId>
-				<artifactId>com.springsource.org.apache.oro</artifactId>
-				<version>${oro.version}</version>
-			</dependency>
 			<dependency>
 				<groupId>commons-io</groupId>
 				<artifactId>commons-io</artifactId>
@@ -964,7 +908,10 @@
 	</dependencyManagement>
 
 	<dependencies>
-
+		<dependency>
+			<groupId>org.noear</groupId>
+			<artifactId>solon</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-core</artifactId>
@@ -1001,39 +948,6 @@
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
 			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-beans</artifactId>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-context</artifactId>
-			<scope>provided</scope>
-		</dependency>
-		<!--JDK17-->
-		<dependency>
-			<groupId>jakarta.servlet</groupId>
-			<artifactId>jakarta.servlet-api</artifactId>
-			<version>${jakarta.servlet.version}</version>
-			<scope>provided</scope>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>jakarta.servlet.jsp</groupId>
-			<artifactId>jakarta.servlet.jsp-api</artifactId>
-			<version>${jakarta.jsp.version}</version>
-			<scope>provided</scope>
-			<optional>true</optional>
-		</dependency>
-
-		<dependency>
-			<groupId>jakarta.servlet.jsp.jstl</groupId>
-			<artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
-			<version>${jakarta.jstl.version}</version>
-			<scope>provided</scope>
-			<optional>true</optional>
 		</dependency>
 	</dependencies>
 	<profiles>
@@ -1183,13 +1097,6 @@
 					<include>*.factories</include>
 				</includes>
 				<targetPath>META-INF</targetPath>
-			</resource>
-			<resource>
-				<directory>src/main/resources/META-INF/spring</directory>
-				<includes>
-					<include>*.imports</include>
-				</includes>
-				<targetPath>META-INF/spring</targetPath>
 			</resource>
 			<resource>
 				<directory>/src/main/webapp/WEB-INF</directory>

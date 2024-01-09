@@ -17,34 +17,33 @@
 
 package org.anyline.listener;
 
-import org.anyline.util.BasicUtil;
-import org.anyline.util.BeanUtil;
 import org.anyline.util.ConfigTable;
+import org.noear.solon.annotation.Component;
+import org.noear.solon.core.event.AppLoadEndEvent;
+import org.noear.solon.core.event.EventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.EnvironmentAware;
-import org.springframework.core.env.Environment;
-import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 
 @Component("anyline.listener.EnvironmentListener")
-public class EnvironmentListener implements EnvironmentAware {
+public class EnvironmentListener implements EventListener<AppLoadEndEvent> {
     private Logger log = LoggerFactory.getLogger(EnvironmentListener.class);
 
+
     @Override
-    public void setEnvironment(Environment environment) {
+    public void onEvent(AppLoadEndEvent event) {
         Field[] fields = ConfigTable.class.getDeclaredFields();
         for(Field field:fields){
             String name = field.getName();
-            String value = BeanUtil.value("anyline", environment, "." + name);
+            //TODO 配置文件 赋值ConfigTable属性
+           /* String value = BeanUtil.value("anyline", environment, "." + name);
             if(BasicUtil.isNotEmpty(value)) {
                 if(Modifier.isFinal(field.getModifiers())){
                     continue;
                 }
                 BeanUtil.setFieldValue(null, field, value);
-            }
+            }*/
         }
     }
 }

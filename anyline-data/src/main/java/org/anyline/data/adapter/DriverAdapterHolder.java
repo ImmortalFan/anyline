@@ -19,20 +19,21 @@ package org.anyline.data.adapter;
 
 import org.anyline.data.runtime.DataRuntime;
 import org.anyline.metadata.type.DatabaseType;
+import org.noear.solon.annotation.Component;
+import org.noear.solon.annotation.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-@Repository("anyline.data.DriverAdapterHolder")
+@Component("anyline.data.DriverAdapterHolder")
 public class DriverAdapterHolder {
 
 	private static final Logger log = LoggerFactory.getLogger(DriverAdapterHolder.class);
+	@Inject(required = false)
 	private static HashSet<DriverAdapter> adapters= new HashSet<>();
 	private static HashSet<DatabaseType> supports= new HashSet<>();
 	private static List<DriverAdapterHolder> utils = new ArrayList<>();
@@ -64,12 +65,7 @@ public class DriverAdapterHolder {
 		list.addAll(adapters);
 		return list;
 	}
-	@Autowired(required = false)
-	public void setAdapters(Map<String, DriverAdapter> map){
-		for (DriverAdapter adapter:map.values()){
-			adapters.add(adapter);
-		}
-	}
+
 	public static boolean support(DatabaseType type){
 		return supports.contains(type);
 	}

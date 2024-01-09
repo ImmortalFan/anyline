@@ -56,7 +56,7 @@ import java.util.*;
 @Service("anyline.service")
 public class DefaultService<E> implements AnylineService<E> {
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
-    @Autowired(required = false)
+    @Inject(required = false)
     @Qualifier("anyline.dao")
     protected AnylineDao dao;
 
@@ -69,7 +69,7 @@ public class DefaultService<E> implements AnylineService<E> {
         return cacheProvider;
     }
 
-    @Autowired(required = false)
+    @Inject(required = false)
     public void setCacheProvider(CacheProvider cacheProvider) {
         DefaultService.cacheProvider = cacheProvider;
     }

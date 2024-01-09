@@ -21,32 +21,22 @@ import org.anyline.data.datasource.DatasourceHolder;
 import org.anyline.data.jdbc.datasource.JDBCDatasourceHolder;
 import org.anyline.data.jdbc.runtime.JDBCRuntimeHolder;
 import org.anyline.data.listener.DatasourceLoader;
-import org.anyline.util.SpringContextUtil;
+import org.noear.solon.annotation.Component;
+import org.noear.solon.core.AppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.core.env.Environment;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Component("anyline.data.datasource.loader.jdbc")
 public class JDBCDatasourceLoader implements DatasourceLoader {
     public static Logger log = LoggerFactory.getLogger(JDBCDatasourceLoader.class);
 
-    private static DefaultListableBeanFactory factory;
-    public List<String> load(ApplicationContext context){
+    public List<String> load(AppContext context){
         List<String> list = new ArrayList<>();
-        Environment env = context.getEnvironment();
-        factory = (DefaultListableBeanFactory) context.getAutowireCapableBeanFactory();
-        SpringContextUtil.init(context);
-        JDBCRuntimeHolder.init(factory);
+        JDBCRuntimeHolder.init(context);
         JDBCDatasourceHolder.loadCache();
         boolean loadDefault = true; //是否需要加载default
         if(!DatasourceHolder.contains("default")){
@@ -77,8 +67,8 @@ public class JDBCDatasourceLoader implements DatasourceLoader {
         }else{
             loadDefault = false;
         }
-        list.addAll(load(env, "spring.datasource", loadDefault));
-        list.addAll(load(env, "anyline.datasource", loadDefault));
+        list.addAll(load(context, "spring.datasource", loadDefault));
+        list.addAll(load(context, "anyline.datasource", loadDefault));
         //TODO 项目指定一个前缀
         return list;
     }
@@ -92,7 +82,7 @@ public class JDBCDatasourceLoader implements DatasourceLoader {
      * @param loadDefault 是否加载默认数据源
      * @return keys
      */
-    private List<String> load(Environment env, String head, boolean loadDefault){
+    private List<String> load(AppContext env, String head, boolean loadDefault){
         //加载成功的前缀 crm, sso
         List<String> list = new ArrayList<>();
         if(loadDefault) {
@@ -104,10 +94,10 @@ public class JDBCDatasourceLoader implements DatasourceLoader {
         //默认数据源
         //多数据源
         // 读取配置文件获取更多数据源 anyline.datasource.list
-        String prefixs = env.getProperty(head + ".list");
+        String prefixs = env.cfg().getProperty(head + ".list");
         if(null == prefixs){
             //anyline.datasource-list
-            prefixs = env.getProperty(head + "-list");
+            prefixs = env.cfg().getProperty(head + "-list");
         }
         if(null != prefixs){
             for (String prefix : prefixs.split(",")) {

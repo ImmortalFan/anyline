@@ -19,9 +19,10 @@ package org.anyline.data.runtime;
 
 import org.anyline.data.adapter.DriverAdapter;
 import org.anyline.proxy.DatasourceHolderProxy;
+import org.noear.solon.Solon;
+import org.noear.solon.core.AppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -32,9 +33,8 @@ import java.util.Map;
 public abstract class RuntimeHolder {
     protected static Logger log = LoggerFactory.getLogger(RuntimeHolder.class);
     protected static Map<String, DataRuntime> runtimes = new Hashtable();
-    protected static DefaultListableBeanFactory factory;
-    public static void init(DefaultListableBeanFactory factory){
-        RuntimeHolder.factory = factory;
+    public static void init(AppContext context){
+
     }
 
     /**
@@ -103,7 +103,7 @@ public abstract class RuntimeHolder {
     }
 
     public static void destroyBean(String bean){
-        if(factory.containsSingleton(bean)){
+        if(Solon.context().getBean(bean)){
             factory.destroySingleton(bean);
         }
         if(factory.containsBeanDefinition(bean)){

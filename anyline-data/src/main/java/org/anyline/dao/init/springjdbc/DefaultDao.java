@@ -35,16 +35,15 @@ import org.anyline.metadata.persistence.OneToMany;
 import org.anyline.metadata.type.DatabaseType;
 import org.anyline.proxy.EntityAdapterProxy;
 import org.anyline.util.*;
+import org.noear.solon.annotation.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Primary;
-import org.springframework.stereotype.Repository;
 
 import java.lang.reflect.Field;
 import java.util.*;
 
-@Primary
-@Repository("anyline.dao")
+
+@Component("anyline.dao")
 public class DefaultDao<E> implements AnylineDao<E> {
 	protected static final Logger log = LoggerFactory.getLogger(DefaultDao.class);
 

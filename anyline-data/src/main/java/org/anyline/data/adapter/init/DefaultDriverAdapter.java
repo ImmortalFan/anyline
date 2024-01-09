@@ -54,9 +54,10 @@ import org.anyline.proxy.InterceptorProxy;
 import org.anyline.util.*;
 import org.anyline.util.regular.Regular;
 import org.anyline.util.regular.RegularUtil;
+import org.noear.solon.annotation.Bean;
+import org.noear.solon.annotation.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
@@ -70,9 +71,9 @@ import java.util.*;
 public abstract class DefaultDriverAdapter implements DriverAdapter {
 	protected static final Logger log = LoggerFactory.getLogger(DefaultDriverAdapter.class);
 
-	@Autowired(required = false)
+	@Inject(required = false)
 	protected DMListener dmListener;
-	@Autowired(required = false)
+	@Inject(required = false)
 	protected DDListener ddListener;
 
 
@@ -80,19 +81,13 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 		return dmListener;
 	}
 
-	@Autowired(required=false)
-	public void setListener(DMListener listener) {
-		this.dmListener = listener;
-	}
-
-
 	public String delimiterFr = "";
 	public String delimiterTo = "";
 
 	//根据名称定位数据类型
 	protected Map<String, TypeMetadata> types = new Hashtable();
 
-	@Autowired(required=false)
+	@Inject(required=false)
 	protected PrimaryGenerator primaryGenerator;
 
 	public DatabaseType compatible(){

@@ -50,6 +50,7 @@ import org.anyline.proxy.ServiceProxy;
 import org.anyline.service.AnylineService;
 import org.anyline.util.BasicUtil;
 import org.anyline.util.BeanUtil;
+import org.noear.solon.core.Props;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -136,7 +137,7 @@ public class MongoDatasourceHolder extends DatasourceHolder {
 		}
 		return database;
 	}
-	public static String reg(String key, String prefix, Environment env) {
+	public static String reg(String key, String prefix, Props env) {
 		try {
 			if(BasicUtil.isNotEmpty(prefix) && !prefix.endsWith(".")){
 				prefix += ".";
@@ -177,7 +178,7 @@ public class MongoDatasourceHolder extends DatasourceHolder {
 	 * @return bean.id
 	 * @throws Exception Exception
 	 */
-	public static String inject(String key, String prefix, Map params, Environment env, boolean override) throws Exception{
+	public static String inject(String key, String prefix, Map params, Props env, boolean override) throws Exception{
 		Map<String, Object> cache = DatasourceHolder.params.get(key);
 		if(null == cache){
 			cache = new HashMap<>();

@@ -37,7 +37,7 @@ public class CacheProxy {
 
     public static CacheProvider provider;
     public CacheProxy(){}
-    @Autowired(required = false)
+    @Inject(required = false)
     @Qualifier("anyline.data.cache.provider")
     public void init(CacheProvider provider) {
         CacheProxy.provider = provider;

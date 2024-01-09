@@ -34,9 +34,9 @@ import org.anyline.metadata.Column;
 import org.anyline.metadata.Table;
 import org.anyline.util.ConfigTable;
 import org.anyline.util.regular.RegularUtil;
+import org.noear.solon.annotation.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

@@ -21,8 +21,8 @@ import org.anyline.adapter.init.ConvertAdapter;
 import org.anyline.adapter.init.JavaTypeAdapter;
 import org.anyline.metadata.type.Convert;
 import org.anyline.metadata.type.DataType;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.noear.solon.annotation.Component;
+import org.noear.solon.annotation.Inject;
 
 import java.util.Hashtable;
 import java.util.Map;
@@ -31,7 +31,9 @@ import java.util.Map;
 public class ConfigListener {
 
     //用户自定义转换器
-    @Autowired(required = false)
+
+    //@Inject(required=false)
+    //TODO 方法注入
     public void setConverts(Map<String, Convert> converts) {
         //内置转换器
         for (Convert convert : converts.values()) {

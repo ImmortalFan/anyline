@@ -37,7 +37,6 @@ import org.anyline.metadata.type.DatabaseType;
 import org.anyline.service.AnylineService;
 import org.anyline.service.init.DefaultService;
 import org.anyline.util.ConfigTable;
-import org.anyline.util.SpringContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +57,7 @@ public class ServiceProxy {
     private static AnylineService.MetaDataService metadata;
     public ServiceProxy(){}
 
-    @Autowired(required = false)
+    @Inject(required = false)
     @Qualifier("anyline.service")
     public void init(AnylineService service) {
         ServiceProxy.service = service;

@@ -48,7 +48,6 @@ import org.anyline.proxy.ServiceProxy;
 import org.anyline.service.AnylineService;
 import org.anyline.util.BasicUtil;
 import org.anyline.util.BeanUtil;
-import org.anyline.util.SpringContextUtil;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
 import org.apache.http.HeaderElementIterator;
@@ -77,13 +76,11 @@ import org.apache.http.protocol.HTTP;
 import org.apache.http.ssl.SSLContexts;
 import org.elasticsearch.client.Node;
 import org.elasticsearch.client.RestClient;
+import org.noear.solon.annotation.Component;
+import org.noear.solon.core.AppContext;
+import org.noear.solon.core.Props;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.core.env.Environment;
-import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
-import org.springframework.util.ObjectUtils;
 
 import javax.net.ssl.SSLContext;
 import javax.sql.DataSource;
@@ -153,7 +150,7 @@ public class ElasticSearchDatasourceHolder extends DatasourceHolder {
 		return init(key, client, false);
 	}
 
-	public static String reg(String key, String prefix, Environment env) {
+	public static String reg(String key, String prefix, Props env) {
 		try {
 			if(BasicUtil.isNotEmpty(prefix) && !prefix.endsWith(".")){
 				prefix += ".";
@@ -205,7 +202,7 @@ public class ElasticSearchDatasourceHolder extends DatasourceHolder {
 	 * @return bean.di
 	 * @throws Exception Exception
 	 */
-	private static String inject(String key, String prefix, Map<String, Object> params, Environment env, boolean override) throws Exception{
+	private static String inject(String key, String prefix, Map<String, Object> params, AppContext env, boolean override) throws Exception{
 		Map<String, Object> cache = DatasourceHolder.params.get(key);
 		if(null == cache){
 			cache = new HashMap<>();

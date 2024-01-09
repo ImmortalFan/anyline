@@ -1015,12 +1015,12 @@ public class Column extends BaseMetadata<Column> implements Serializable {
         if(!BasicUtil.equals(typeMetadata, column.getTypeMetadata())){
             return false;
         }
-        if(!typeMetadata.ignorePrecision()) {
+        if(null == typeMetadata || !typeMetadata.ignorePrecision()) {
             if (!BasicUtil.equals(precision, column.getPrecision())) {
                 return false;
             }
         }
-        if(!typeMetadata.ignoreScale()) {
+        if(null == typeMetadata || !typeMetadata.ignoreScale()) {
             if (!BasicUtil.equals(scale, column.getScale())) {
                 return false;
             }

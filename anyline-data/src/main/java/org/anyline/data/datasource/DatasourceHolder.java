@@ -1,22 +1,22 @@
-/*  
+/*
  * Copyright 2006-2023 www.anyline.org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License. 
- * You may obtain a copy of the License at 
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and 
- * limitations under the License. 
- * 
- *           
- */ 
- 
- 
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ */
+
+
 /*
  * Copyright 2006-2023 www.anyline.org
  *
@@ -43,10 +43,10 @@ import org.anyline.data.runtime.RuntimeHolder;
 import org.anyline.metadata.type.DatabaseType;
 import org.anyline.proxy.DatasourceHolderProxy;
 import org.anyline.util.BeanUtil;
+import org.noear.solon.core.AppContext;
+import org.noear.solon.core.Props;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.core.env.Environment;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -57,12 +57,8 @@ import java.util.Map;
 public abstract class DatasourceHolder {
 	public static Logger log = LoggerFactory.getLogger(DatasourceHolder.class);
 
-	protected static DefaultListableBeanFactory factory;
-	public static void init(DefaultListableBeanFactory factory){
-		DatasourceHolder.factory = factory;
-	}
-	public static DefaultListableBeanFactory factory(){
-		return factory;
+	public static void init(AppContext factory){
+
 	}
 	//数据源对应的数据库类型
 	protected static Map<String, DatabaseType> types = new HashMap<>();
@@ -94,10 +90,10 @@ public abstract class DatasourceHolder {
 		return RuntimeHolder.contains(ds);
 	}
 
-	public static Object value(Environment env, String prefix, String name){
+	public static Object value(Props env, String prefix, String name){
 		return value(env, prefix, name, Object.class, null);
 	}
-	public static <T> T value(Environment env, String prefix, String name, Class<T> clazz, T def){
+	public static <T> T value(Props env, String prefix, String name, Class<T> clazz, T def){
 		T result = null;
 		if(null != env && null != prefix && null != name) {
 			String value = BeanUtil.value(prefix, env, name);

@@ -32,18 +32,10 @@ import org.anyline.proxy.DatasourceHolderProxy;
 import org.anyline.proxy.ServiceProxy;
 import org.anyline.service.AnylineService;
 import org.anyline.util.*;
+import org.noear.solon.annotation.Component;
+import org.noear.solon.core.AppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.core.env.Environment;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Method;
@@ -156,12 +148,12 @@ public class JDBCDatasourceHolder extends DatasourceHolder {
 		return init(key, ds, false);
 	}
 
-	public static String reg(String key, String prefix, Environment env) {
+	public static String reg(String key, String prefix, AppContext env) {
 		try {
 			if(BasicUtil.isNotEmpty(prefix) && !prefix.endsWith(".")){
 				prefix += ".";
 			}
-			String type = value(env, prefix, "type", String.class, null);
+			String type = value(env.cfg(), prefix, "type", String.class, null);
 			if(null == type){//未设置类型 先取默认数据源类型
 				type = value(env, prefix.substring(0, prefix.length()- key.length()-1), "type", String.class, null);
 			}

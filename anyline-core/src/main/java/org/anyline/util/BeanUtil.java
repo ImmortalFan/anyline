@@ -43,10 +43,9 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.noear.solon.core.Props;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.env.Environment;
-
 import java.io.*;
 import java.lang.reflect.*;
 import java.math.BigDecimal;
@@ -3743,7 +3742,7 @@ public class BeanUtil {
 	 * @param keys key列表 第一个有值的key生效
 	 * @return String
 	 */
-	public static String value(String prefix, Environment env, String ... keys){
+	public static String value(String prefix, Props env, String ... keys){
 		String value = null;
 		if(null == env || null == keys){
 			return value;
@@ -3817,7 +3816,7 @@ public class BeanUtil {
 		}
 		return value;
 	}
-	private static String value(Environment env, String ... keys){
+	private static String value(Props env, String ... keys){
 		return value(null, env, keys);
 	}
 
