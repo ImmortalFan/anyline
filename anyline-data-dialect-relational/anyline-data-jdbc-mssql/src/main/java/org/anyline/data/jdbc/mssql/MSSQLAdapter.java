@@ -48,7 +48,7 @@ import java.util.*;
 @Repository("anyline.data.jdbc.adapter.mssql") 
 public class MSSQLAdapter extends DefaultJDBCAdapter implements JDBCAdapter, InitializingBean {
 
-	public DatabaseType type(){
+	public DatabaseType typeMetadata(){
 		return DatabaseType.MSSQL; 
 	}
 	public String version(){return "2005";}
@@ -1675,6 +1675,7 @@ public class MSSQLAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
 	 * @param pattern 名称统配符或正则
 	 * @param types  "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
 	 * @return String
+	 * @throws Exception Exception
 	 */
 	@Override
 	public List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
@@ -1724,6 +1725,7 @@ public class MSSQLAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
 	 * @param pattern 名称统配符或正则
 	 * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
 	 * @return String
+	 * @throws Exception Exception
 	 */
 	@Override
 	public List<Run> buildQueryTablesCommentRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
@@ -4434,7 +4436,7 @@ public class MSSQLAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
 		builder.append(" ALTER COLUMN ");
 		delimiter(builder, meta.getName());
 		builder.append(" ");
-		type(runtime, builder, update);
+		this.typeMetadata(runtime, builder, update);
 		nullable(runtime, builder, update);
 		return runs;
 	}
@@ -4501,7 +4503,7 @@ public class MSSQLAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
 			runs.add(drop);
 			StringBuilder builder = drop.getBuilder();
 			builder.append("ALTER TABLE ");
-			delimiter(builder, meta.getTable());
+			name(runtime, builder, meta.getTable());
 			builder.append(" DROP CONSTRAINT ").append(constraint);
 		}
 		//添加默认值
@@ -4510,7 +4512,7 @@ public class MSSQLAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
 			runs.add(run);
 			StringBuilder builder = run.getBuilder();
 			builder.append("ALTER TABLE ");
-			delimiter(builder, meta.getTable());
+			name(runtime, builder, meta.getTable());
 			builder.append(" ADD DEFAULT ");
 			udef = write(runtime, meta, udef, false);
 			if (null == udef) {
@@ -4518,7 +4520,7 @@ public class MSSQLAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
 			}
 			builder.append(udef);
 			builder.append(" FOR ");
-			delimiter(builder, meta);
+			name(runtime, builder, meta);
 		}
 		return runs;
 	}
@@ -4544,7 +4546,7 @@ public class MSSQLAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
 			builder.append("ALTER TABLE ");
 			name(runtime, builder, meta.getTable(true)).append(" ALTER COLUMN ");
 			delimiter(builder, meta.getName()).append(" ");
-			type(runtime, builder, update);
+			this.typeMetadata(runtime, builder, update);
 			if(nullable == 0){
 				builder.append(" NOT");
 			}
@@ -4680,8 +4682,8 @@ public class MSSQLAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
 	 * @return StringBuilder
 	 */
 	@Override
-	public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta){
-		return super.type(runtime, builder, meta);
+	public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta){
+		return super.typeMetadata(runtime, builder, meta);
 	}
 	/**
 	 * column[命令合成-子流程]<br/>
@@ -4695,8 +4697,8 @@ public class MSSQLAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
 	 * @return StringBuilder
 	 */
 	@Override
-	public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta, String type, boolean isIgnorePrecision, boolean isIgnoreScale){
-		return super.type(runtime, builder, meta, type, isIgnorePrecision, isIgnoreScale);
+	public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta, String type, boolean isIgnorePrecision, boolean isIgnoreScale){
+		return super.typeMetadata(runtime, builder, meta, type, isIgnorePrecision, isIgnoreScale);
 	}
 	/**
 	 * column[命令合成-子流程]<br/>
@@ -5531,8 +5533,8 @@ public class MSSQLAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
 	 * @return StringBuilder
 	 */
 	@Override
-	public StringBuilder type(DataRuntime runtime, StringBuilder builder, Index meta){
-		return super.type(runtime, builder, meta);
+	public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Index meta){
+		return super.typeMetadata(runtime, builder, meta);
 	}
 	/**
 	 * index[命令合成-子流程]<br/>

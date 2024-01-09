@@ -29,7 +29,7 @@ import org.anyline.data.runtime.DataRuntime;
 import org.anyline.entity.*;
 import org.anyline.entity.Compare.EMPTY_VALUE_SWITCH;
 import org.anyline.metadata.*;
-import org.anyline.metadata.type.ColumnType;
+import org.anyline.metadata.type.TypeMetadata;
 import org.anyline.util.*;
 import org.anyline.util.regular.RegularUtil;
 import org.slf4j.Logger;
@@ -52,7 +52,7 @@ public abstract class BasicRun implements Run {
 	protected List<RunValue> batchValues;
 	protected PageNavi pageNavi;
 	protected ConditionChain conditionChain;			// 查询条件
-	protected ConfigStore configStore;
+	protected ConfigStore configs;
 	protected OrderStore orderStore; 
 	protected GroupStore groupStore;
 	protected String having;
@@ -106,8 +106,8 @@ public abstract class BasicRun implements Run {
 			this.delimiterTo = runtime.getAdapter().getDelimiterTo();
 		}
 
-		if(null != configStore){
-			setPageNavi(configStore.getPageNavi()); 
+		if(null != configs){
+			setPageNavi(configs.getPageNavi());
 			/*OrderStore orderStore = configStore.getOrders();
 			List<Order> orders = null;
 			if (null != orderStore) {
@@ -413,12 +413,12 @@ public abstract class BasicRun implements Run {
 		this.pageNavi = pageNavi; 
 	}
 	@Override
-	public ConfigStore getConfigStore() {
-		return configStore; 
+	public ConfigStore getConfigs() {
+		return configs;
 	}
 	@Override
-	public void setConfigStore(ConfigStore configStore) {
-		this.configStore = configStore; 
+	public void setConfigStore(ConfigStore configs) {
+		this.configs = configs;
 	}
 
 	@Override
@@ -795,8 +795,8 @@ public abstract class BasicRun implements Run {
 					String orders[] = orderStr.split(",");
 					for(String item:orders){
 						order(item);
-						if(null != configStore){
-							configStore.order(item);
+						if(null != configs){
+							configs.order(item);
 						}
 						if(null != this.orderStore){
 							this.orderStore.order(item);
@@ -1104,9 +1104,9 @@ public abstract class BasicRun implements Run {
 			for(RunValue rv:values){
 				Object value = rv.getValue();
 				Column column = rv.getColumn();
-				ColumnType columnType = null;
+				TypeMetadata columnType = null;
 				if(null != column){
-					columnType = column.getColumnType();
+					columnType = column.getTypeMetadata();
 				}
 				int index = result.indexOf("?");
 				String replacement = null;

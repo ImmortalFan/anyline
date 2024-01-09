@@ -27,7 +27,8 @@ import org.anyline.data.runtime.DataRuntime;
 import org.anyline.entity.*;
 import org.anyline.metadata.*;
 import org.anyline.metadata.type.DatabaseType;
-import org.anyline.metadata.type.init.AbstractColumnType;
+import org.anyline.metadata.type.TypeMetadata;
+import org.anyline.metadata.type.init.AbstractTypeMetadata;
 import org.anyline.util.BasicUtil;
 import org.anyline.util.regular.RegularUtil;
 import org.springframework.beans.factory.InitializingBean;
@@ -55,7 +56,7 @@ public class OracleAdapter extends OracleGenusAdapter implements JDBCAdapter, In
 	
 	public static boolean IS_GET_SEQUENCE_VALUE_BEFORE_INSERT = false;
 
-	public DatabaseType type(){
+	public DatabaseType typeMetadata(){
 		return DatabaseType.ORACLE; 
 	}
 	public String version(){
@@ -87,13 +88,13 @@ public class OracleAdapter extends OracleGenusAdapter implements JDBCAdapter, In
 		for(OracleReader reader: OracleReader.values()){
 			reg(reader.supports(), reader.reader());
 		}
-		types.put("BFILE", new AbstractColumnType("BFILE", DatabaseType.ORACLE, oracle.sql.BFILE.class, true, true));
-		types.put("ROWID", new AbstractColumnType("ROWID", DatabaseType.ORACLE, oracle.sql.ROWID.class, true, true));
-		types.put("UROWID", new AbstractColumnType("UROWID", DatabaseType.ORACLE, oracle.sql.ROWID.class, true, true));
-		types.put("DATE", new AbstractColumnType("DATE", DatabaseType.ORACLE, java.util.Date.class, java.sql.Timestamp.class, true, true));
-		types.put("TIMESTAMP", new AbstractColumnType("TIMESTAMP", DatabaseType.ORACLE, java.sql.Timestamp.class, oracle.sql.TIMESTAMP.class, true, true));
-		types.put("TIMESTAMPTZ", new AbstractColumnType("TIMESTAMPTZ", DatabaseType.ORACLE, java.sql.Timestamp.class, oracle.sql.TIMESTAMPTZ.class, true, true));
-		types.put("TIMESTAMPLTZ", new AbstractColumnType("TIMESTAMPLTZ", DatabaseType.ORACLE, java.sql.Timestamp.class, oracle.sql.TIMESTAMPLTZ.class, true, true));
+		types.put("BFILE", new AbstractTypeMetadata(TypeMetadata.CATEGORY.BYTES,"BFILE", DatabaseType.ORACLE, oracle.sql.BFILE.class, true, true));
+		types.put("ROWID", new AbstractTypeMetadata(TypeMetadata.CATEGORY.STRING, "ROWID", DatabaseType.ORACLE, oracle.sql.ROWID.class, true, true));
+		types.put("UROWID", new AbstractTypeMetadata(TypeMetadata.CATEGORY.STRING, "UROWID", DatabaseType.ORACLE, oracle.sql.ROWID.class, true, true));
+		types.put("DATE", new AbstractTypeMetadata(TypeMetadata.CATEGORY.DATE, "DATE", DatabaseType.ORACLE, java.util.Date.class, java.sql.Timestamp.class, true, true));
+		types.put("TIMESTAMP", new AbstractTypeMetadata(TypeMetadata.CATEGORY.DATE, "TIMESTAMP", DatabaseType.ORACLE, java.sql.Timestamp.class, oracle.sql.TIMESTAMP.class, true, true));
+		types.put("TIMESTAMPTZ", new AbstractTypeMetadata(TypeMetadata.CATEGORY.DATE, "TIMESTAMPTZ", DatabaseType.ORACLE, java.sql.Timestamp.class, oracle.sql.TIMESTAMPTZ.class, true, true));
+		types.put("TIMESTAMPLTZ", new AbstractTypeMetadata(TypeMetadata.CATEGORY.DATE, "TIMESTAMPLTZ", DatabaseType.ORACLE, java.sql.Timestamp.class, oracle.sql.TIMESTAMPLTZ.class, true, true));
 	}
 
 
@@ -1690,6 +1691,7 @@ public class OracleAdapter extends OracleGenusAdapter implements JDBCAdapter, In
 	 * @param pattern 名称统配符或正则
 	 * @param types  "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
 	 * @return String
+	 * @throws Exception Exception
 	 */
 	@Override
 	public List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
@@ -1706,6 +1708,7 @@ public class OracleAdapter extends OracleGenusAdapter implements JDBCAdapter, In
 	 * @param pattern 名称统配符或正则
 	 * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
 	 * @return String
+	 * @throws Exception Exception
 	 */
 	@Override
 	public List<Run> buildQueryTablesCommentRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
@@ -4273,8 +4276,8 @@ public class OracleAdapter extends OracleGenusAdapter implements JDBCAdapter, In
 	 * @return StringBuilder
 	 */
 	@Override
-	public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta){
-		return super.type(runtime, builder, meta);
+	public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta){
+		return super.typeMetadata(runtime, builder, meta);
 	}
 	/**
 	 * column[命令合成-子流程]<br/>
@@ -4288,8 +4291,8 @@ public class OracleAdapter extends OracleGenusAdapter implements JDBCAdapter, In
 	 * @return StringBuilder
 	 */
 	@Override
-	public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta, String type, boolean isIgnorePrecision, boolean isIgnoreScale){
-		return super.type(runtime, builder, meta, type, isIgnorePrecision, isIgnoreScale);
+	public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta, String type, boolean isIgnorePrecision, boolean isIgnoreScale){
+		return super.typeMetadata(runtime, builder, meta, type, isIgnorePrecision, isIgnoreScale);
 	}
 
 
@@ -5133,8 +5136,8 @@ public class OracleAdapter extends OracleGenusAdapter implements JDBCAdapter, In
 	 * @return StringBuilder
 	 */
 	@Override
-	public StringBuilder type(DataRuntime runtime, StringBuilder builder, Index meta){
-		return super.type(runtime, builder, meta);
+	public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Index meta){
+		return super.typeMetadata(runtime, builder, meta);
 	}
 	/**
 	 * index[命令合成-子流程]<br/>

@@ -54,7 +54,7 @@ import java.util.*;
 @Repository("anyline.data.jdbc.adapter.neo4j")
 public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, InitializingBean {
     
-    public DatabaseType type(){
+    public DatabaseType typeMetadata(){
         return DatabaseType.Neo4j;
     }
     public Neo4jAdapter(){
@@ -207,18 +207,18 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
         }
         // CREATE (emp:Employee{id:123, name:"zh"})
 
-        PrimaryGenerator generator = checkPrimaryGenerator(type(), dest.getName());
+        PrimaryGenerator generator = checkPrimaryGenerator(this.typeMetadata(), dest.getName());
         DataRow row = null;
         if(obj instanceof DataRow){
             row = (DataRow)obj;
             if(row.hasPrimaryKeys() && null != generator){
-                generator.create(row, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), row.getPrimaryKeys(), null);
+                generator.create(row, this.typeMetadata(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), row.getPrimaryKeys(), null);
                 //createPrimaryValue(row, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), row.getPrimaryKeys(), null);
             }
         }else{
             boolean create = EntityAdapterProxy.createPrimaryValue(obj, columns);
             if(!create && null != generator){
-                generator.create(obj, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), columns, null);
+                generator.create(obj, this.typeMetadata(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), columns, null);
                 //createPrimaryValue(obj, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), null, null);
             }
         }
@@ -738,10 +738,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
         Table table = run.getTable();
         if(BasicUtil.isNotEmpty(table)) {
             builder.append(":");
-            if (null != run.getSchema()) {
-                delimiter(builder, run.getSchema()).append(".");
-            }
-            delimiter(builder, run.getTable());
+            name(runtime, builder, run.getTable());
         }
         builder.append(") ");
         /*
@@ -1015,15 +1012,11 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
         return null;
     }
 
-    protected Run fillDeleteRunContent(TableRun run){
+    public void fillDeleteRunContent(DataRuntime runtime, TableRun run){
         RunPrepare prepare =   run.getPrepare();
         StringBuilder builder = run.getBuilder();
         builder.append("DELETE FROM ");
-        if(null != run.getSchema()){
-            delimiter(builder, run.getSchema()).append(".");
-        }
-
-        delimiter(builder, run.getTable());
+        name(runtime, builder, run.getTable());
         builder.append(JDBCAdapter.BR);
         if(BasicUtil.isNotEmpty(prepare.getAlias())){
             builder.append("  ").append(prepare.getAlias());
@@ -1051,8 +1044,6 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
         run.appendGroup();
         run.appendOrderStore();
         run.checkValid();
-
-        return run;
     }
     @Override
     public Run buildDeleteRunFromTable(DataRuntime runtime, int batch, String table, String key, Object values){

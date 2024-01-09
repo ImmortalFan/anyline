@@ -2372,12 +2372,11 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
     @Override
     public List<Run> buildQueryColumnsRun(DataRuntime runtime, Table table, boolean metadata) throws Exception{
         List<Run> runs = new ArrayList<>();
-        Catalog catalog = null;
         Schema schema = null;
         String name = null;
         if(null != table){
+            checkName(runtime, null, table);
             name = table.getName();
-            catalog = table.getCatalog();
             schema = table.getSchema();
         }
         Run run = new SimpleRun(runtime);
@@ -2623,6 +2622,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
         StringBuilder builder = run.getBuilder();
         builder.append("SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE where REFERENCED_TABLE_NAME IS NOT NULL\n");
         if(null != table){
+            checkName(runtime, null, table);
             String name = table.getName();
             if(BasicUtil.isNotEmpty(name)){
                 builder.append(" AND TABLE_NAME = '").append(name).append("'\n");
@@ -2727,6 +2727,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
         builder.append("SELECT * FROM INFORMATION_SCHEMA.STATISTICS\n");
         builder.append("WHERE 1=1\n");
         if(null != table) {
+            checkName(runtime, null, table);
             if (null != table.getSchema()) {
                 builder.append("AND TABLE_SCHEMA='").append(table.getSchema()).append("'\n");
             }
@@ -3003,6 +3004,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
         StringBuilder builder = run.getBuilder();
         builder.append("SELECT * FROM INFORMATION_SCHEMA.TRIGGERS WHERE 1=1");
         if(null != table){
+            checkName(runtime, null, table);
             Schema schemae = table.getSchema();
             String name = table.getName();
             if(BasicUtil.isNotEmpty(schemae)){
@@ -3732,7 +3734,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
         builder.append("RENAME TABLE ");
         name(runtime, builder, meta);
         builder.append(" TO ");
-        name(runtime, builder, (Table)meta.getUpdate());
+        name(runtime, builder, meta.getUpdate());
         return runs;
     }
     /**
@@ -4550,7 +4552,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
             addColumnGuide(runtime, builder, meta);
             delimiter(builder, meta.getName()).append(" ");
             // 数据类型
-            type(runtime, builder, meta);
+            this.typeMetadata(runtime, builder, meta);
             // 编码
             charset(runtime, builder, meta);
             // 默认值
@@ -4595,12 +4597,13 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
             name(runtime, builder, table);
         }
         Column update = meta.getUpdate();
-        if(null != update){
-            builder.append(" CHANGE ");
-            delimiter(builder, meta.getName()).append(" ");
-            delimiter(builder, update.getName()).append(" ");
-            define(runtime, builder, update);
+        if(null == update){
+            update = meta;
         }
+        builder.append(" CHANGE ");
+        delimiter(builder, meta.getName()).append(" ");
+        delimiter(builder, update.getName()).append(" ");
+        define(runtime, builder, update);
         return runs;
     }
     @Override
@@ -4801,8 +4804,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return StringBuilder
      */
     @Override
-    public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta){
-        return super.type(runtime, builder, meta);
+    public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta){
+        return super.typeMetadata(runtime, builder, meta);
     }
     /**
      * column[命令合成-子流程]<br/>
@@ -4816,8 +4819,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return StringBuilder
      */
     @Override
-    public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta, String type, boolean isIgnorePrecision, boolean isIgnoreScale){
-        return super.type(runtime, builder, meta, type, isIgnorePrecision, isIgnoreScale);
+    public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta, String type, boolean isIgnorePrecision, boolean isIgnoreScale){
+        return super.typeMetadata(runtime, builder, meta, type, isIgnorePrecision, isIgnoreScale);
     }
 
 
@@ -5725,7 +5728,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return StringBuilder
      */
     @Override
-    public StringBuilder type(DataRuntime runtime, StringBuilder builder, Index meta){
+    public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Index meta){
         String type = meta.getType();
         if(BasicUtil.isNotEmpty(type)){
             builder.append("USING ").append(type).append(" ");

@@ -46,12 +46,13 @@ import org.anyline.entity.generator.PrimaryGenerator;
 import org.anyline.exception.AnylineException;
 import org.anyline.exception.SQLUpdateException;
 import org.anyline.metadata.*;
-import org.anyline.metadata.type.ColumnType;
+import org.anyline.metadata.type.TypeMetadata;
 import org.anyline.metadata.type.DatabaseType;
 import org.anyline.proxy.CacheProxy;
 import org.anyline.proxy.EntityAdapterProxy;
 import org.anyline.proxy.InterceptorProxy;
 import org.anyline.util.*;
+import org.anyline.util.regular.Regular;
 import org.anyline.util.regular.RegularUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,7 +90,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 	public String delimiterTo = "";
 
 	//根据名称定位数据类型
-	protected Map<String, ColumnType> types = new Hashtable();
+	protected Map<String, TypeMetadata> types = new Hashtable();
 
 	@Autowired(required=false)
 	protected PrimaryGenerator primaryGenerator;
@@ -102,7 +103,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 		for(StandardColumnType type: StandardColumnType.values()){
 			DatabaseType[] dbs = type.dbs();
 			for(DatabaseType db:dbs){
-				if(db == this.type()){
+				if(db == this.typeMetadata()){
 					//column type支持当前db
 					types.put(type.getName(), type);
 					break;
@@ -2556,7 +2557,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 		runs.add(run);
 		StringBuilder builder = run.getBuilder();
 		builder.append("TRUNCATE TABLE ");
-		delimiter(builder, table);
+		name(runtime, builder, table);
 		return runs;
 	}
 
@@ -3652,6 +3653,34 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 		}
 		return null;
 	}
+
+	/**
+	 * 检测name,name中可能包含catalog.schema.name<br/>
+	 * 如果有一项或三项，在父类中解析<br/>
+	 * 如果只有两项，需要根据不同数据库区分出最前一项是catalog还是schema，如果区分不出来的抛出异常
+	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+	 * @param random 用来标记同一组命令
+	 * @param meta 表,视图等
+	 * @return T
+	 * @throws Exception 如果区分不出来的抛出异常
+	 */
+	public <T extends BaseMetadata> T checkName(DataRuntime runtime, String random, T meta) throws RuntimeException{
+		if(null == meta){
+			return null;
+		}
+		String name = meta.getName();
+		if(null != name && name.contains(".")){
+			String[] ks = name.split("\\.");
+			if(ks.length == 3){
+				meta.setCatalog(ks[0]);
+				meta.setSchema(ks[1]);
+				meta.setName(ks[2]);
+			}else{
+				throw new RuntimeException("无法实别schema或catalog(子类未" + this.getClass().getSimpleName() + "实现)");
+			}
+		}
+		return meta;
+	}
 	/* *****************************************************************************************************************
 	 * 													table
 	 * -----------------------------------------------------------------------------------------------------------------
@@ -3777,7 +3806,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 			//表备注
 			if(!comment) {
 				try {
-					List<Run> runs = buildQueryTablesCommentRun(runtime, catalog, schema, null, types);
+					List<Run> runs = buildQueryTablesCommentRun(runtime, catalog, schema, origin, types);
 					if (null != runs) {
 						int idx = 0;
 						for (Run run : runs) {
@@ -3803,8 +3832,10 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 				List<T> tmp = new ArrayList<>();
 				for(T item:list){
 					String name = item.getName(greedy);
-					if(RegularUtil.match(name, origin)){
-						tmp.add(item);
+					if(RegularUtil.match(name, origin, Regular.MATCH_MODE.MATCH)){
+						if(BasicUtil.equalsIgnoreCase(catalog, item.getCatalog()) && BasicUtil.equalsIgnoreCase(schema, item.getSchema())) {
+							tmp.add(item);
+						}
 					}
 				}
 				list = tmp;
@@ -3813,24 +3844,20 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 				//查询全部表结构
 				List<Column> columns = columns(runtime, random, greedy, catalog, schema, pattern);
 				for(Table table:list){
-					String tName = table.getName();
-					Catalog tCatalog = table.getCatalog();
-					Schema tSchema = table.getSchema();
 					Long tObjectId = table.getObjectId();
 					LinkedHashMap<String, Column> cols = new LinkedHashMap<>();
 					table.setColumns(cols);
 					for(Column column:columns){
-						if(tName.equalsIgnoreCase(column.getTableName(false))){
-							Catalog  cCatalog = column.getCatalog();
+						if(table.equals(column.getTable())){
+							Catalog cCatalog = column.getCatalog();
 							Schema cSchema = column.getSchema();
 							Long cObjectId = column.getObjectId();
 							if(null != tObjectId && null != cObjectId && tObjectId == cObjectId){
 								cols.put(column.getName().toUpperCase(), column);
 							}else{
-								if( null == cCatalog  || cCatalog.equals(tCatalog)){
-									if(null == cSchema || cSchema.equal(tSchema)){
+								if(BasicUtil.equalsIgnoreCase(cCatalog, column.getCatalog())
+										&& BasicUtil.equalsIgnoreCase(schema, column.getSchema())){
 										cols.put(column.getName().toUpperCase(), column);
-									}
 								}
 							}
 						}
@@ -3914,6 +3941,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 	 * @param pattern 名称统配符或正则
 	 * @param types  "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
 	 * @return String
+	 * @throws Exception Exception
 	 */
 	@Override
 	public List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
@@ -3933,6 +3961,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 	 * @param pattern 名称统配符或正则
 	 * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
 	 * @return String
+	 * @throws Exception Exception
 	 */
 	public List<Run> buildQueryTablesCommentRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
 		if(log.isDebugEnabled()) {
@@ -4112,10 +4141,16 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 				table.setDdls(list);
 			}else{
 				//数据库不支持的 根据metadata拼装
-				LinkedHashMap<String, Column> columns = columns(runtime, random, false, table, true);
-				table.setColumns(columns);
-				table.setTags(tags(runtime, random, false, table));
-				PrimaryKey pk = primary(runtime, random, false, table);
+				LinkedHashMap<String, Column> columns = table.getColumns();
+				if(null == columns || columns.isEmpty()) {
+					columns = columns(runtime, random, false, table, true);
+					table.setColumns(columns);
+					table.setTags(tags(runtime, random, false, table));
+				}
+				PrimaryKey pk = table.getPrimaryKey();
+				if(null == pk) {
+					pk = primary(runtime, random, false, table);
+				}
 				if (null != pk) {
 					for (String col : pk.getColumns().keySet()) {
 						Column column = columns.get(col.toUpperCase());
@@ -4125,7 +4160,10 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 					}
 				}
 				table.setPrimaryKey(pk);
-				table.setIndexs(indexs(runtime, random, table, null));
+				LinkedHashMap<String, Index> indexs = table.getIndexs();
+				if(null == indexs || indexs.isEmpty()) {
+					table.setIndexs(indexs(runtime, random, table, null));
+				}
 				runs = buildCreateRun(runtime, table);
 				for(Run run:runs){
 					list.add(run.getFinalUpdate());
@@ -4253,7 +4291,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 					LinkedHashMap<String,View> all = views(runtime, random, greedy, catalog, schema, null, types);
 					if(!greedy) {
 						for (View view : all.values()) {
-							if ((catalog + "_" + schema).equals(view.getCatalog() + "_" + view.getSchema())) {
+							if (BasicUtil.equalsIgnoreCase(catalog, view.getCatalog()) && BasicUtil.equalsIgnoreCase(schema, view.getSchema())) {
 								view_map.put(view.getName(greedy).toUpperCase(), view.getName(greedy));
 							}
 						}
@@ -4314,7 +4352,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 				for(String key:keys){
 					T item = views.get(key);
 					String name = item.getName(greedy);
-					if(RegularUtil.match(name, pattern)){
+					if(RegularUtil.match(name, pattern, Regular.MATCH_MODE.MATCH)){
 						tmps.put(name.toUpperCase(), item);
 					}
 				}
@@ -6249,8 +6287,8 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 	public <T extends Table> T table(List<T> tables, Catalog catalog, Schema schema, String name){
 		if(null != tables){
 			for(T table:tables){
-				if((null == catalog || catalog.equal(table.getCatalog()))
-						&& (null == schema || schema.equal(table.getSchema()))
+				if(BasicUtil.equalsIgnoreCase(catalog, table.getCatalog())
+						&& BasicUtil.equalsIgnoreCase(schema, table.getSchema())
 						&& table.getName().equalsIgnoreCase(name)
 				){
 					return table;
@@ -6272,7 +6310,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 	public <T extends Schema> T schema(List<T> schemas, Catalog catalog, String name){
 		if(null != schemas){
 			for(T schema:schemas){
-				if((null == catalog || catalog.equal(schema.getCatalog()))
+				if(BasicUtil.equalsIgnoreCase(catalog, schema.getCatalog())
 						&& schema.getName().equalsIgnoreCase(name)
 				){
 					return schema;
@@ -6425,71 +6463,23 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 		return result;
 	}
 
-	/**
-	 * table[调用入口]<br/>
-	 * 修改表,执行的SQL通过meta.ddls()返回
-	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-	 * @param meta 表
-	 * @return boolean 是否执行成功
-	 * @throws Exception DDL异常
-	 */
 
-	public boolean alter(DataRuntime runtime, Table meta) throws Exception{
-		boolean result = true;
-		List<Run> runs = new ArrayList<>();
+	/**
+	 * 检测列的执行命令,all drop alter等
+	 * @param meta 表
+	 * @return cols
+	 */
+	protected LinkedHashMap<String, Column> checkColumnAction(Table meta){
 		Table update = (Table)meta.getUpdate();
 		LinkedHashMap<String, Column> columns = meta.getColumns();
 		LinkedHashMap<String, Column> ucolumns = update.getColumns();
 		for(Column col:columns.values()){
-			col.setColumnType(type(col.getTypeName()));
+			col.setTypeMetadata(typeMetadata(col.getTypeName()));
 		}
 		for(Column col:ucolumns.values()){
-			col.setColumnType(type(col.getTypeName()));
+			col.setTypeMetadata(typeMetadata(col.getTypeName()));
 		}
-		checkPrimary(runtime, update);
-		String name = meta.getName();
-		String uname = update.getName();
-		String random = random(runtime);
-		ACTION.SWITCH swt = InterceptorProxy.prepare(runtime, random, ACTION.DDL.TABLE_ALTER, meta);
-		if(null != ddListener && swt == ACTION.SWITCH.CONTINUE) {
-			swt = ddListener.parepareAlter(runtime, random, meta);
-		}
-		if(swt == ACTION.SWITCH.BREAK){
-			return false;
-		}
-		checkSchema(runtime, meta);
-		checkSchema(runtime, update);
-
-		long fr = System.currentTimeMillis();
-		if(!name.equalsIgnoreCase(uname)){
-			result = rename(runtime, meta, uname);
-			meta.setName(uname);
-		}
-		if(!result){
-			return result;
-		}
-
-		//修改表备注
-		String comment = update.getComment()+"";
-		if(!comment.equals(meta.getComment())){
-			swt = InterceptorProxy.prepare(runtime, random, ACTION.DDL.TABLE_COMMENT, meta);
-			if(swt != ACTION.SWITCH.BREAK) {
-				if(BasicUtil.isNotEmpty(meta.getComment())) {
-					runs.addAll(buildChangeCommentRun(runtime, update));
-				}else{
-					runs.addAll(buildAppendCommentRun(runtime, update));
-				}
-				swt = InterceptorProxy.before(runtime, random, ACTION.DDL.TABLE_COMMENT, meta, runs);
-				if(swt != ACTION.SWITCH.BREAK) {
-					long cmt_fr = System.currentTimeMillis();
-					result = execute(runtime, random, meta, ACTION.DDL.TABLE_COMMENT, runs) && result;
-					InterceptorProxy.after(runtime, random, ACTION.DDL.TABLE_COMMENT, meta, runs, result, System.currentTimeMillis()-cmt_fr);
-				}
-			}
-		}
-
-		Map<String, Column> cols = new LinkedHashMap<>();
-
+		LinkedHashMap<String, Column> cols = new LinkedHashMap<>();
 		// 更新列
 		for (Column ucolumn : ucolumns.values()) {
 			//先根据原列名 找到数据库中定义的列
@@ -6503,18 +6493,12 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 				if (!column.equals(ucolumn)) {
 					column.setTable(update);
 					column.setUpdate(ucolumn, false, false);
-					/*
-					alter(rutime, column);
-					result = true;*/
 					column.setAction(ACTION.DDL.COLUMN_ALTER);
 					cols.put(column.getName().toUpperCase(), column);
 				}
 			} else {
 				// 添加列
 				ucolumn.setTable(update);
-				/*
-				add(ucolumn);
-				result = true;*/
 				ucolumn.setAction(ACTION.DDL.COLUMN_ADD);
 				cols.put(ucolumn.getName().toUpperCase(), ucolumn);
 			}
@@ -6542,9 +6526,6 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 				Column ucolumn = ucolumns.get(column.getName().toUpperCase());
 				if (null == ucolumn) {
 					column.setTable(update);
-					/*
-					drop(column);
-					result = true;*/
 					column.setAction(ACTION.DDL.COLUMN_DROP);
 					cols.put(column.getName().toUpperCase(), column);
 				}
@@ -6558,46 +6539,110 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 				}
 			}
 		}
+		return cols;
+	}
 
-		//主键
-		PrimaryKey src_primary = primary(runtime, random, false, meta);
-		PrimaryKey cur_primary = update.getPrimaryKey();
-		String src_define = "";
-		String cur_define = "";
-		if(null != src_primary) {
-			src_primary.setTable(update);
-			src_define = BeanUtil.concat(src_primary.getColumns().values(), "name",",", false, true);
-		}
-		if(null != cur_primary){
-			cur_primary.setTable(update);
-			cur_define= BeanUtil.concat(cur_primary.getColumns().values(),"name",",", false, true);
-		}
-		boolean change_pk = !cur_define.equalsIgnoreCase(src_define);
-		if(null != src_primary){
-			//如果主键有更新 先删除主键 避免alters中把原主键列的非空取消时与主键约束冲突
-			if(change_pk){
-				LinkedHashMap<String,Column> pks = null;
-				if(null != src_primary) {
-					pks = src_primary.getColumns();
-				}
-				LinkedHashMap<String,Column> npks = null;
-				if(null != cur_primary) {
-					npks = cur_primary.getColumns();
-				}
-				if(null != pks) {
-					for (String k : pks.keySet()) {
-						Column auto = columns.get(k.toUpperCase());
-						if (null != auto && auto.isAutoIncrement() == 1) {//原主键科自增
-							if (null != npks && !npks.containsKey(auto.getName().toUpperCase())) { //当前不是主键
-								auto.primary(false);
-								runs = buildDropAutoIncrement(runtime, auto);
-								result = execute(runtime, random, meta, ACTION.DDL.TABLE_ALTER, runs) && result;
-							}
+	/**
+	 * 修改主键前先 根据主键检测自增 部分数据库要求自增必须在主键上时才需要执行
+	 * @param runtime
+	 * @param random
+	 * @param table
+	 * @return
+	 * @throws Exception
+	 */
+	protected boolean checkAutoIncrement(DataRuntime runtime, String random, Table table) throws Exception{
+		boolean result = false;
+		Table update = (Table)table.getUpdate();
+		if(table.primaryEquals(update)) {
+			LinkedHashMap<String, Column> pks = table.getPrimaryKeyColumns();
+			LinkedHashMap<String, Column> npks = update.getPrimaryKeyColumns();
+			LinkedHashMap<String, Column> columns = table.getColumns();
+			if (null != pks) {
+				for (String k : pks.keySet()) {
+					Column auto = columns.get(k.toUpperCase());
+					if (null != auto && auto.isAutoIncrement() == 1) {//原来是自增
+						if (null != npks && !npks.containsKey(auto.getName().toUpperCase())) { //当前不是主键
+							auto.primary(false);
+							//取消自增
+							List<Run> runs = buildDropAutoIncrement(runtime, auto);
+							result = execute(runtime, random, table, ACTION.DDL.TABLE_ALTER, runs);
 						}
 					}
 				}
 			}
 		}
+		return result;
+	}
+	/**
+	 * table[调用入口]<br/>
+	 * 修改表,执行的SQL通过meta.ddls()返回
+	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+	 * @param meta 表
+	 * @return boolean 是否执行成功
+	 * @throws Exception DDL异常
+	 */
+	public boolean alter(DataRuntime runtime, Table meta) throws Exception{
+		boolean result = true;
+		List<Run> runs = new ArrayList<>();
+		Table update = (Table)meta.getUpdate();
+		LinkedHashMap<String, Column> columns = meta.getColumns();
+
+		checkPrimary(runtime, update);
+		String name = meta.getName();
+		String uname = update.getName();
+		String random = random(runtime);
+		ACTION.SWITCH swt = InterceptorProxy.prepare(runtime, random, ACTION.DDL.TABLE_ALTER, meta);
+		if(null != ddListener && swt == ACTION.SWITCH.CONTINUE) {
+			swt = ddListener.parepareAlter(runtime, random, meta);
+		}
+		if(swt == ACTION.SWITCH.BREAK){
+			return false;
+		}
+		checkSchema(runtime, meta);
+		checkSchema(runtime, update);
+
+		long fr = System.currentTimeMillis();
+		if(!name.equalsIgnoreCase(uname)){
+			//先修改表名，后续在新表名基础上执行
+			result = rename(runtime, meta, uname);
+			meta.setName(uname);
+		}
+		if(!result){
+			return result;
+		}
+
+		//修改表备注
+		String comment = update.getComment()+"";
+		if(!comment.equals(meta.getComment())){
+			swt = InterceptorProxy.prepare(runtime, random, ACTION.DDL.TABLE_COMMENT, meta);
+			if(swt != ACTION.SWITCH.BREAK) {
+				if(BasicUtil.isNotEmpty(meta.getComment())) {
+					runs.addAll(buildChangeCommentRun(runtime, update));
+				}else{
+					runs.addAll(buildAppendCommentRun(runtime, update));
+				}
+				swt = InterceptorProxy.before(runtime, random, ACTION.DDL.TABLE_COMMENT, meta, runs);
+				if(swt != ACTION.SWITCH.BREAK) {
+					long cmt_fr = System.currentTimeMillis();
+					result = execute(runtime, random, meta, ACTION.DDL.TABLE_COMMENT, runs) && result;
+					InterceptorProxy.after(runtime, random, ACTION.DDL.TABLE_COMMENT, meta, runs, result, System.currentTimeMillis()-cmt_fr);
+				}
+			}
+		}
+
+		LinkedHashMap<String, Column> cols = checkColumnAction(meta);
+		//主键
+		PrimaryKey src_primary = primary(runtime, random, false, meta);
+		PrimaryKey cur_primary = update.getPrimaryKey();
+		boolean change_pk = !meta.primaryEquals(update);
+		//如果主键有更新 先删除主键 避免alters中把原主键列的非空取消时与主键约束冲突
+		try {
+			checkAutoIncrement(runtime, null, meta);
+		}catch (Exception e){
+			e.printStackTrace();
+			result = false;
+		}
+		//更新列
 		List<Run> alters = buildAlterRun(runtime, meta, cols.values());
 		if(null != alters && alters.size()>0){
 			result = execute(runtime, random, meta, ACTION.DDL.COLUMN_ALTER, alters) && result;
@@ -6616,7 +6661,6 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 	 * @return boolean 是否执行成功
 	 * @throws Exception DDL异常
 	 */
-
 	public boolean drop(DataRuntime runtime, Table meta) throws Exception{
 		boolean result = false;
 		ACTION.DDL action = ACTION.DDL.TABLE_DROP;
@@ -8110,7 +8154,10 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 			}
 			log.warn("{}[{}][exception:{}]", random, LogUtil.format("修改Column执行异常", 33), e.toString());
 			if(trigger && null != ddListener && !BasicUtil.equalsIgnoreCase(meta.getTypeName(), meta.getUpdate().getTypeName())) {
-				if (ConfigTable.AFTER_ALTER_COLUMN_EXCEPTION_ACTION != 0) {
+				//DDL修改列异常后 -1:抛出异常 0:中断修改 1:删除列 n:总行数小于多少时更新值否则触发另一个监听
+				if (ConfigTable.AFTER_ALTER_COLUMN_EXCEPTION_ACTION == -1) {
+					throw e;
+				}else if (ConfigTable.AFTER_ALTER_COLUMN_EXCEPTION_ACTION != 0) {
 					swt = ddListener.afterAlterColumnException(runtime, random, table, meta, e);
 				}
 				log.warn("{}[修改Column执行异常][尝试修正数据][修正结果:{}]", random, swt);
@@ -8474,7 +8521,6 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 		return new ArrayList<>();
 	}
 
-
 	/**
 	 * column[命令合成-子流程]<br/>
 	 * 取消自增
@@ -8531,7 +8577,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 	 * @return StringBuilder
 	 */
 	@Override
-	public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta){
+	public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta){
 		if(log.isDebugEnabled()) {
 			log.debug(LogUtil.format("子类(" + this.getClass().getSimpleName() + ")未实现 StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta)", 37));
 		}
@@ -8549,7 +8595,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 	 * @return StringBuilder
 	 */
 	@Override
-	public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta, String type, boolean isIgnorePrecision, boolean isIgnoreScale){
+	public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta, String type, boolean isIgnorePrecision, boolean isIgnoreScale){
 		if(log.isDebugEnabled()) {
 			log.debug(LogUtil.format("子类(" + this.getClass().getSimpleName() + ")未实现 StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta, String type, boolean isIgnorePrecision, boolean isIgnoreScale)", 37));
 		}
@@ -10083,7 +10129,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 	 * @param builder builder
 	 * @return StringBuilder
 	 */
-	public StringBuilder type(DataRuntime runtime, StringBuilder builder, Index meta){
+	public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Index meta){
 		if(log.isDebugEnabled()) {
 			log.debug(LogUtil.format("子类(" + this.getClass().getSimpleName() + ")未实现 StringBuilder type(DataRuntime runtime, StringBuilder builder, Index meta)", 37));
 		}
@@ -11276,7 +11322,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 	 * @return 具体数据库中对应的数据类型
 	 */
 	@Override
-	public ColumnType type(String type){
+	public TypeMetadata typeMetadata(String type){
 		if(null == type){
 			return null;
 		}
@@ -11292,11 +11338,28 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 		if(type.contains(" ")){
 			type = type.split(" ")[0];
 		}
-		ColumnType ct = types.get(type.toUpperCase());
+		if(type.contains("(")){
+			type = type.split("\\(")[0];
+		}
+		TypeMetadata ct = types.get(type.toUpperCase());
 		if(null != ct){
 			ct.setArray(array);
 		}
 		return ct;
+	}
+	public String name(BaseMetadata meta){
+		StringBuilder builder = new StringBuilder();
+		String catalog = meta.getCatalogName();
+		String schema = meta.getSchemaName();
+		String name = meta.getName();
+		if(BasicUtil.isNotEmpty(catalog)) {
+			builder.append(catalog).append(".");
+		}
+		if(BasicUtil.isNotEmpty(schema)) {
+			builder.append(schema).append(".");
+		}
+		builder.append(name);
+		return builder.toString();
 	}
 	/**
 	 * 构造完整表名
@@ -11306,8 +11369,9 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 	 */
 	@Override
 	public StringBuilder name(DataRuntime runtime, StringBuilder builder, BaseMetadata meta){
-		Catalog catalog = meta.getCatalog();
-		Schema schema = meta.getSchema();
+		checkName(runtime, null, meta);
+		String catalog = meta.getCatalogName();
+		String schema = meta.getSchemaName();
 		String name = meta.getName();
 		if(BasicUtil.isNotEmpty(catalog)) {
 			delimiter(builder, catalog).append(".");
@@ -11318,6 +11382,26 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 		delimiter(builder, name);
 		return builder;
 	}
+	@Override
+	public StringBuilder name(DataRuntime runtime, StringBuilder builder, Column meta){
+		if(null != meta){
+			delimiter(builder, meta.getName());
+		}
+		return builder;
+	}
+	public StringBuilder delimiter(StringBuilder builder, String src){
+		return SQLUtil.delimiter(builder, src, getDelimiterFr(), getDelimiterTo());
+	}/*
+	//column.name不需要catalog等前缀
+	public StringBuilder delimiter(StringBuilder builder, Column src){
+		if(null != src) {
+			String name = src.getName();
+			if(BasicUtil.isNotEmpty(name)) {
+				SQLUtil.delimiter(builder, name, getDelimiterFr(), getDelimiterTo());
+			}
+		}
+		return builder;
+	}*/
 	@Override
 	public boolean isBooleanColumn(DataRuntime runtime, Column column) {
 		String clazz = column.getClassName();
@@ -11533,13 +11617,13 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 			return null;
 		}
 		Object result = null;
-		ColumnType columnType = null;
+		TypeMetadata columnType = null;
 		DataWriter writer = null;
 		boolean isArray = false;
 		if(null != metadata){
 			isArray = metadata.isArray();
 			//根据列类型
-			columnType = metadata.getColumnType();
+			columnType = metadata.getTypeMetadata();
 			if(null != columnType){
 				writer = writer(columnType);
 			}
@@ -11548,13 +11632,13 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 				if (null != typeName) {
 					writer = writer(typeName);
 					if(null != columnType){
-						writer = writer(type(typeName.toUpperCase()));
+						writer = writer(typeMetadata(typeName.toUpperCase()));
 					}
 				}
 			}
 		}
 		if(null == columnType){
-			columnType = type(value.getClass().getSimpleName());
+			columnType = typeMetadata(value.getClass().getSimpleName());
 		}
 		if(null != columnType){
 			Class writeClass = columnType.compatible();
@@ -11613,9 +11697,9 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 			return null;
 		}
 		DataReader reader = null;
-		ColumnType ctype = null;
+		TypeMetadata ctype = null;
 		if (null != metadata) {
-			ctype = metadata.getColumnType();
+			ctype = metadata.getTypeMetadata();
 			if(null != ctype){
 				reader = reader(ctype);
 			}
@@ -11624,7 +11708,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 				if (null != typeName) {
 					reader = reader(typeName);
 					if(null == reader) {
-						reader = reader(type(typeName));
+						reader = reader(typeMetadata(typeName));
 					}
 				}
 			}
@@ -11660,7 +11744,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 			if(value instanceof SQL_BUILD_IN_VALUE){
 				builder.append(value(runtime, null, (SQL_BUILD_IN_VALUE)value));
 			}else {
-				ColumnType type = type(value.getClass().getName());
+				TypeMetadata type = typeMetadata(value.getClass().getName());
 				if (null != type) {
 					value = type.write(value, null, false);
 				}
@@ -11795,12 +11879,12 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 		}
 		try {
 			if(null != metadata) {
-				ColumnType columnType = metadata.getColumnType();
+				TypeMetadata columnType = metadata.getTypeMetadata();
 				if(null == columnType){
-					columnType = type(metadata.getTypeName());
+					columnType = typeMetadata(metadata.getTypeName());
 					if(null != columnType) {
 						columnType.setArray(metadata.isArray());
-						metadata.setColumnType(columnType);
+						metadata.setTypeMetadata(columnType);
 					}
 				}
 				value = convert(runtime, columnType, value);
@@ -11811,7 +11895,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 		return value;
 	}
 	@Override
-	public Object convert(DataRuntime runtime, ColumnType columnType, Object value){
+	public Object convert(DataRuntime runtime, TypeMetadata columnType, Object value){
 		if(null == columnType){
 			return value;
 		}
@@ -11857,7 +11941,7 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 
 	@Override
 	public String objectName(DataRuntime runtime, String name) {
-		KeyAdapter.KEY_CASE keyCase = type().nameCase();
+		KeyAdapter.KEY_CASE keyCase = typeMetadata().nameCase();
 		if(null != keyCase){
 			return keyCase.convert(name);
 		}
@@ -11923,18 +12007,6 @@ public abstract class DefaultDriverAdapter implements DriverAdapter {
 		return builder.toString();
 	}
 
-	public StringBuilder delimiter(StringBuilder builder, String src){
-		return SQLUtil.delimiter(builder, src, getDelimiterFr(), getDelimiterTo());
-	}
-	public StringBuilder delimiter(StringBuilder builder, BaseMetadata src){
-		if(null != src) {
-			String name = src.getName();
-			if(BasicUtil.isNotEmpty(name)) {
-				SQLUtil.delimiter(builder, name, getDelimiterFr(), getDelimiterTo());
-			}
-		}
-		return builder;
-	}
 
 	public  <T extends BaseMetadata> T search(List<T> list, String catalog, String schema, String name){
 		return BaseMetadata.search(list, catalog, schema, name);

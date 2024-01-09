@@ -28,27 +28,73 @@ public class Table<E extends Table> extends BaseMetadata<E> implements Serializa
 
     protected String keyword = "TABLE"            ;
 
+    /**
+     * 主表名(相对于分区表)
+     */
     protected String masterName;
+    /**
+     * 主表(相对于分区表)
+     */
     protected Table master;
-    protected Partition partitionBy ; // 分区方式
-    protected Partition partitionFor ; // 分区值
+    /**
+     * 分区方式 LIST, RANGE, HASH
+     */
+    protected Partition partitionBy ;
+    /**
+     * 分区值
+     */
+    protected Partition partitionFor ;
 
+    /**
+     * 表类型 不同数据库有所区别 如"TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM"
+     */
     protected String type                         ;
-    protected Table inherits                      ;
+    /**
+     * 继承自
+     */
+    protected Table inherit;
+    /**
+     * 地理坐标系
+     */
     protected int srid                            ;
 
     protected String typeCat                      ;
     protected String typeSchema                   ;
     protected String typeName                     ;
+    /**
+     * 指定 "identifier" 列的名称
+     */
     protected String selfReferencingColumn        ;
+    /**
+     * 指定在 SELF_REFERENCING_COL_NAME 中创建值的方式。如 SYSTEM USER DERIVED
+     */
     protected String refGeneration                ;
 
+    /**
+     * 数据库引擎
+     */
     protected String engine                       ;
+
+    /**
+     * 编码
+     */
     protected String charset                      ;
+    /**
+     * 排序规则
+     */
     protected String collate                      ;
+    /**
+     * 数据的过期时间
+     */
     protected Long ttl                            ;
 
+    /**
+     * 创建时间
+     */
     protected Date createTime;
+    /**
+     * 修改结构时间
+     */
     protected Date updateTime;
     /**
      * 数据行数
@@ -70,6 +116,10 @@ public class Table<E extends Table> extends BaseMetadata<E> implements Serializa
      * 索引长度
      */
     protected Long indexLength                  ;
+    /**
+     * 是否临时表
+     */
+    protected int temporary                     ;
 
 
     protected PrimaryKey primaryKey;
@@ -576,6 +626,13 @@ public class Table<E extends Table> extends BaseMetadata<E> implements Serializa
         }
         return (LinkedHashMap<String, T>) indexs;
     }
+    public LinkedHashMap<String, Column> getPrimaryKeyColumns(){
+        PrimaryKey pk = getPrimaryKey();
+        if(null != pk){
+            return pk.getColumns();
+        }
+        return new LinkedHashMap<>();
+    }
     public PrimaryKey getPrimaryKey(){
         if(getmap && null != update){
             return update.getPrimaryKey();
@@ -740,18 +797,17 @@ public class Table<E extends Table> extends BaseMetadata<E> implements Serializa
         this.dataFree = dataFree;
     }
 
-    public Table getInherits() {
-        return inherits;
+    public Table getInherit() {
+        return inherit;
     }
 
-    public void setInherits(Table inherits) {
-        this.inherits = inherits;
+    public void setInherit(Table inherit) {
+        this.inherit = inherit;
     }
 
-    public void setInherits(String inherits) {
-        this.inherits = new Table(inherits);
+    public void setInherit(String setInherit) {
+        this.inherit = new Table(setInherit);
     }
-
     public String getKeyword() {
         return keyword;
     }
@@ -791,6 +847,25 @@ public class Table<E extends Table> extends BaseMetadata<E> implements Serializa
 
     public Long getDataLength() {
         return dataLength;
+    }
+
+    public int getTemporary() {
+        return temporary;
+    }
+    public boolean isTemporary() {
+        return (temporary == 1);
+    }
+
+    public void setTemporary(int temporary) {
+        this.temporary = temporary;
+    }
+
+    public void setTemporary(boolean temporary) {
+        if(temporary){
+            this.temporary = 1;
+        }else{
+            this.temporary = 0;
+        }
     }
 
     public void setDataLength(Long dataLength) {
@@ -847,5 +922,44 @@ public class Table<E extends Table> extends BaseMetadata<E> implements Serializa
         }
         builder.append(name);
         return builder.toString();
+    }
+
+    public boolean equals(Table table) {
+        return equals(table, true);
+    }
+    public boolean equals(Table table, boolean ignoreCase) {
+        if(null == table){
+            return false;
+        }
+        boolean catalog_equals = BasicUtil.equals(this.catalog, table.getCatalog(), ignoreCase);
+        if(!catalog_equals){
+            return false;
+        }
+        boolean schema_equals = BasicUtil.equals(this.schema, table.getSchema(), ignoreCase) ;
+        if(!schema_equals){
+            return false;
+        }
+        return BasicUtil.equals(this.name, table.getName());
+    }
+
+    /**
+     * 主键相同
+     * @param table table
+     * @return boolean
+     */
+    public boolean primaryEquals(Table table){
+        if(null == table){
+            return false;
+        }
+        PrimaryKey pks = getPrimaryKey();
+        PrimaryKey tpks = table.getPrimaryKey();
+        if(null == pks){
+            if(null == tpks){
+                return true;
+            }else{
+                return false;
+            }
+        }
+        return pks.equals(tpks);
     }
 }

@@ -3,6 +3,7 @@ package org.anyline.data.jdbc.adapter.init;
 import org.anyline.data.param.ConfigStore;
 import org.anyline.data.param.init.DefaultConfigStore;
 import org.anyline.data.prepare.RunPrepare;
+import org.anyline.data.prepare.auto.init.DefaultTablePrepare;
 import org.anyline.data.run.*;
 import org.anyline.data.runtime.DataRuntime;
 import org.anyline.entity.*;
@@ -142,6 +143,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
         if(null == set || set.isEmpty()){
             return;
         }
+        checkName(runtime, null, dest);
         StringBuilder builder = run.getBuilder();
         DataRow first = set.getRow(0);
         Map<String, Sequence> sequens = new HashMap<>();
@@ -169,7 +171,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
             }
         }
 
-        PrimaryGenerator generator = checkPrimaryGenerator(type(), dest.getName());
+        PrimaryGenerator generator = checkPrimaryGenerator(typeMetadata(), dest.getName());
         LinkedHashMap<String, Column> pks = null;
         if(null != generator) {
             pks = first.getPrimaryColumns();
@@ -184,13 +186,13 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
         if(null == override) {
             //正常插入
             builder.append("INSERT INTO ");
-            delimiter(builder, dest).append(" (");
+            name(runtime, builder, dest).append(" (");
             builder.append(concat("",", ", Column.names(columns)));
             builder.append(") \n");
             builder.append(select);
         }else{
             //重复时 是否覆盖
-            merge(builder, dest, configs, select, columns, pks);
+            merge(runtime, builder, dest, configs, select, columns, pks);
         }
     }
 
@@ -208,6 +210,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
         if(null == list || list.isEmpty()){
             return;
         }
+        checkName(runtime, null, dest);
         StringBuilder builder = run.getBuilder();
         if(null == builder){
             builder = new StringBuilder();
@@ -246,7 +249,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
             }
         }
 
-        PrimaryGenerator generator = checkPrimaryGenerator(type(), dest.getName());
+        PrimaryGenerator generator = checkPrimaryGenerator(typeMetadata(), dest.getName());
         LinkedHashMap<String, Column> pks = null;
         if(null != generator) {
             pks = EntityAdapterProxy.primaryKeys(first.getClass());
@@ -259,7 +262,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
         }
         if(null == override) {
             builder.append("INSERT INTO ");
-            delimiter(builder, dest).append(" (");
+            name(runtime, builder, dest).append(" (");
             boolean start = true;
             for (Column column : columns.values()) {
                 if (!start) {
@@ -273,7 +276,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
             builder.append(select);
         }else{
             //重复时 是否覆盖
-            merge(builder, dest, configs, select, columns, pks);
+            merge(runtime, builder, dest, configs, select, columns, pks);
         }
     }
 
@@ -752,7 +755,10 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
                 first = false;
                 builder.append(name).append(".").append(key).append(" AS ").append(name);
             }
-            builder.append(" FROM ").append(dummy());
+            String dummy = dummy();
+            if(BasicUtil.isNotEmpty(dummy)) {
+                builder.append(" FROM ").append(dummy);
+            }
         }
         return runs;
     }
@@ -1830,11 +1836,15 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
 		}
 */
         //需要跨schema查询
-        builder.append("SELECT M.OWNER AS TABLE_SCHEMA, M.OBJECT_NAME AS TABLE_NAME, M.OBJECT_TYPE AS TABLE_TYPE, F.COMMENTS FROM ALL_OBJECTS   M LEFT JOIN ALL_TAB_COMMENTS   F \n");
+        builder.append("SELECT M.OWNER AS TABLE_SCHEMA, M.OBJECT_NAME AS TABLE_NAME, M.OBJECT_TYPE AS TABLE_TYPE, M.CREATED AS CREATE_TIME, M.LAST_DDL_TIME AS UPDATE_TIME, M.TEMPORARY AS IS_TEMPORARY, F.COMMENTS\n");
+        builder.append("FROM ALL_OBJECTS M LEFT JOIN ALL_TAB_COMMENTS F \n");
         builder.append("ON M.OBJECT_NAME = F.TABLE_NAME  AND M.OWNER = F.OWNER AND M.object_type = F.TABLE_TYPE \n");
         builder.append("WHERE M.OWNER NOT IN('CTXSYS','EXFSYS','WMSYS','MDSYS','SYSTEM','OLAPSYS','SYSMAN','APEX_030200','SYS') AND M.OBJECT_TYPE IN('TABLE','VIEW')");
         if(BasicUtil.isNotEmpty(schema)){
             builder.append(" AND M.OWNER = '").append(schema.getName()).append("'");
+        }
+        if(BasicUtil.isNotEmpty(pattern)){
+            builder.append(" AND M.OBJECT_NAME LIKE '").append(pattern).append("'");
         }
         if(BasicUtil.isNotEmpty(types)){
             String[] tmps = types.split(",");
@@ -4565,16 +4575,17 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
 
                 update.setName(uname);
                 runs.addAll(buildAddRun(runtime, update));
-
-                StringBuilder builder = new StringBuilder();
-                builder.append("UPDATE ");
-                name(runtime, builder, meta.getTable(true));
-                builder.append(" SET ");
-                delimiter(builder, uname);
-                builder.append(" = ");
-                delimiter(builder, tmp_name);
-                runs.add(new SimpleRun(runtime, builder));
-
+                long size = count(runtime, null, new DefaultTablePrepare(meta.getTable(true)), null);
+                if(size > 0) {
+                    StringBuilder builder = new StringBuilder();
+                    builder.append("UPDATE ");
+                    name(runtime, builder, meta.getTable(true));
+                    builder.append(" SET ");
+                    delimiter(builder, uname);
+                    builder.append(" = ");
+                    delimiter(builder, tmp_name);
+                    runs.add(new SimpleRun(runtime, builder));
+                }
                 meta.setName(tmp_name);
                 List<Run> drop = buildDropRun(runtime, meta);
                 runs.addAll(drop);
@@ -4589,7 +4600,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
                 name(runtime, builder, meta.getTable(true));
                 builder.append(" MODIFY(");
                 delimiter(builder, meta.getName()).append(" ");
-                type(runtime, builder, meta.getUpdate());
+                this.typeMetadata(runtime, builder, meta.getUpdate());
                 builder.append(")");
                 runs.add(new SimpleRun(runtime, builder));
             }
@@ -4803,8 +4814,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return StringBuilder
      */
     @Override
-    public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta){
-        return super.type(runtime, builder, meta);
+    public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta){
+        return super.typeMetadata(runtime, builder, meta);
     }
     /**
      * column[命令合成-子流程]<br/>
@@ -4818,8 +4829,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return StringBuilder
      */
     @Override
-    public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta, String type, boolean isIgnorePrecision, boolean isIgnoreScale){
-        return super.type(runtime, builder, meta, type, isIgnorePrecision, isIgnoreScale);
+    public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta, String type, boolean isIgnorePrecision, boolean isIgnoreScale){
+        return super.typeMetadata(runtime, builder, meta, type, isIgnorePrecision, isIgnoreScale);
     }
 
 
@@ -5701,8 +5712,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return StringBuilder
      */
     @Override
-    public StringBuilder type(DataRuntime runtime, StringBuilder builder, Index meta){
-        return super.type(runtime, builder, meta);
+    public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Index meta){
+        return super.typeMetadata(runtime, builder, meta);
     }
     /**
      * index[命令合成-子流程]<br/>
@@ -6428,7 +6439,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      *  *****************************************************************************************************************/
 
 
-    protected void merge(StringBuilder builder, Table dest, ConfigStore configs, String select, LinkedHashMap<String, Column> columns, LinkedHashMap<String, Column> pks){
+    protected void merge(DataRuntime runtime, StringBuilder builder, Table dest, ConfigStore configs, String select, LinkedHashMap<String, Column> columns, LinkedHashMap<String, Column> pks){
         List<String> bys = configs.overrideByColumns();
         if(null == bys){
             bys = new ArrayList<>();
@@ -6437,7 +6448,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
             bys = Column.names(pks);
         }
         builder.append("MERGE INTO ");
-        delimiter(builder, dest);
+        name(runtime, builder, dest);
         builder.append(" M\n");
         builder.append("USING (\n");
         builder.append(select);
@@ -6492,7 +6503,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
         int col = 0;
         for(DataRow row:set) {
             if(row.hasPrimaryKeys() && null != generator){
-                generator.create(row, type(),dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
+                generator.create(row, typeMetadata(),dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
             }
 
             if(col > 0){
@@ -6513,7 +6524,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
         for(Object obj:list){
             boolean create = EntityAdapterProxy.createPrimaryValue(obj, pks);
             if(!create && null != generator){
-                generator.create(obj, type(),dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
+                generator.create(obj, typeMetadata(),dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
             }
             if(col > 0){
                 builder.append("\n\tUNION ALL");

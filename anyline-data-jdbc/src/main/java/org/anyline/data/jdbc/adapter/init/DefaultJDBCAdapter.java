@@ -39,7 +39,7 @@ import org.anyline.entity.generator.PrimaryGenerator;
 import org.anyline.exception.SQLQueryException;
 import org.anyline.exception.SQLUpdateException;
 import org.anyline.metadata.*;
-import org.anyline.metadata.type.ColumnType;
+import org.anyline.metadata.type.TypeMetadata;
 import org.anyline.metadata.type.DatabaseType;
 import org.anyline.proxy.CacheProxy;
 import org.anyline.proxy.EntityAdapterProxy;
@@ -73,7 +73,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 	protected static final Logger log = LoggerFactory.getLogger(DefaultJDBCAdapter.class);
 
 	@Override
-	public DatabaseType type() {
+	public DatabaseType typeMetadata() {
 		return DatabaseType.COMMON;
 	}
 	protected JdbcTemplate jdbc(DataRuntime runtime){
@@ -212,7 +212,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			run.setBuilder(builder);
 		}
 		LinkedHashMap<String, Column> pks = null;
-		PrimaryGenerator generator = checkPrimaryGenerator(type(), dest.getName());
+		checkName(runtime, null, dest);
+		PrimaryGenerator generator = checkPrimaryGenerator(typeMetadata(), dest.getName());
 		if(null != generator){
 			pks = set.getRow(0).getPrimaryColumns();
 			columns.putAll(pks);
@@ -252,7 +253,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			}
 			if(row.hasPrimaryKeys() && BasicUtil.isEmpty(row.getPrimaryValue())){
 				if(null != generator){
-					generator.create(row, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), BeanUtil.getMapKeys(pks), null);
+					generator.create(row, typeMetadata(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), BeanUtil.getMapKeys(pks), null);
 				}
 				//createPrimaryValue(row, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
 			}
@@ -284,12 +285,13 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			builder = new StringBuilder();
 			run.setBuilder(builder);
 		}
+		checkName(runtime, null, dest);
 		if(list instanceof DataSet){
 			DataSet set = (DataSet) list;
 			this.fillInsertContent(runtime, run, dest, set, configs, columns);
 			return;
 		}
-		PrimaryGenerator generator = checkPrimaryGenerator(type(), dest.getName());
+		PrimaryGenerator generator = checkPrimaryGenerator(typeMetadata(), dest.getName());
 		Object entity = list.iterator().next();
 		List<String> pks = null;
 		if(null != generator) {
@@ -334,7 +336,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
             }else{*/
 			boolean create = EntityAdapterProxy.createPrimaryValue(obj, Column.names(columns));
 			if(!create && null != generator){
-				generator.create(obj, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
+				generator.create(obj, typeMetadata(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
 				//createPrimaryValue(obj, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), null, null);
 			}
 			builder.append(insertValue(runtime, run, obj, true, true, false, true, columns));
@@ -424,7 +426,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			throw new org.anyline.exception.SQLException("未指定表");
 		}
 
-		PrimaryGenerator generator = checkPrimaryGenerator(type(), dest.getName());
+		checkName(runtime, null, dest);
+		PrimaryGenerator generator = checkPrimaryGenerator(typeMetadata(), dest.getName());
 
 		int from = 1;
 		StringBuilder valuesBuilder = new StringBuilder();
@@ -437,7 +440,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		if(obj instanceof DataRow){
 			row = (DataRow)obj;
 			if(row.hasPrimaryKeys() && null != generator){
-				generator.create(row, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), row.getPrimaryKeys(), null);
+				generator.create(row, typeMetadata(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), row.getPrimaryKeys(), null);
 				//createPrimaryValue(row, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), row.getPrimaryKeys(), null);
 			}
 		}else{
@@ -445,7 +448,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			boolean create = EntityAdapterProxy.createPrimaryValue(obj, columns);
 			LinkedHashMap<String, Column> pks = EntityAdapterProxy.primaryKeys(obj.getClass());
 			if(!create && null != generator){
-				generator.create(obj, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
+				generator.create(obj, typeMetadata(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
 				//createPrimaryValue(obj, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), null, null);
 			}
 		}
@@ -1410,7 +1413,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		builder.append(BR_TAB);
 		LinkedHashMap<String,Column> columns = sql.getColumns();
 		if(null == columns || columns.isEmpty()){
-			ConfigStore configs = run.getConfigStore();
+			ConfigStore configs = run.getConfigs();
 			if(null != configs) {
 				List<String> cols = configs.columns();
 				columns = new LinkedHashMap<>();
@@ -2355,7 +2358,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		runs.add(run);
 		StringBuilder builder = run.getBuilder();
 		builder.append("TRUNCATE TABLE ");
-		delimiter(builder, table);
+		name(runtime, builder, table);
 		return runs;
 	}
 
@@ -2377,7 +2380,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		StringBuilder builder = new StringBuilder();
 		TableRun run = new TableRun(runtime, table);
 		builder.append("DELETE FROM ");
-		delimiter(builder, table);
+		name(runtime, builder, table);
 		builder.append(" WHERE ");
 
 		if(values instanceof Collection){
@@ -2445,7 +2448,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		run.setFrom(2);
 		StringBuilder builder = new StringBuilder();
 		builder.append("DELETE FROM ");
-		delimiter(builder, table);
+		name(runtime, builder, table);
 		builder.append(" WHERE ");
 		List<String> keys = new ArrayList<>();
 		if(null != columns && columns.length>0){
@@ -3169,6 +3172,36 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		return schema;
 	}
 
+	/**
+	 * 检测name,name中可能包含catalog.schema.name<br/>
+	 * 如果有一项或三项，在父类中解析<br/>
+	 * 如果只有两项，需要根据不同数据库区分出最前一项是catalog还是schema，如果区分不出来的抛出异常
+	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+	 * @param random 用来标记同一组命令
+	 * @param meta 表,视图等
+	 * @return T
+	 * @throws Exception 如果区分不出来的抛出异常
+	 */
+	public <T extends BaseMetadata> T checkName(DataRuntime runtime, String random, T meta) throws RuntimeException{
+		if(null == meta){
+			return null;
+		}
+		String name = meta.getName();
+		if(null != name && name.contains(".")){
+			String[] ks = name.split("\\.");
+			if(ks.length == 3){
+				meta.setCatalog(ks[0]);
+				meta.setSchema(ks[1]);
+				meta.setName(ks[2]);
+			}else if(ks.length == 2){
+				meta.setSchema(ks[0]);
+				meta.setName(ks[1]);
+			}else{
+				throw new RuntimeException("无法实别schema或catalog(子类未" + this.getClass().getSimpleName() + "实现)");
+			}
+		}
+		return meta;
+	}
 	/* *****************************************************************************************************************
 	 * 													table
 	 * -----------------------------------------------------------------------------------------------------------------
@@ -3239,6 +3272,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 	 * @param pattern 名称统配符或正则
 	 * @param types  "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
 	 * @return String
+	 * @throws Exception Exception
 	 */
 	@Override
 	public List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
@@ -3255,6 +3289,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 	 * @param pattern 名称统配符或正则
 	 * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
 	 * @return String
+	 * @throws Exception Exception
 	 */
 	@Override
 	public List<Run> buildQueryTablesCommentRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
@@ -3383,6 +3418,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		table.setUpdateTime(row.getDate("UPDATE_TIME", (Date)null));
 		table.setType(row.getString("TABLE_TYPE"));
 		table.setEngine(row.getString("ENGINE"));
+		table.setTemporary(row.getBoolean("IS_TEMPORARY", false));
 	}
 	protected void init(Table table, ResultSet set, Map<String,Integer> keys){
 		try {
@@ -4324,7 +4360,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		}
 		int index = 0;
 		for(Column column:columns.values()){
-			if(null == column.getPrecision()) {
+			if(null == column.getPosition()) {
 				column.setPosition(index++);
 			}
 		}
@@ -4452,6 +4488,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			ds = jdbc.getDataSource();
 			con = DataSourceUtils.getConnection(ds);
 
+			checkName(runtime, null, table);
 			String catalog = table.getCatalogName();
 			String schema = table.getSchemaName();
 			DatabaseMetaData dbmd = con.getMetaData();
@@ -4510,8 +4547,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 				column.setDefaultValue(value(keys, "COLUMN_DEF", set, column.getDefaultValue()));
 				column.setPosition(integer(keys, "ORDINAL_POSITION", set, column.getPosition()));
 				column.autoIncrement(bool(keys,"IS_AUTOINCREMENT", set, column.isAutoIncrement()));
-				ColumnType columnType = type(column.getTypeName());
-				column.setColumnType(columnType);
+				TypeMetadata columnType = typeMetadata(column.getTypeName());
+				column.setTypeMetadata(columnType);
 				column(runtime, column, set);
 				column.setName(name);
 			}
@@ -4566,6 +4603,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		if(null == table || BasicUtil.isEmpty(table.getName())){
 			return new LinkedHashMap();
 		}
+		checkName(runtime, null, table);
 		LinkedHashMap<String,T> tags = CacheProxy.tags(runtime.getKey(), table);
 		if(null != tags && !tags.isEmpty()){
 			return tags;
@@ -4906,6 +4944,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			ds = jdbc.getDataSource();
 			con = DataSourceUtils.getConnection(ds);
 			DatabaseMetaData dbmd = con.getMetaData();
+			checkName(runtime, null, table);
 			String[] tmp = correctSchemaFromJDBC(table.getCatalogName(), table.getSchemaName());
 			ResultSet set = dbmd.getIndexInfo(tmp[0], tmp[1], table.getName(), unique, approximate);
 			Map<String, Integer> keys = keys(set);
@@ -5817,14 +5856,14 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		//分区依据 PARTITION BY RANGE (code);
 		partitionBy(runtime, builder, meta);
 		//继承表CREATE TABLE simple.public.tab_1c1() INHERITS(simple.public.tab_parent)
-		if(BasicUtil.isNotEmpty(meta.getInherits())){
+		if(BasicUtil.isNotEmpty(meta.getInherit())){
 			if(null == columns || columns.isEmpty()){
 				// TODO 放到子类实现
 				//继承关系中 子表如果没有新添加的列 需要空()
 				builder.append("()");
 			}
 			builder.append(" INHERITS(");
-			name(runtime, builder, meta.getInherits());
+			name(runtime, builder, meta.getInherit());
 			builder.append(")");
 		}
 		//CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='备注';
@@ -6824,8 +6863,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 				runs.addAll(buildRenameRun(runtime, meta));
 			}
 			// 修改数据类型
-			String type = type(runtime, null, meta).toString();
-			String utype = type(runtime, null, update).toString();
+			String type = this.typeMetadata(runtime, null, meta).toString();
+			String utype = this.typeMetadata(runtime, null, update).toString();
 			boolean exe = false;
 			if(!BasicUtil.equalsIgnoreCase(type, utype)){
 				List<Run> list = buildChangeTypeRun(runtime, meta);
@@ -6932,7 +6971,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		builder.append(" RENAME ").append(meta.getKeyword()).append(" ");
 		delimiter(builder, meta.getName());
 		builder.append(" ");
-		delimiter(builder, meta.getUpdate());
+		name(runtime, builder, meta.getUpdate());
 		meta.setName(meta.getUpdate().getName());
 		return runs;
 	}
@@ -7071,7 +7110,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 	@Override
 	public StringBuilder define(DataRuntime runtime, StringBuilder builder, Column meta){
 		// 数据类型
-		type(runtime, builder, meta);
+		this.typeMetadata(runtime, builder, meta);
 		// 编码
 		charset(runtime, builder, meta);
 		// 默认值
@@ -7113,14 +7152,14 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 	 * @return StringBuilder
 	 */
 	@Override
-	public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta){
+	public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta){
 		if(null == builder){
 			builder = new StringBuilder();
 		}
 		boolean isIgnorePrecision = false;
 		boolean isIgnoreScale = false;
 		String typeName = meta.getTypeName();
-		ColumnType type = type(typeName);
+		TypeMetadata type = typeMetadata(typeName);
 		if(null != type){
 			if(!type.support()){
 				throw new RuntimeException("数据类型不支持:"+typeName);
@@ -7132,7 +7171,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			isIgnorePrecision = isIgnorePrecision(runtime, meta);
 			isIgnoreScale = isIgnoreScale(runtime, meta);
 		}
-		return type(runtime, builder, meta, typeName, isIgnorePrecision, isIgnoreScale);
+		return typeMetadata(runtime, builder, meta, typeName, isIgnorePrecision, isIgnoreScale);
 	}
 	/**
 	 * column[命令合成-子流程]<br/>
@@ -7146,7 +7185,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 	 * @return StringBuilder
 	 */
 	@Override
-	public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta, String type, boolean isIgnorePrecision, boolean isIgnoreScale){
+	public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta, String type, boolean isIgnorePrecision, boolean isIgnoreScale){
 		if(null == builder){
 			builder = new StringBuilder();
 		}
@@ -7192,7 +7231,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 	 */
 	@Override
 	public boolean isIgnorePrecision(DataRuntime runtime, Column meta) {
-		ColumnType type = meta.getColumnType();
+		TypeMetadata type = meta.getTypeMetadata();
 		if(null != type){
 			return type.ignorePrecision();
 		}
@@ -7215,7 +7254,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 	 */
 	@Override
 	public boolean isIgnoreScale(DataRuntime runtime, Column meta) {
-		ColumnType type = meta.getColumnType();
+		TypeMetadata type = meta.getTypeMetadata();
 		if(null != type){
 			return type.ignoreScale();
 		}
@@ -7534,8 +7573,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			}
 			meta.setName(uname);
 			// 修改数据类型
-			String type = type(runtime, null, meta).toString();
-			String utype = type(runtime, null, update).toString();
+			String type = this.typeMetadata(runtime, null, meta).toString();
+			String utype = this.typeMetadata(runtime, null, update).toString();
 			if(!BasicUtil.equalsIgnoreCase(type, utype)){
 				List<Run> list = buildChangeTypeRun(runtime, meta);
 				if(null != list){
@@ -7614,7 +7653,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		builder.append(" RENAME ").append(meta.getKeyword()).append(" ");
 		delimiter(builder, meta.getName());
 		builder.append(" ");
-		delimiter(builder, meta.getUpdate());
+		name(runtime, builder, meta.getUpdate());
 		return runs;
 	}
 	/**
@@ -7988,7 +8027,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 				if(!first){
 					builder.append(",");
 				}
-				delimiter(builder, column.getReference());
+				name(runtime, builder, column.getReference());
 				first = false;
 			}
 			builder.append(")");
@@ -8173,7 +8212,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			qty ++;
 		}
 		builder.append(")");
-		type(runtime, builder, meta);
+		typeMetadata(runtime, builder, meta);
 		comment(runtime, builder, meta);
 		return runs;
 	}
@@ -8238,8 +8277,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 	 * @return StringBuilder
 	 */
 	@Override
-	public StringBuilder type(DataRuntime runtime, StringBuilder builder, Index meta){
-		return super.type(runtime, builder, meta);
+	public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Index meta){
+		return super.typeMetadata(runtime, builder, meta);
 	}
 	/**
 	 * index[命令合成-子流程]<br/>
@@ -8553,18 +8592,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		runs.add(run);
 		StringBuilder builder = run.getBuilder();
 		builder.append("DROP TRIGGER ");
-		Table table = meta.getTable(true);
-		if(null != table) {
-			Catalog catalog = table.getCatalog();
-			Schema schema = table.getSchema();
-			if (BasicUtil.isNotEmpty(catalog)) {
-				delimiter(builder, catalog).append(".");
-			}
-			if (BasicUtil.isNotEmpty(schema)) {
-				delimiter(builder, schema).append(".");
-			}
-		}
-		delimiter(builder, meta.getName());
+		name(runtime, builder, meta);
 		return runs;
 	}
 
@@ -8587,14 +8615,14 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		Schema schema = table.getSchema();
 		builder.append("ALTER TRIGGER ");
 		if(BasicUtil.isNotEmpty(catalog)) {
-			delimiter(builder, catalog).append(".");
+			name(runtime, builder, catalog).append(".");
 		}
 		if(BasicUtil.isNotEmpty(schema)) {
-			delimiter(builder, schema).append(".");
+			name(runtime, builder, schema).append(".");
 		}
 		delimiter(builder, meta.getName());
 		builder.append(" RENAME TO ");
-		delimiter(builder, meta.getUpdate());
+		name(runtime, builder, meta.getUpdate());
 
 		return runs;
 	}
@@ -8777,7 +8805,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		builder.append("ALTER PROCEDURE ");
 		name(runtime, builder, meta);
 		builder.append(" RENAME TO ");
-		delimiter(builder, meta.getUpdate());
+		name(runtime, builder, meta.getUpdate());
 		return runs;
 	}
 
@@ -8799,7 +8827,7 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			builder.append("OUT");
 		}
 		builder.append(" ").append(parameter.getName());
-		ColumnType type = parameter.getColumnType();
+		TypeMetadata type = parameter.getColumnType();
 		boolean isIgnorePrecision= type.ignorePrecision();
 		boolean isIgnoreScale = type.ignoreScale();
 		builder.append(type);
@@ -9116,6 +9144,10 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 				column.autoIncrement(true);
 			}
 		}
+		//mysql中的on update
+		if(row.getStringNvl("EXTRA").toLowerCase().contains("on update")){
+			column.setOnUpdate(true);
+		}
 		String defaultValue = column.getDefaultValue()+"";
 		if(defaultValue.toLowerCase().contains("nextval")){
 			column.autoIncrement(true);
@@ -9155,9 +9187,9 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		if(null == column.getCollate()) {
 			column.setCollate(row.getString("COLLATION_NAME"));
 		}
-		if(null == column.getColumnType()) {
-			ColumnType columnType = type(column.getTypeName());
-			column.setColumnType(columnType);
+		if(null == column.getTypeMetadata()) {
+			TypeMetadata columnType = typeMetadata(column.getTypeName());
+			column.setTypeMetadata(columnType);
 		}
 	}
 	/**
@@ -9254,8 +9286,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 		}catch (Exception e){
 			log.debug("[获取MetaData失败][驱动未实现:getColumnTypeName]");
 		}
-		ColumnType columnType = type(column.getTypeName());
-		column.setColumnType(columnType);
+		TypeMetadata columnType = typeMetadata(column.getTypeName());
+		column.setTypeMetadata(columnType);
 		return column;
 	}
 
@@ -9349,8 +9381,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			column.setDefaultValue(value(keys, "COLUMN_DEF", set, column.getDefaultValue()));
 			column.setPosition(integer(keys, "ORDINAL_POSITION", set, column.getPosition()));
 			column.autoIncrement(bool(keys,"IS_AUTOINCREMENT", set, column.isAutoIncrement()));
-			ColumnType columnType = type(column.getTypeName());
-			column.setColumnType(columnType);
+			TypeMetadata columnType = typeMetadata(column.getTypeName());
+			column.setTypeMetadata(columnType);
 			column(runtime, column, set);
 			column.setName(name);
 		}
@@ -9424,8 +9456,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 			if (BasicUtil.isEmpty(column.getDefaultValue())) {
 				column.setDefaultValue(string(keys, "COLUMN_DEF", rs));
 			}
-			ColumnType columnType = type(column.getTypeName());
-			column.setColumnType(columnType);
+			TypeMetadata columnType = typeMetadata(column.getTypeName());
+			column.setTypeMetadata(columnType);
 		}catch (Exception e){
 			e.printStackTrace();
 		}
@@ -9559,8 +9591,8 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 				log.debug("[获取MetaData失败][驱动未实现:getColumnTypeName]");
 			}
 
-			ColumnType columnType = type(column.getTypeName());
-			column.setColumnType(columnType);
+			TypeMetadata columnType = typeMetadata(column.getTypeName());
+			column.setTypeMetadata(columnType);
 		}
 		return column;
 	}
@@ -10124,9 +10156,9 @@ public class DefaultJDBCAdapter extends DefaultDriverAdapter implements JDBCAdap
 				// CD = ?
 				if(var.getType() == Variable.VAR_TYPE_INDEX){
 					List<Object> varValues = var.getValues();
-					String value = null;
+					Object value = null;
 					if(BasicUtil.isNotEmpty(true, varValues)){
-						value = (String)varValues.get(0);
+						value = varValues.get(0);
 					}
 					addRunValue(runtime, run, Compare.EQUAL, new Column(var.getKey()), value);
 				}
