@@ -1015,11 +1015,15 @@ public class Column extends BaseMetadata<Column> implements Serializable {
         if(!BasicUtil.equals(typeMetadata, column.getTypeMetadata())){
             return false;
         }
-        if(!BasicUtil.equals(precision, column.getPrecision())){
-            return false;
+        if(!typeMetadata.ignorePrecision()) {
+            if (!BasicUtil.equals(precision, column.getPrecision())) {
+                return false;
+            }
         }
-        if(!BasicUtil.equals(scale, column.getScale())){
-            return false;
+        if(!typeMetadata.ignoreScale()) {
+            if (!BasicUtil.equals(scale, column.getScale())) {
+                return false;
+            }
         }
         if(!BasicUtil.equals(defaultValue, column.getDefaultValue())){
             return false;
@@ -1172,6 +1176,10 @@ public class Column extends BaseMetadata<Column> implements Serializable {
      * @return boolean
      */
     public boolean ignorePrecision(){
+        TypeMetadata metadata = getTypeMetadata();
+        if(null != metadata){
+            return metadata.ignorePrecision();
+        }
         if(null != typeName) {
             String chk = typeName.toLowerCase();
             if (chk.contains("date")) {
