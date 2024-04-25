@@ -24,19 +24,22 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Repository("anyline.data.DriverAdapterHolder")
 public class DriverAdapterHolder {
-
 	private static final Logger log = LoggerFactory.getLogger(DriverAdapterHolder.class);
-	private static HashSet<DriverAdapter> adapters= new HashSet<>();
-	private static HashSet<DatabaseType> supports= new HashSet<>();
+	/**
+	 * 项目注册adapter用来覆盖adapters
+	 */
+	public static LinkedHashMap<DatabaseType, DriverAdapter> user_adapters = new LinkedHashMap<>();
+	private static HashSet<DriverAdapter> adapters = new HashSet<>();
+	private static HashSet<DatabaseType> supports = new HashSet<>();
 	private static List<DriverAdapterHolder> utils = new ArrayList<>();
 	public DriverAdapterHolder(){}
+	public static void reg(DatabaseType type, DriverAdapter adapter){
+		user_adapters.put(type, adapter);
+	}
 
 	/**
 	 * 获取支持数据库的适配器,注意有可能获取到多个
@@ -44,16 +47,19 @@ public class DriverAdapterHolder {
 	 * @return DriverAdapter
 	 */
 	public static DriverAdapter getAdapter(DatabaseType type){
-		List<DriverAdapter> list = getAdapters(type);
-		if(list.isEmpty()){
-			return null;
+		DriverAdapter adapter = user_adapters.get(type);
+		if(null == adapter) {
+			List<DriverAdapter> list = getAdapters(type);
+			if (!list.isEmpty()) {
+				adapter = list.get(0);
+			}
 		}
-		return list.get(0);
+		return adapter;
 	}
 	public static List<DriverAdapter> getAdapters(DatabaseType type){
 		List<DriverAdapter> list = new ArrayList<>();
 		for(DriverAdapter adapter:adapters){
-			if(adapter.typeMetadata() == type){
+			if(adapter.type() == type){
 				list.add(adapter);
 			}
 		}
@@ -87,12 +93,20 @@ public class DriverAdapterHolder {
 		if(null != defaultAdapter){
 			return defaultAdapter;
 		}
-		if(adapters.size() ==1){
+		if(adapters.size() == 1){
 			defaultAdapter = adapters.iterator().next();
 			return defaultAdapter;
+		}else if(adapters.size() == 2){
+			for (DriverAdapter adapter:adapters){
+				if(!adapter.getClass().getName().toLowerCase().contains("common")){
+					defaultAdapter = adapter;
+					return defaultAdapter;
+				}
+			}
 		}
 		DriverAdapter adapter = null;
 		try {
+			//执行两次匹配, 第一次失败后，会再匹配一次，第二次传入true
 			for (DriverAdapter item:adapters){
 				if(item.match(runtime, false)){
 					adapter = item;

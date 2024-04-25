@@ -19,10 +19,6 @@
 package org.anyline.util.regular;
 
 import org.anyline.util.ConfigTable;
-import org.anyline.util.regular.Regular;
-import org.anyline.util.regular.RegularContain;
-import org.anyline.util.regular.RegularMatch;
-import org.anyline.util.regular.RegularMatchPrefix;
 import org.apache.oro.text.regex.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,25 +79,25 @@ public class RegularUtil {
 	 * @return List
 	 * @throws Exception 异常 Exception
 	 */
-	public static synchronized List<List<String>> fetchs(String src, String regx, Regular.MATCH_MODE mode) throws Exception{
+	public static synchronized List<List<String>> fetchs(String src, String regx, Regular.MATCH_MODE mode) throws Exception {
 		List<List<String>> result = null;
 		regular = regularList.get(mode);
 		result = regular.fetchs(src, regx);
 		return result;
 	}
-	public static List<List<String>> fetchs(String src, String regx) throws Exception{
+	public static List<List<String>> fetchs(String src, String regx) throws Exception {
 		return fetchs(src, regx, Regular.MATCH_MODE.CONTAIN);
 	}
-	public static List<String> fetch(String src, String regx) throws Exception{
+	public static List<String> fetch(String src, String regx) throws Exception {
 		return fetch(src, regx, Regular.MATCH_MODE.CONTAIN);
 	}
-	public static synchronized List<String> fetch(String src, String regx, Regular.MATCH_MODE mode, int idx) throws Exception{
+	public static synchronized List<String> fetch(String src, String regx, Regular.MATCH_MODE mode, int idx) throws Exception {
 		List<String> result = null;
 		regular = regularList.get(mode);
 		result = regular.fetch(src, regx, idx);
 		return result;
 	}
-	public static synchronized List<String> fetch(String src, String regx, Regular.MATCH_MODE mode) throws Exception{
+	public static synchronized List<String> fetch(String src, String regx, Regular.MATCH_MODE mode) throws Exception {
 		List<String> result = null;
 		regular = regularList.get(mode);
 		result = regular.fetch(src, regx);
@@ -116,6 +112,7 @@ public class RegularUtil {
 			return new ArrayList<>();
 		}
 	}
+
 	/**
 	 * 过滤 保留匹配项
 	 * @param src  src
@@ -127,6 +124,7 @@ public class RegularUtil {
 		regular = regularList.get(mode);
 		return regular.pick(src, regx);
 	}
+
 	/**
 	 * 过滤 删除匹配项
 	 * @param src  src
@@ -138,6 +136,7 @@ public class RegularUtil {
 		regular = regularList.get(mode);
 		return regular.wipe(src, regx);
 	}
+
 	/**
 	 * 字符串下标 regx在src中首次出现的位置
 	 * @param src     src
@@ -170,6 +169,7 @@ public class RegularUtil {
 	public static int indexOf(String src, String regx){
 		return indexOf(src, regx, 0);
 	}
+
 	/**
 	 * 表达式匹配值长度
 	 * @param src  src
@@ -190,6 +190,7 @@ public class RegularUtil {
 		}
 		return result;
 	}
+
 	/**
 	 * 删除所有 包含attribute属性 的标签 连同标签体一起删除<br/>
 	 * RegularUtil.removeTagWithBodyByAttribute(str, "class")<br/>
@@ -214,6 +215,7 @@ public class RegularUtil {
 		src = src.replaceAll(reg, "");
 		return src;
 	}
+
 	/**
 	 * 删除所有 包含attribute属性=value值  的标签连同标签体一起删除<br/>
 	 * RegularUtil.removeTagWithBodyByAttributeValue(s, "class","a")<br/>
@@ -247,7 +249,7 @@ public class RegularUtil {
 	 * @param value 属性值
 	 * @return String
 	 */
-	public static String removeTagByAttributeValue(String src, String attribute, String value) throws Exception{
+	public static String removeTagByAttributeValue(String src, String attribute, String value) throws Exception {
 		if(null == src || null == attribute || null == value){
 			return src;
 		}
@@ -260,13 +262,14 @@ public class RegularUtil {
 		}
 		return src;
 	}
+
 	/**
 	 * 根据属性名 删除标签(只删除标签, 保留标签体)
 	 * @param src xml/html
 	 * @param attribute 属性名
 	 * @return String
 	 */
-	public static String removeTagByAttribute(String src, String attribute) throws Exception{
+	public static String removeTagByAttribute(String src, String attribute) throws Exception {
 		if(null == src || null == attribute){
 			return src;
 		}
@@ -280,7 +283,6 @@ public class RegularUtil {
 		return src;
 	}
 
-
 	/**
 	 * 获取所有 包含attribute属性 的标签与标签体, 不支持相同标签嵌套<br/>
 	 * [<br/>
@@ -292,7 +294,7 @@ public class RegularUtil {
 	 * @return List
 	 * @throws Exception 异常 Exception
 	 */
-	public static List<List<String>> getTagWithBodyByAttribute(String src, String attribute) throws Exception{
+	public static List<List<String>> getTagWithBodyByAttribute(String src, String attribute) throws Exception {
 		List<List<String>> result = new ArrayList<>();
 		String reg =  "(<([\\w-]+)[^>]*?\\s"+attribute+"\\b[^>]*?>[^>]*?</\\1>)"	// 双标签
 				+ "|(<([\\w-]+)[^>]*?\\s"+attribute+"\\b[^>]*?(>|(/>)))";			// 单标签
@@ -351,7 +353,7 @@ public class RegularUtil {
 	 * @return List
 	 * @throws Exception 异常 Exception
 	 */
-	public static List<List<String>> getTagWithBodyByAttributeValue(String src, String attribute, String value) throws Exception{
+	public static List<List<String>> getTagWithBodyByAttributeValue(String src, String attribute, String value) throws Exception {
 		List<List<String>> result = new ArrayList<>();
 		Regular regular = regularList.get(Regular.MATCH_MODE.CONTAIN);
 		String reg =  "<([\\w-]+)[^>]*?\\s"+attribute+"\\b[\\s]*=[\\s]*(['\"])[^>]*?\\b"+value+"\\b[^>]*?\\2[^>]*?>[^>]*?</\\1>";	// 双标签
@@ -386,7 +388,6 @@ public class RegularUtil {
 		return result;
 	}
 
-
 	/**
 	 * 删除 tags之外的标签"&lt;b&gt;"与"&lt;/b&gt;"只写一次 "b"<br/>
 	 * 只删除标签不删除标签体
@@ -413,7 +414,6 @@ public class RegularUtil {
 		return removeTagExcept(src, tags);
 	}
 
-
 	/**
 	 * 清除所有标签(只清除标签, 不清除标签体)
 	 * @param src xml/html
@@ -437,6 +437,7 @@ public class RegularUtil {
 	public static String removeHtmlTag(String src, String ...tags){
 		return removeTag(src, tags);
 	}
+
 	/**
 	 * 删除标签及标签体
 	 * @param src xml/html
@@ -515,37 +516,39 @@ public class RegularUtil {
 		}
 		return src;
 	}
+
 	/**
 	 * 提取所有a棱中的url
 	 * @param src xml/html
 	 * @return list
 	 * @throws Exception 异常
 	 */
-	public static List<String> fetchUrls(String src) throws Exception{
+	public static List<String> fetchUrls(String src) throws Exception {
 		List<String> urls = null;
 		urls = fetch(src, Regular.PATTERN.HTML_TAG_A.getCode(), Regular.MATCH_MODE.CONTAIN, 4);
 		return urls;
 	}
 
-	public static String fetchUrl(String src) throws Exception{
+	public static String fetchUrl(String src) throws Exception {
 		List<String> urls = fetchUrls(src);
 		if(null != urls && urls.size()>0){
 			return urls.get(0);
 		}
 		return null;
 	}
-	public static List<String> fetchNumbers(String src) throws Exception{
+	public static List<String> fetchNumbers(String src) throws Exception {
 		List<String> numbers = null;
 		numbers = fetch(src, "(\\-|\\+)?\\d+(\\.\\d+)?", Regular.MATCH_MODE.CONTAIN, 0);
 		return numbers;
 	}
-	public static String fetchNumber(String src) throws Exception{
+	public static String fetchNumber(String src) throws Exception {
 		List<String> numbers = fetchNumbers(src);
 		if(null != numbers && numbers.size()>0){
 			return numbers.get(0);
 		}
 		return null;
 	}
+
 	/**
 	 * 提取双标签&lt;div&gt;content&lt;div&gt;
 	 * 依次取出p, table, div中的内容 有嵌套时只取外层
@@ -558,7 +561,7 @@ public class RegularUtil {
 	 * @return List
 	 * @throws Exception 异常 Exception
 	 */
-	public static List<List<String>> fetchPairedTag(String txt, String ... tags) throws Exception{
+	public static List<List<String>> fetchPairedTag(String txt, String ... tags) throws Exception {
 		List<List<String>> result = new ArrayList<List<String>>();
 		if(null != tags && tags.length>0){
 			String tagNames = "";
@@ -576,7 +579,6 @@ public class RegularUtil {
 		return result;
 	}
 
-
 	/**
 	 * 提取单标签 如&lt;img&gt; &lt;br/&gt;
 	 * 如果传入div等带有结束标签的参数 则只取出开始标签 &lt;div&gt;
@@ -587,7 +589,7 @@ public class RegularUtil {
 	 * @return List
 	 * @throws Exception 异常 Exception
 	 */
-	public static List<List<String>> fetchSingleTag(String txt, String ... tags) throws Exception{
+	public static List<List<String>> fetchSingleTag(String txt, String ... tags) throws Exception {
 		List<List<String>> result = new ArrayList<List<String>>();
 		if(null != tags && tags.length>0){
 			String tagNames = "";
@@ -604,6 +606,7 @@ public class RegularUtil {
 		}
 		return result;
 	}
+
 	/**
 	 * 提取单标签+双标签
 	 * 不区分大小写
@@ -613,7 +616,7 @@ public class RegularUtil {
 	 * @return List
 	 * @throws Exception 异常 Exception
 	 */
-	public static List<List<String>> fetchAllTag(String txt, String ... tags) throws Exception{
+	public static List<List<String>> fetchAllTag(String txt, String ... tags) throws Exception {
 		List<List<String>> result = new ArrayList<List<String>>();
 		List<List<String>> items = new ArrayList<List<String>>();
 		if(null != tags && tags.length>0){
@@ -650,6 +653,7 @@ public class RegularUtil {
 		}
 		return result;
 	}
+
 	/**
 	 * 取出所有属性值
 	 * 0全文  1:属性name 2:引号('|") 3:属性值
@@ -668,6 +672,7 @@ public class RegularUtil {
 		}
 		return result;
 	}
+
 	/**
 	 * 取出属性及属性值
 	 * 0全文  1:属性name 2:引号('|") 3:属性值
@@ -719,6 +724,7 @@ public class RegularUtil {
 	public static String cut(String text, String ... tags){
 		return cut(text, false, tags);
 	}
+
 	/**
 	 * 取tags[i-2]与tags[i-1]之间的文本
 	 * @param text text
@@ -819,5 +825,29 @@ public class RegularUtil {
 		}
 		str = str.replace("/","-");
 		return regularMatch.match(str, Regular.PATTERN.DATE_TIME.getCode());
+	}
+
+	public static boolean isUrl(String src){
+		if(null == src){
+			return false;
+		}
+		if(src.startsWith("http://") || src.startsWith("https://")){
+			return true;
+		}
+		if(src.startsWith("//")){
+			src = src.substring(2);
+			int index1 = src.indexOf("."); 	// 域名中的.
+			if(index1 == -1){
+				return false;
+			}
+			int index2 = src.indexOf("/");	// url中的path分隔
+			if(index1 < index2){			// 没有在/之前出现的 有可能是文件名中的.
+				return true;
+			}
+			if(index2 == -1){				// 没有域名
+				return true;
+			}
+		}
+		return false;
 	}
 }

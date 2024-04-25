@@ -26,6 +26,7 @@ import org.anyline.data.prepare.auto.init.DefaultAutoCondition;
 import org.anyline.data.prepare.auto.init.DefaultAutoConditionChain;
 import org.anyline.data.prepare.init.DefaultGroupStore;
 import org.anyline.data.runtime.DataRuntime;
+import org.anyline.util.SQLUtil;
 import org.anyline.entity.*;
 import org.anyline.entity.Compare.EMPTY_VALUE_SWITCH;
 import org.anyline.metadata.*;
@@ -69,6 +70,7 @@ public abstract class BasicRun implements Run {
 	protected List<String> queryColumns;	//查询列
 	protected List<String> excludeColumn;  //不查询列
 	protected int from = 1;
+	protected long rows = -1;
 	protected boolean supportBr = true;
 
 	protected DataRuntime runtime;
@@ -76,6 +78,13 @@ public abstract class BasicRun implements Run {
 	protected String delimiterTo;
 
 	protected String action;
+	protected boolean emptyCondition = true;
+
+	@Override
+	public boolean isEmptyCondition() {
+		return emptyCondition;
+	}
+
 	public DriverAdapter adapter() {
 		if(null != runtime) {
 			return runtime.getAdapter();
@@ -86,6 +95,17 @@ public abstract class BasicRun implements Run {
 	@Override
 	public Run setRuntime(DataRuntime runtime){
 		this.runtime = runtime;
+		return this;
+	}
+
+	@Override
+	public long getRows() {
+		return rows;
+	}
+
+	@Override
+	public Run setRows(long rows) {
+		this.rows = rows;
 		return this;
 	}
 
@@ -204,8 +224,7 @@ public abstract class BasicRun implements Run {
 		} 
  
 		group = group.trim().toUpperCase(); 
- 
-		 
+
 		/*添加新分组条件*/ 
 		if(!groupStore.getGroups().contains(group)){
 			groupStore.group(group); 
@@ -229,6 +248,18 @@ public abstract class BasicRun implements Run {
 	public Run setPrepare(RunPrepare prepare) {
 		this.prepare = prepare;
 		this.table = prepare.getTable();
+		GroupStore groups = prepare.getGroups();
+		if(null != groups) {
+			setGroupStore(groups);
+		}
+		OrderStore orders = prepare.getOrders();
+		if(null != orders){
+			setOrderStore(orders);
+		}
+		String having = prepare.getHaving();
+		if(null != having){
+			this.having = having;
+		}
 		return this; 
 	}
 	@Override
@@ -253,7 +284,13 @@ public abstract class BasicRun implements Run {
 		return list;
 	}
 	@Override
-	public void setValues(String key, List<Object> values) {
+	public void setValues(String key, Collection<Object> values) {
+		this.values = new ArrayList<>();
+		addValues(key, values);
+	}
+
+	@Override
+	public void addValues(String key, Collection<Object> values) {
 		if(null != values){
 			if(null == this.values){
 				this.values = new ArrayList<>();
@@ -353,6 +390,10 @@ public abstract class BasicRun implements Run {
 								break;
 							}
 						}
+					}else{
+						//byte[]等
+						rv = new RunValue(column, obj);
+						addValues(rv);
 					}
 				}else if(obj instanceof Collection && !json){
 					Collection list = (Collection)obj;
@@ -379,7 +420,6 @@ public abstract class BasicRun implements Run {
 		}
 		return rv;
 	}
-
 
 	/**
 	 * 添加参数值
@@ -419,6 +459,22 @@ public abstract class BasicRun implements Run {
 	@Override
 	public void setConfigStore(ConfigStore configs) {
 		this.configs = configs;
+		if(null != configs){
+			GroupStore groups = configs.getGroups();
+			if(null != groups){
+				if(groupStore == null){
+					groupStore = new DefaultGroupStore();
+				}
+				List<Group> list = groups.getGroups();
+				for(Group group:list){
+					groupStore.group(group);
+				}
+			}
+			String having = configs.getHaving();
+			if(BasicUtil.isNotEmpty(having)){
+				this.having = having;
+			}
+		}
 	}
 
 	@Override
@@ -437,6 +493,10 @@ public abstract class BasicRun implements Run {
 	public void setGroupStore(GroupStore groupStore) {
 		this.groupStore = groupStore; 
 	}
+	public void setHaving(String having){
+		this.having = having;
+	}
+
 	public String getDelimiterFr() {
 		return delimiterFr;
 	}
@@ -857,32 +917,6 @@ public abstract class BasicRun implements Run {
 		return this;
 	}
 	protected static boolean endWithWhere(String txt){
-		/*boolean result = false;
-		txt = txt.toUpperCase();
-		int fr = 0;
-		while((fr = txt.indexOf("WHERE")) > 0){
-			txt = txt.substring(fr+5);
-			if(txt.indexOf("UNION") > 0){
-				continue;
-			}
-			try{
-				int bSize = 0;//左括号数据
-				if(txt.contains(")")){
-					bSize = RegularUtil.fetch(txt, "\\)").size();
-				}
-				int eSize = 0;//右括号数量
-				if(txt.contains("(")){
-					eSize = RegularUtil.fetch(txt, "\\(").size();
-				}
-				if(bSize == eSize){
-					result = true;
-					break;
-				}
-			}catch(Exception e){
-				e.printStackTrace();
-			}
-		}
-		return result;*/
 		txt = txt.replaceAll("\\s"," ")
 				.replaceAll("'[\\S\\s]*?'","{}")
 				.replaceAll("\\([^\\(\\)]+?\\)","{}")
@@ -921,9 +955,6 @@ public abstract class BasicRun implements Run {
 	}
 
 
-	public List<Variable> getVariables() {
-		return variables;
-	}
 
 	public void setVariables(List<Variable> variables) {
 		this.variables = variables;
@@ -962,6 +993,9 @@ public abstract class BasicRun implements Run {
 			}
 		}
 		return null;
+	}
+	public List<Variable> getVariables(){
+		return variables;
 	}
 
 	@Override
@@ -1142,7 +1176,7 @@ public abstract class BasicRun implements Run {
 	public String log(ACTION.DML action, boolean placeholder){
 		StringBuilder builder = new StringBuilder();
 		List<String> keys = null;
-		builder.append("[sql:\n");
+		builder.append("[cmd:\n");
 		if(action == ACTION.DML.SELECT){
 			builder.append(getFinalQuery(placeholder));
 		}else if(action == ACTION.DML.COUNT){
@@ -1163,7 +1197,7 @@ public abstract class BasicRun implements Run {
 		builder.append("\n]");
 		if(placeholder){
 			List<Object> values = getValues();
-			if(null!= values && values.size() > 0) {
+			if(null!= values && !values.isEmpty()) {
 				builder.append("\n[param:");
 				builder.append(LogUtil.param(keys, getValues()));
 				builder.append("];");

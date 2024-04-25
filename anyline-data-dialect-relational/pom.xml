@@ -13,24 +13,27 @@
 	<name>anyline-data-dialect-relational</name>
 	<packaging>pom</packaging>
 
-    <modules>
+	<modules>
 		<module>anyline-data-jdbc-clickhouse</module>
+		<module>anyline-data-jdbc-cloudera</module>
 		<module>anyline-data-jdbc-cockroachdb</module>
 		<module>anyline-data-jdbc-couchdb</module>
 		<module>anyline-data-jdbc-db2</module>
 		<module>anyline-data-jdbc-derby</module>
 		<module>anyline-data-jdbc-dm</module>
+		<module>anyline-data-jdbc-doris</module>						<!--Apache Doris-->
 		<module>anyline-data-jdbc-edb</module>
-		<module>anyline-data-jdbc-gbase</module>					<!--南大通用(oracle)-->
+		<module>anyline-data-jdbc-gbase</module>						<!--南大通用-->
 		<module>anyline-data-jdbc-h2</module>
+		<module>anyline-data-jdbc-gaussdb</module>
 		<module>anyline-data-jdbc-hana</module>
 		<module>anyline-data-jdbc-highgo</module>						<!--瀚高-->
 		<module>anyline-data-jdbc-hive</module>
 		<module>anyline-data-jdbc-hyper</module>
 		<module>anyline-data-jdbc-informix</module>
-		<module>anyline-data-jdbc-ignite-thin</module>				<!--Apache Ignite-->
+		<module>anyline-data-jdbc-ignite-thin</module>					<!--Apache Ignite-->
 		<module>anyline-data-jdbc-iotdb</module>						<!--Apache IoTDB-->
-		<module>anyline-data-jdbc-kingbase</module>					<!--人大金仓(oracle)-->
+		<module>anyline-data-jdbc-kingbase</module>						<!--人大金仓(oracle)-->
 		<module>anyline-data-jdbc-mariadb</module>
 		<module>anyline-data-jdbc-maxdb</module>						<!--MaxDB/SAP DB-->
 		<module>anyline-data-jdbc-mssql</module>
@@ -40,8 +43,12 @@
 		<module>anyline-data-jdbc-oscar</module>						<!--神舟通用-->
 		<module>anyline-data-jdbc-postgresql</module>
 		<module>anyline-data-jdbc-rethinkdb</module>
+		<module>anyline-data-jdbc-sinodb</module>						<!--星瑞格-->
 		<module>anyline-data-jdbc-sqlite</module>
 		<module>anyline-data-jdbc-sybase</module>
+		<module>anyline-data-jdbc-tidb</module>
 		<module>anyline-data-jdbc-voltdb</module>
-    </modules>
+		<module>anyline-data-jdbc-xugu</module>							<!--虚谷-->
+		<module>anyline-data-jdbc-yugabyte</module>
+	</modules>
 </project>

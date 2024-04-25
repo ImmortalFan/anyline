@@ -28,6 +28,7 @@ import org.anyline.entity.OrderStore;
 import org.anyline.entity.PageNavi;
 import org.anyline.metadata.*;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -46,6 +47,7 @@ public interface Run {
 	 */
 	Run setConditionValue(EMPTY_VALUE_SWITCH swt, Compare compare, String prefix, String variable, Object value);
 	void setGroupStore(GroupStore groups) ;
+	void setHaving(String having);
 	GroupStore getGroupStore() ; 
 	Run group(String group);
  
@@ -56,6 +58,12 @@ public interface Run {
 	 
 	void setConfigStore(ConfigStore configs);
 	ConfigStore getConfigs() ;
+
+	/**
+	 * 过滤条件是否为空
+	 * @return boolean
+	 */
+	boolean isEmptyCondition();
 	 
  
 	/** 
@@ -96,6 +104,19 @@ public interface Run {
 	 * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
 	 */
 	RunValue addValues(Compare compare, Column column, Object obj, boolean split);
+
+	/**
+	 * 设置行数
+	 * @param rows 行
+	 * @return this
+	 */
+	Run setRows(long rows);
+
+	/**
+	 * 获取行数
+	 * @return 未设置行数的返回-1
+	 */
+	long getRows();
 	Run addValue(RunValue value);
 	Run addOrders(OrderStore orderStore);
 	Run addOrder(Order order);
@@ -179,6 +200,7 @@ public interface Run {
 	boolean isSetValue(String condition, String variable);
 	boolean isSetValue(String variable);
 	Variable getVariable(String var);
+	List<Variable> getVariables();
 
 	void setFilter(Object filter);
 	Object getFilter();
@@ -193,7 +215,8 @@ public interface Run {
 	Run setExcludeColumns(String... columns);
 
 	void setValue(Object value);
-	void setValues(String key, List<Object> values);
+	void setValues(String key, Collection<Object> values);
+	void addValues(String key, Collection<Object> values);
 	Object getValue();
 	void setBatch(int batch);
 	int getBatch();

@@ -167,7 +167,8 @@ public class DefaultVariable implements Variable {
 				key = fullKey.replace(":","")
 						.replace("${","")
 						.replace("#{","")
-						.replace("}","");
+					.replace("{","")
+					.replace("}","");
 			}
 			if (null == keyPrefix) {
 				if(fullKey.startsWith("#{")){

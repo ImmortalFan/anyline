@@ -56,12 +56,12 @@ public class DefaultConfig implements Config {
 		}
 		config.values = values;
 		return config;
-	} 
+	}
 	public DefaultConfig(){
 		this.parser = new ParseResult();
-	} 
+	}
 	public String toString(){
-		Map<String,Object> map = new HashMap<String,Object>();
+		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("join", this.getJoin());
 		map.put("prefix", this.getPrefix());
 		map.put("var", this.getVariable());
@@ -76,44 +76,44 @@ public class DefaultConfig implements Config {
 		map.put("compare", this.getCompare().getCode());
 		map.put("values", values);
 		return BeanUtil.map2json(map);
-	} 
- 
-	/** 
-	 * 解析配置 
-	 * 		[+]	SQL参数名	[.SQL变量名]	:	[&gt;=]request参数名		:默认值 
-	 * 										[request参数名] 
-	 * 										%request参数名% 
-	 * 						 
+	}
+
+	/**
+	 * 解析配置
+	 * 		[+]	SQL参数名	[.SQL变量名]	:	[&gt;=]request参数名		:默认值
+	 * 										[request参数名]
+	 * 										%request参数名%
+	 *
 	 * @param config  config
-	 */ 
+	 */
 	public DefaultConfig(String config){
-		parser = ConfigParser.parse(config, true); 
+		parser = ConfigParser.parse(config, true);
 	}
 	public void setValue(Map<String,Object> values){
 		try{
 			//解析动态column ${column}
 			ConfigParser.parseVar(values, parser);
 			this.values = ConfigParser.getValues(values, parser);
-			empty = BasicUtil.isEmpty(true, this.values); 
+			empty = BasicUtil.isEmpty(true, this.values);
 			setOrValue(values);
 		}catch(Exception e){
-			e.printStackTrace(); 
-		} 
-	} 
+			e.printStackTrace();
+		}
+	}
 	public void setOrValue(Map<String,Object> values){
 		try{
 			this.orValues = ConfigParser.getValues(values, parser.getOr());
 		}catch(Exception e){
-			e.printStackTrace(); 
-		} 
+			e.printStackTrace();
+		}
 	}
 
 	public List<Object> getValues() {
-		return values; 
-	} 
+		return values;
+	}
 	public List<Object> getOrValues() {
-		return orValues; 
-	} 
+		return orValues;
+	}
 	@SuppressWarnings({"rawtypes","unchecked" })
 	public void addValue(Object value){
 		values = append(values, value);
@@ -121,7 +121,7 @@ public class DefaultConfig implements Config {
 	public void setValue(Object value){
 		values = new ArrayList<Object>();
 		addValue(value);
-	} 
+	}
 	public void setOrValue(Object value){
 		orValues = new ArrayList<Object>();
 		addValue(value);
@@ -159,11 +159,12 @@ public class DefaultConfig implements Config {
 		}
 		return values;
 	}
-	/** 
+
+	/**
 	 *  createAutoCondition
-	 * @param chain 容器 
+	 * @param chain 容器
 	 * @return Condition
-	 */ 
+	 */
 	public Condition createAutoCondition(ConditionChain chain){
 		Condition condition = null;
 		EMPTY_VALUE_SWITCH swt = parser.getSwitch();
@@ -183,7 +184,7 @@ public class DefaultConfig implements Config {
 					condition = new DefaultAutoCondition(this).setOrCompare(getOrCompare()).setJoin(parser.getJoin());
 					condition.setContainer(chain);
 				}
-			} 
+			}
 		}
 		if(null != condition){
 			condition.setSwitch(getSwitch());
@@ -191,63 +192,71 @@ public class DefaultConfig implements Config {
 			condition.integrality(integrality);
 		}
 		return condition;
-	} 
+	}
 	public String getPrefix() {
 		return parser.getPrefix();
-	} 
+	}
 
 	public void setPrefix(String prefix) {
 		parser.setPrefix(prefix);
-	} 
- 
+	}
+
 	public String getVariable() {
 		return parser.getVar();
-	} 
- 
+	}
+
 	public void setVariable(String variable) {
 		parser.setVar(variable);
-	} 
- 
- 
- 
+	}
+
+
+
 	public String getKey() {
-		return parser.getKey(); 
-	} 
- 
+		return parser.getKey();
+	}
+
 	public void setKey(String key) {
-		parser.setKey(key); 
-	} 
- 
+		parser.setKey(key);
+	}
+
 	public Compare getCompare() {
-		return parser.getCompare(); 
-	} 
- 
+		return parser.getCompare();
+	}
+
 	public void setCompare(Compare compare) {
-		parser.setCompare(compare); 
-	} 
- 
+		parser.setCompare(compare);
+	}
+
 	public boolean isEmpty() {
-		return empty; 
-	} 
- 
+		EMPTY_VALUE_SWITCH sw = null;
+		if(null != parser){
+			sw = parser.getSwitch();
+		}
+		if(sw == EMPTY_VALUE_SWITCH.NULL || sw == EMPTY_VALUE_SWITCH.SRC){
+			return false;
+		}
+		return BasicUtil.isEmpty(true, this.values) && BasicUtil.isEmpty(text);
+	}
+
+
 	public void setEmpty(boolean empty) {
-		this.empty = empty; 
-	} 
+		this.empty = empty;
+	}
 
 	public String getJoin() {
-		return parser.getJoin(); 
-	} 
- 
+		return parser.getJoin();
+	}
+
 	public void setJoin(String join) {
 		parser.setJoin(join);
-	} 
- 
+	}
+
 	public boolean isKeyEncrypt() {
-		return parser.isKeyEncrypt(); 
-	} 
- 
+		return parser.isKeyEncrypt();
+	}
+
 	public boolean isValueEncrypt() {
-		return parser.isValueEncrypt(); 
+		return parser.isValueEncrypt();
 	}
 	@Override
 	public Compare getOrCompare() {

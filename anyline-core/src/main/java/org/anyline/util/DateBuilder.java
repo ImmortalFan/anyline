@@ -97,13 +97,17 @@ public class DateBuilder{
 		date = DateUtil.addMinute(date, qty);
 		return this;
 	}
+	public DateBuilder addSecond(int qty){
+		date = DateUtil.addSecond(date, qty);
+		return this;
+	}
 
 	/**
 	 * 是否在date之前
 	 * @param date date
 	 * @return boolean
 	 */
-	public boolean before(String date) throws Exception{
+	public boolean before(String date) throws Exception {
 		return before(DateUtil.parse(date));
 	}
 	public boolean before(Date date){
@@ -125,7 +129,7 @@ public class DateBuilder{
 		Long time = date.getTime();
 		return time > min.getTime() && time <max.getTime();
 	}
-	public boolean between(String min, String max) throws Exception{
+	public boolean between(String min, String max) throws Exception {
 		return between(DateUtil.parse(min), DateUtil.parse(max));
 	}
 
@@ -167,7 +171,6 @@ public class DateBuilder{
 		return DateUtil.month(date);
 	}
 
-
 	/**
 	 * 当周第一天
 	 * 周日作为一周的第一天
@@ -187,7 +190,6 @@ public class DateBuilder{
 		date = DateUtil.getFirstDayOfNextWeek(date);
 		return this;
 	}
-
 
 	/**
 	 * 上个周第一天
@@ -216,7 +218,6 @@ public class DateBuilder{
 		date =  DateUtil.getLastDayOfNextWeek(date);
 		return this;
 	}
-
 
 	/**
 	 * 上个周最后天

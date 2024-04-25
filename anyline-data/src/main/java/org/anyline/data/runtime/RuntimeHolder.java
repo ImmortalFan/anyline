@@ -19,6 +19,8 @@ package org.anyline.data.runtime;
 
 import org.anyline.data.adapter.DriverAdapter;
 import org.anyline.proxy.DatasourceHolderProxy;
+import org.anyline.util.BasicUtil;
+import org.anyline.util.regular.RegularUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -45,7 +47,7 @@ public abstract class RuntimeHolder {
      * @return DataRuntime
      * @throws Exception 异常 Exception
      */
-    public static DataRuntime temporary(Object datasource, String database, DriverAdapter adapter) throws Exception{
+    public static DataRuntime temporary(Object datasource, String database, DriverAdapter adapter) throws Exception {
         return DatasourceHolderProxy.temporary(datasource, database, adapter);
     }
     public abstract DataRuntime callTemporary(Object datasource, String database, DriverAdapter adapter) throws Exception;
@@ -126,13 +128,33 @@ public abstract class RuntimeHolder {
         return DatasourceHolderProxy.validate(runtime);
     }
 
-    public static boolean hit(String ds) throws Exception{
+    public static boolean hit(String ds) throws Exception {
         return hit(runtime(ds));
     }
-    public static boolean hit() throws Exception{
+    public static boolean hit() throws Exception {
         return hit(runtime());
     }
-    public static boolean hit(DataRuntime runtime) throws Exception{
+    public static boolean hit(DataRuntime runtime) throws Exception {
         return DatasourceHolderProxy.hit(runtime);
+    }
+
+    public static String parseAdapterKey(String url){
+        return parseParamValue(url, "adapter");
+    }
+    public static String parseCatalog(String url){
+        return parseParamValue(url, "catalog");
+    }
+    public static String parseSchema(String url){
+        return parseParamValue(url, "schema");
+    }
+    public static String parseParamValue(String url, String key){
+        String value = null;
+        if(url.contains(key)){
+            value = RegularUtil.cut(url, key+"=", "&");
+            if(BasicUtil.isEmpty(value)){
+                value = RegularUtil.cut(url, key+"=", RegularUtil.TAG_END);
+            }
+        }
+        return value;
     }
 }

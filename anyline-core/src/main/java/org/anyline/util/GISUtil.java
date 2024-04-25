@@ -23,7 +23,6 @@ import org.anyline.entity.geometry.Point;
 import org.anyline.entity.geometry.Ring;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -430,7 +429,7 @@ public class GISUtil {
         return pnpoly(lng, lat, lngs, lats);
     }
     public static boolean pnpoly(Double x, Double y, List<Double> xs, List<Double> ys) {
-        if (CollectionUtils.isEmpty(xs) || CollectionUtils.isEmpty(ys)) {
+        if (null == xs || xs.isEmpty() || null == ys || ys.isEmpty()) {
             return false;
         }
         Double maxX = xs.stream().max(Comparator.comparingDouble(Double::doubleValue)).get();

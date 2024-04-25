@@ -22,10 +22,11 @@ import org.anyline.data.adapter.DriverAdapterHolder;
 import org.anyline.data.elasticsearch.entity.ElasticSearchDataRow;
 import org.anyline.data.runtime.DataRuntime;
 import org.anyline.data.runtime.RuntimeHolder;
+import org.anyline.data.runtime.init.DefaultRuntime;
 import org.anyline.util.ConfigTable;
 import org.elasticsearch.client.RestClient;
 
-public class ElasticSearchRuntime implements DataRuntime {
+public class ElasticSearchRuntime extends DefaultRuntime implements DataRuntime {
 
     private String origin;
     /**
@@ -93,6 +94,16 @@ public class ElasticSearchRuntime implements DataRuntime {
 
     public void setAdapter(DriverAdapter adapter) {
         this.adapter = adapter;
+    }
+
+    @Override
+    public void setAdapterKey(String adapter) {
+
+    }
+
+    @Override
+    public String getAdapterKey() {
+        return null;
     }
 
     public ElasticSearchRuntime(String key, RestClient client, DriverAdapter adapter){

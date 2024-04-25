@@ -73,7 +73,7 @@ public class DataSourceUtil {
                 result.setDatasource(datasource);
             }
         }
-        //pw_user<id,code>
+        //pw_user<id, code>
         if(src.endsWith(">")){
             int fr = src.lastIndexOf("<");
             if(fr != -1) {
@@ -107,12 +107,15 @@ public class DataSourceUtil {
                 table = parseDest(set.getRow(0).getDest(), configs);
             }
         } else if (obj instanceof Collection) {
-            Object first = ((Collection)obj).iterator().next();
-            if(first instanceof DataRow){
-                table = parseDest(((DataRow)first).getDest(), configs);
-            }else {
-                String tableName = EntityAdapterProxy.table(first.getClass(), true);
-                table = parseDest(tableName, configs);
+            Collection col = (Collection)obj;
+            if(!col.isEmpty()) {
+                Object first = col.iterator().next();
+                if (first instanceof DataRow) {
+                    table = parseDest(((DataRow) first).getDest(), configs);
+                } else {
+                    String tableName = EntityAdapterProxy.table(first.getClass(), true);
+                    table = parseDest(tableName, configs);
+                }
             }
         } else{
             table = EntityAdapterProxy.table(obj.getClass());

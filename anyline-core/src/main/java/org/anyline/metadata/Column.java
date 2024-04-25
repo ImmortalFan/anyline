@@ -14,21 +14,46 @@
  * limitations under the License.
  */
 
-
 package org.anyline.metadata;
 
-import org.anyline.metadata.type.TypeMetadata;
+import org.anyline.metadata.adapter.MetadataAdapterHolder;
+import org.anyline.metadata.type.DatabaseType;
 import org.anyline.metadata.type.JavaType;
+import org.anyline.metadata.type.TypeMetadata;
 import org.anyline.util.BasicUtil;
 
 import java.io.Serializable;
 import java.util.*;
 
 public class Column extends BaseMetadata<Column> implements Serializable {
-    public static  <T extends Column>  void sort(Map<String, T> columns){
+
+    public static LinkedHashMap<TypeMetadata.CATEGORY, TypeMetadata.Config> typeCategoryConfigs = new LinkedHashMap<>();
+
+    public enum Aggregation {
+        MIN			            ("MIN"  			    , "最小"),
+        MAX			            ("MAX"  			    , "最大"),
+        SUM			            ("SUM"  			    , "求和"),
+        REPLACE			        ("REPLACE"  			, "替换"), //对于维度列相同的行，指标列会按照导入的先后顺序，后导入的替换先导入的。
+        REPLACE_IF_NOT_NULL     ("REPLACE_IF_NOT_NULL", "非空值替换"), //和 REPLACE 的区别在于对于null值，不做替换。这里要注意的是字段默认值要给NULL，而不能是空字符串，如果是空字符串，会给你替换成空字符串。
+        HLL_UNION			    ("HLL_UNION"  		, "HLL 类型的列的聚合方式"),//通过 HyperLogLog 算法聚合
+        BITMAP_UNION            ("BITMAP_UNION"  		, "BIMTAP 类型的列的聚合方式，");//进行位图的并集聚合
+        final String code;
+        final String name;
+        Aggregation(String code, String name){
+            this.code = code;
+            this.name = name;
+        }
+        public String getName(){
+            return name;
+        }
+        public String getCode(){
+            return code;
+        }
+    }
+    public static <T extends Column>  void sort(Map<String, T> columns){
         sort(columns, false);
     }
-    public static  <T extends Column>  void sort(Map<String, T> columns, boolean nullFirst){
+    public static <T extends Column>  void sort(Map<String, T> columns, boolean nullFirst){
         List<T> list = new ArrayList<>();
         list.addAll(columns.values());
         sort(list, nullFirst);
@@ -37,7 +62,7 @@ public class Column extends BaseMetadata<Column> implements Serializable {
             columns.put(column.getName().toUpperCase(), column);
         }
     }
-    public static  <T extends Column>  void sort(List<T> columns){
+    public static <T extends Column>  void sort(List<T> columns){
         sort(columns, false);
     }
 
@@ -47,7 +72,7 @@ public class Column extends BaseMetadata<Column> implements Serializable {
      * @param nullFirst 未设置过位置(setPosition)的列是否排在最前面
      * @param <T> Column
      */
-    public static  <T extends Column>  void sort(List<T> columns, boolean nullFirst){
+    public static <T extends Column>  void sort(List<T> columns, boolean nullFirst){
         Collections.sort(columns, new Comparator<T>() {
             @Override
             public int compare(T o1, T o2) {
@@ -76,20 +101,31 @@ public class Column extends BaseMetadata<Column> implements Serializable {
         });
     }
     protected String keyword = "COLUMN"           ;
-    protected String originalName                 ; // 原名 SELECT ID AS USER_ID FROM USER; originalName=ID, name=USER_ID
+    protected String originName                   ; // 原名 SELECT ID AS USER_ID FROM USER; originName=ID, name=USER_ID
+    protected String typeName                     ; // 类型名称 varchar完整类型调用getFullType > varchar(10)
+    protected String originType                   ; // 原始类型(未解析,交给具体的adapter解析)
+    protected TypeMetadata typeMetadata           ;
+    protected String fullType                     ; //完整类型名称
+    protected String finalType                    ; //如果设置了finalType 生成SQL时 name finalType 其他属性
+    protected String define                       ; //完整定义(不包含名称) 如果设置了define 生成SQL时 name define
+    protected int ignoreLength               = -1 ;
+    protected int ignorePrecision            = -1 ;
+    protected int ignoreScale                = -1 ;
+    //数字类型:precision,scale 日期:length 时间戳:scale 其他:length
+    protected Integer precisionLength             ; // 精确长度 根据数据类型返回precision或length
+    protected Integer length                      ; // 长度(注意varchar,date,timestamp,number的区别)
+    protected Integer precision                   ; // 有效位数 整个字段的长度(包含小数部分)  123.45：precision = 5, scale = 2 对于SQL Server 中 varchar(max)设置成 -1 null:表示未设置
+    protected Integer scale                       ; // 小数部分的长度
+
     protected String className                    ; // 对应的Java数据类型 java.lang.Long
     protected Integer displaySize                 ; // display size
     protected Integer type                        ; // 类型
-    protected String typeName                     ; // 类型名称 varchar完整类型调用getFullType > varchar(10)
-    protected TypeMetadata typeMetadata;
     protected String childTypeName                ;
     protected TypeMetadata childTypeMetadata;
     protected JavaType javaType                   ;
     protected String jdbcType                     ; // 有可能与typeName不一致 可能多个typeName对应一个jdbcType 如point>
-    protected Integer precision                   ; // 整个字段的长度(包含小数部分)  123.45：precision = 5, scale = 2 对于SQL Server 中 varchar(max)设置成 -1 null:表示未设置
-    protected Integer scale                       ; // 小数部分的长度
     protected String dateScale                    ; // 日期类型 精度
-    protected int nullable                   = -1 ; // 是否可以为NULL -1:未配置 1:是  0:否
+    protected int nullable                   = -1 ; // 是否可以为NULL -1:未配置 1:是(NULL)  0:否(NOT NULL)
     protected int caseSensitive              = -1 ; // 是否区分大小写
     protected int currency = -1                   ; // 是否是货币
     protected int signed = -1                     ; // 是否可以带正负号
@@ -102,18 +138,19 @@ public class Column extends BaseMetadata<Column> implements Serializable {
     protected String defaultConstraint            ; // 默认约束名
     protected String charset                      ; // 编码
     protected String collate                      ; // 排序编码
+    protected Aggregation aggregation; //聚合类型
     protected int withTimeZone                = -1;
     protected int withLocalTimeZone           = -1;
     protected Column reference                    ; // 外键依赖列
     protected Integer srid                        ; // SRID
     protected boolean array                       ; // 是否数组
+    protected boolean isKey                       ; // doris中用到
 
     protected Boolean index                       ; // 是否需要创建索引
     protected Boolean store                       ; // 是否需要存储
     protected String analyzer                     ; // 分词器
     protected String searchAnalyzer               ; // 查询分词器
     protected Integer ignoreAbove                 ; // 可创建索引的最大词长度
-
 
     protected Integer position                    ; // 在表或索引中的位置, 如果需要在第一列 设置成0
     protected String order                        ; // 在索引中的排序方式ASC | DESC
@@ -123,6 +160,7 @@ public class Column extends BaseMetadata<Column> implements Serializable {
     protected int onUpdate = -1                   ; // 是否在更新行时 更新这一列数据
     protected Object value                        ;
     protected boolean defaultCurrentDateTime = false;
+    protected int parseLvl                      = 0;// 类型解析级别0:未解析 1:column解析 2:adapter解析
 
     public Column(){
     }
@@ -175,7 +213,10 @@ public class Column extends BaseMetadata<Column> implements Serializable {
         setType(type);
     }
 
-
+    public Column drop(){
+        this.action = ACTION.DDL.COLUMN_DROP;
+        return super.drop();
+    }
 
     public void setKeyword(String keyword) {
         this.keyword = keyword;
@@ -221,6 +262,13 @@ public class Column extends BaseMetadata<Column> implements Serializable {
         return this;
     }
 
+    public boolean isKey() {
+        return isKey;
+    }
+
+    public void setKey(boolean key) {
+        isKey = key;
+    }
 
     public String getClassName() {
         if(getmap && null != update){
@@ -289,9 +337,20 @@ public class Column extends BaseMetadata<Column> implements Serializable {
         return this;
     }
 
+    public String getOriginType() {
+        if(null == originType){
+            return typeName;
+        }
+        return originType;
+    }
+
+    public void setOriginType(String originType) {
+        this.originType = originType;
+    }
+
     public Integer getType() {
         if(getmap && null != update){
-            return update.type;
+            return update.getType();
         }
         return type;
     }
@@ -327,7 +386,12 @@ public class Column extends BaseMetadata<Column> implements Serializable {
 
     public String getTypeName() {
         if(getmap && null != update){
-            return update.typeName;
+            return update.getTypeName();
+        }
+        if(null == typeName){
+            if(null != typeMetadata && typeMetadata != TypeMetadata.ILLEGAL && typeMetadata != TypeMetadata.NONE){
+                typeName = typeMetadata.getName();
+            }
         }
         return typeName;
     }
@@ -348,66 +412,228 @@ public class Column extends BaseMetadata<Column> implements Serializable {
         return this;
     }
 
+    public Column setTypeName(String typeName) {
+        return setTypeName(typeName, true);
+    }
     /**
      * 设置数据类型 根据数据库定义的数据类型
      * @param typeName 数据类型 如 int  varchar(10) decimal(18, 6)
      * @return Column
      */
-    public Column setTypeName(String typeName) {
+    public Column setTypeName(String typeName, boolean parse) {
         if(setmap && null != update){
-            update.setTypeName(typeName);
+            update.setTypeName(typeName, parse);
             return this;
         }
-        if(null != typeName){
-            //数组类型
-            if(typeName.contains("[]")){
-                setArray(true);
-            }
-            //数组类型
-            if(typeName.startsWith("_")){
-                typeName = typeName.substring(1);
-                setArray(true);
-            }
-            typeName = typeName.trim().replace("'","");
-
-            if(typeName.toUpperCase().contains("IDENTITY")){
-                autoIncrement(true);
-                if(typeName.contains(" ")) {
-                    // TYPE_NAME=int identity
-                    typeName = typeName.split(" ")[0];
-                }
-            }
-
-            if(typeName.contains("(")){
-                //decimal(10, 2) varchar(10) geometry(Polygon, 4326) geometry(Polygon) geography(Polygon, 4326)
-                this.precision = 0;
-                this.scale = 0;
-                String tmp = typeName.substring(typeName.indexOf("(")+1, typeName.indexOf(")"));
-                if(tmp.contains(",")){
-                    //有精度或srid
-                    String[] lens = tmp.split("\\,");
-                    if(BasicUtil.isNumber(lens[0])) {
-                        setPrecision(BasicUtil.parseInt(lens[0], null));
-                        setScale(BasicUtil.parseInt(lens[1], null));
-                    }else{
-                        setChildTypeName(lens[0]);
-                        setSrid(BasicUtil.parseInt(lens[1], null));
-                    }
-                }else{
-                    //没有精度和srid
-                    if(BasicUtil.isNumber(tmp)){
-                        setPrecision(BasicUtil.parseInt(tmp, null));
-                    }else{
-                        setChildTypeName(tmp);
-                    }
-                }
-                typeName = typeName.substring(0, typeName.indexOf("(") );
-            }
-        }
-        if(!BasicUtil.equalsIgnoreCase(typeName, this.typeName)) {
-            this.className = null;
+        if(null == this.typeName || !this.typeName.equalsIgnoreCase(typeName)){
+            //修改数据类型的重置解析状态
+            parseLvl = 0;
         }
         this.typeName = typeName;
+        if(parse) {
+            setOriginType(typeName);
+            parseType(1);
+        }
+        //fullType = null;
+        return this;
+    }
+    public Column parseType(int lvl){
+        if(lvl <= parseLvl){
+            return this;
+        }
+        TypeMetadata.parse(DatabaseType.NONE, this, null, null);
+        return this;
+    }
+
+    public int getParseLvl() {
+        return parseLvl;
+    }
+
+    public void setParseLvl(int parseLvl) {
+        this.parseLvl = parseLvl;
+    }
+
+    public Column setFullType(String fullType) {
+        this.fullType = fullType;
+        return this;
+    }
+    public String getFullType(){
+        return getFullType(database);
+    }
+
+    public String getFullType(DatabaseType database){
+        return getFullType(database, null);
+    }
+    public String getFullType(DatabaseType database, TypeMetadata.Config config){
+        if(getmap && null != update){
+            return update.getFullType(database);
+        }
+        if(null != fullType && this.database == database){
+            return fullType;
+        }
+        int ignoreLength = -1;
+        int ignorePrecision = -1;
+        int ignoreScale = -1;
+        if(null != config){
+            ignoreLength = config.ignoreLength();
+            ignorePrecision = config.ignorePrecision();
+            ignoreScale = config.ignoreScale();
+        }else{
+            ignoreLength = ignoreLength(database);
+            ignorePrecision = ignorePrecision(database);
+            ignoreScale = ignoreScale(database);
+        }
+        String result = null;
+        String type = null;
+        String formula = null;
+        if(null != typeMetadata && typeMetadata != TypeMetadata.NONE && typeMetadata != TypeMetadata.ILLEGAL){
+            type = typeMetadata.getName();
+            formula = typeMetadata.formula();
+        }else{
+            type = getTypeName();
+        }
+        boolean appendLength = false;
+        boolean appendPrecision = false;
+        boolean appendScale = false;
+
+        if(ignoreLength != 1){
+            if(null == length){
+                //null表示没有设置过,有可能用的precision,复制precision值
+                // -1也表示设置过了不要再用length覆盖
+                if(null != precision && precision != -1){
+                    length = precision;
+                }
+            }
+            if(null != length){
+                if(length > 0 || length == -2){ //-2:max
+                    appendLength = true;
+                }
+            }
+        }
+        if(ignorePrecision != 1){
+            if(null == precision){
+                //null表示没有设置过,有可能用的length,复制length
+                // -1也表示设置过了不要再用length覆盖
+                if(null != length && length != -1){
+                    precision = length;
+                }
+            }
+            if(null != precision){
+                if(precision > 0){
+                    if(ignorePrecision == 3){
+                        if(null != scale && scale > 0){
+                            appendPrecision = true;
+                        }else{
+                            appendPrecision = false;
+                        }
+                    }else{
+                        appendPrecision = true;
+                    }
+                }
+            }
+        }
+        if(ignoreScale != 1){
+            if(null != scale){
+                if(scale > 0){
+                    if(ignoreScale == 3){
+                        if(null != precision && precision > 0){
+                            appendScale = true;
+                        }else{
+                            appendScale = false;
+                        }
+                    }else{
+                        appendScale = true;
+                    }
+                }
+            }
+        }
+
+        if(BasicUtil.isNotEmpty(formula)){
+            formula = formula.replace("{L}", length+"");
+            formula = formula.replace("{P}", precision+"");
+            formula = formula.replace("{S}", scale+"");
+            result = formula.replace("(null)","");
+        }else{
+            StringBuilder builder = new StringBuilder();
+            builder.append(type);
+            if(appendLength || appendPrecision || appendScale){
+                builder.append("(");
+            }
+            if(appendLength){
+                if(length == -2){
+                    builder.append("max");
+                }else {
+                    builder.append(length);
+                }
+            }else {
+                if (appendPrecision) {
+                    builder.append(precision);
+                }
+                if(appendScale){//可能单独出现
+                    if(appendPrecision){
+                        builder.append(",");
+                    }
+                    builder.append(scale);
+                }
+            }
+            if(appendLength || appendPrecision || appendScale){
+                builder.append(")");
+            }
+
+            String child = getChildTypeName();
+            Integer srid = getSrid();
+            if(null != child){
+                builder.append("(");
+                builder.append(child);
+                if(null != srid){
+                    builder.append(",").append(srid);
+                }
+                builder.append(")");
+            }
+            if(isArray()){
+                builder.append("[]");
+            }
+            result = builder.toString();
+        }
+
+        return result;
+    }
+
+    /**
+     * 精确长度 根据数据类型返回precision或length
+     * @return Integer
+     */
+    public Integer getPrecisionLength(){
+        if(null != precisionLength && precisionLength != -1){
+            return precisionLength;
+        }
+        if(null != precision && precision != -1){
+            precisionLength = precision;
+        }else{
+            precisionLength = length;
+        }
+        return precisionLength;
+    }
+    public Integer getLength() {
+        if(getmap && null != update){
+            return update.getLength();
+        }
+        if(null != length && length != -1){
+            return length;
+        }
+        return precision;
+    }
+    public Column setLength(Integer length) {
+        if(setmap && null != update){
+            update.setLength(length);
+            return this;
+        }
+        if(ignoreLength == 1){
+            this.precision = length;
+        }else {
+            this.length = length;
+        }
+        //fullType = null;
         return this;
     }
 
@@ -415,7 +641,10 @@ public class Column extends BaseMetadata<Column> implements Serializable {
         if(getmap && null != update){
             return update.getPrecision();
         }
-        return precision;
+        if(null != precision && precision != -1){
+            return precision;
+        }
+        return length;
     }
 
     public Column setPrecision(Integer precision) {
@@ -423,7 +652,12 @@ public class Column extends BaseMetadata<Column> implements Serializable {
             update.setPrecision(precision);
             return this;
         }
-        this.precision = precision;
+        if(ignorePrecision == 1){
+            this.length = precision;
+        }else {
+            this.precision = precision;
+        }
+        //fullType = null;
         return this;
     }
     public Column setPrecision(Integer precision, Integer scale) {
@@ -433,9 +667,9 @@ public class Column extends BaseMetadata<Column> implements Serializable {
         }
         this.precision = precision;
         this.scale = scale;
+        //fullType = null;
         return this;
     }
-
 
     public Object getValue() {
         if(getmap && null != update){
@@ -555,6 +789,22 @@ public class Column extends BaseMetadata<Column> implements Serializable {
         return this;
     }
 
+    public Aggregation getAggregation() {
+        if(getmap && null != update){
+            return update.aggregation;
+        }
+        return aggregation;
+    }
+
+    public Column setAggregation(Aggregation aggregation) {
+        if(setmap && null != update){
+            update.setAggregation(aggregation);
+            return this;
+        }
+        this.aggregation = aggregation;
+        return this;
+    }
+
     public Integer getScale() {
         if(getmap && null != update){
             return update.getScale();
@@ -568,6 +818,7 @@ public class Column extends BaseMetadata<Column> implements Serializable {
             return this;
         }
         this.scale = scale;
+        //fullType = null;
         return this;
     }
 
@@ -623,6 +874,7 @@ public class Column extends BaseMetadata<Column> implements Serializable {
         if(autoIncrement == 1){
             nullable(false);
         }
+        //fullType = null;
         return this;
     }
 
@@ -894,19 +1146,19 @@ public class Column extends BaseMetadata<Column> implements Serializable {
         return this;
     }
 
-    public String getOriginalName() {
+    public String getOriginName() {
         if(getmap && null != update){
-            return update.originalName;
+            return update.originName;
         }
-        return originalName;
+        return originName;
     }
 
-    public Column setOriginalName(String originalName) {
+    public Column setOriginName(String originName) {
         if(setmap && null != update){
-            update.setOriginalName(originalName);
+            update.setOriginName(originName);
             return this;
         }
-        this.originalName = originalName;
+        this.originName = originName;
         return this;
     }
 
@@ -955,52 +1207,7 @@ public class Column extends BaseMetadata<Column> implements Serializable {
         }
         this.before = before;
         return this;
-    } 
-    public String getFullType(){
-        if(getmap && null != update){
-            return update.getFullType();
-        }
-        return getFullType(typeName);
     }
-    public String getFullType(String typeName){
-        if(getmap && null != update){
-            return update.getFullType(typeName);
-        }
-        return getFullType(typeName, ignorePrecision());
-    }
-    public String getFullType(String typeName, boolean ignorePrecision){
-        if(getmap && null != update){
-            return update.getFullType(typeName, ignorePrecision);
-        }
-        StringBuilder builder = new StringBuilder();
-        builder.append(typeName);
-        if(!ignorePrecision) {
-            if (null != precision) {
-                if (precision > 0) {
-                    builder.append("(").append(precision);
-                    if (null != scale && scale > 0) {
-                        builder.append(",").append(scale);
-                    }
-                    builder.append(")");
-                } else if (precision == -1) {
-                    builder.append("(max)");
-                }
-            }
-        }
-        String child = getChildTypeName();
-        if(null != child){
-            builder.append("(");
-            builder.append(child);
-            if(null != srid){
-                builder.append(",");
-                builder.append(srid);
-            }
-            builder.append(")");
-        }
-        return builder.toString();
-    }
-
-
     public boolean equals(Column column) {
         return equals(column, true);
     }
@@ -1012,36 +1219,59 @@ public class Column extends BaseMetadata<Column> implements Serializable {
         if (!BasicUtil.equals(name, column.getName(), ignoreCase)) {
             return false;
         }
-        if(!BasicUtil.equals(typeMetadata, column.getTypeMetadata())){
+        TypeMetadata columnTypeMetadata = column.getTypeMetadata();
+        TypeMetadata origin = null;
+        TypeMetadata columnOrigin = null;
+        if(null != typeMetadata){
+            origin = typeMetadata.getOrigin();
+        }
+        if(null != columnTypeMetadata){
+            columnOrigin = columnTypeMetadata.getOrigin();
+        }
+
+        if(!BasicUtil.equals(typeMetadata, columnTypeMetadata, ignoreCase)
+                && !BasicUtil.equals(typeMetadata, columnOrigin, ignoreCase)
+                && !BasicUtil.equals(origin, columnTypeMetadata, ignoreCase)
+                && !BasicUtil.equals(origin, columnOrigin, ignoreCase)
+        ){
             return false;
         }
-        if(!BasicUtil.equals(precision, column.getPrecision())){
+        if(null == typeMetadata || 0 == typeMetadata.ignoreLength()) {
+            if (!BasicUtil.equals(getLength(), column.getLength())) {
+                return false;
+            }
+        }
+        if(null == typeMetadata || 0 == typeMetadata.ignorePrecision()) {
+            if (!BasicUtil.equals(getPrecision(), column.getPrecision())) {
+                return false;
+            }
+        }
+        if(null == typeMetadata ||  0 == typeMetadata.ignoreScale()) {
+            if (!BasicUtil.equals(getScale(), column.getScale())) {
+                return false;
+            }
+        }
+        if(!BasicUtil.equals(getDefaultValue(), column.getDefaultValue())){
             return false;
         }
-        if(!BasicUtil.equals(scale, column.getScale())){
+        if(!BasicUtil.equals(getComment(), column.getComment())){
             return false;
         }
-        if(!BasicUtil.equals(defaultValue, column.getDefaultValue())){
+        if(!BasicUtil.equals(isNullable(), column.isNullable())){
             return false;
         }
-        if(!BasicUtil.equals(comment, column.getComment())){
+        if(!BasicUtil.equals(isAutoIncrement(), column.isAutoIncrement())){
             return false;
         }
-        if(!BasicUtil.equals(nullable, column.isNullable())){
+        if(!BasicUtil.equals(getCharset(), column.getCharset(), ignoreCase)){
             return false;
         }
-        if(!BasicUtil.equals(autoIncrement, column.isAutoIncrement())){
+        if(!BasicUtil.equals(isPrimaryKey(), column.isPrimaryKey())){
             return false;
         }
-        if(!BasicUtil.equals(charset, column.getCharset())){
+        /*if(!BasicUtil.equals(getPosition(), column.getPosition())){
             return false;
-        }
-        if(!BasicUtil.equals(primary, column.isPrimaryKey())){
-            return false;
-        }
-        if(!BasicUtil.equals(position, column.getPosition())){
-            return false;
-        }
+        }*/
         return true;
     }
     
@@ -1097,6 +1327,22 @@ public class Column extends BaseMetadata<Column> implements Serializable {
         return this;
     }
 
+    public Column setNewName(String newName, boolean setmap, boolean getmap) {
+        if(null == update){
+            update(setmap, getmap);
+        }
+        update.setName(newName);
+        Table table = getTable();
+        if(null != table){
+            //修改主键列名
+            LinkedHashMap<String, Column> pks = table.getPrimaryKeyColumns();
+            if(null != pks && pks.containsKey(this.getName().toUpperCase())){
+                pks.remove(this.getName().toUpperCase());
+                pks.put(newName.toUpperCase(), update);
+            }
+        }
+        return update;
+    }
     
     public JavaType getJavaType() {
         if(getmap && null != update){
@@ -1114,7 +1360,6 @@ public class Column extends BaseMetadata<Column> implements Serializable {
         this.javaType = javaType;
         return this;
     }
-
 
     public Integer getSrid() {
         if(getmap && null != update){
@@ -1166,49 +1411,100 @@ public class Column extends BaseMetadata<Column> implements Serializable {
         return this;
     }
 
+    public void ignoreLength(int ignoreLength) {
+        this.ignoreLength = ignoreLength;
+    }
+
+    public void ignorePrecision(int ignorePrecision) {
+        this.ignorePrecision = ignorePrecision;
+    }
+
+    public void ignoreScale(int ignoreScale) {
+        this.ignoreScale = ignoreScale;
+    }
+    public int ignoreScale(DatabaseType database){
+        if(null != typeMetadata) {
+            return MetadataAdapterHolder.ignoreScale(database, typeMetadata);
+        }else{
+            return ignoreScale();
+        }
+    }
+
     /**
      * 是否需要指定精度 主要用来识别能取出精度，但DDL不需要精度的类型
      * 精确判断通过adapter
      * @return boolean
      */
-    public boolean ignorePrecision(){
-        if(null != typeName) {
-            String chk = typeName.toLowerCase();
-            if (chk.contains("date")) {
-                return true;
-            }
-            if (chk.contains("time")) {
-                return true;
-            }
-            if (chk.contains("year")) {
-                return true;
-            }
-            if (chk.contains("text")) {
-                return true;
-            }
-            if (chk.contains("blob")) {
-                return true;
-            }
-            if (chk.contains("json")) {
-                return true;
-            }
-            if (chk.contains("point")) {
-                return true;
-            }
-            if (chk.contains("line")) {
-                return true;
-            }
-            if (chk.contains("polygon")) {
-                return true;
-            }
-            if (chk.contains("geometry")) {
-                return true;
-            }
-            if (chk.contains("geography")) {
-                return true;
-            }
+    public int ignoreLength(){
+        if(-1 != ignoreLength){
+            return ignoreLength;
         }
-        return false;
+        if(null != typeMetadata){
+            return typeMetadata.ignoreLength();
+        }
+        return ignoreLength;
+    }
+    public int ignoreLength(DatabaseType database){
+        if(null != typeMetadata) {
+            return MetadataAdapterHolder.ignoreLength(database, typeMetadata);
+        }else{
+            return ignoreLength();
+        }
+    }
+
+    /**
+     * 是否需要指定精度 主要用来识别能取出精度，但DDL不需要精度的类型
+     * 精确判断通过adapter
+     * @return boolean
+     */
+    public int ignorePrecision(){
+        if(-1 != ignorePrecision){
+            return ignorePrecision;
+        }
+        if(null != typeMetadata){
+            return typeMetadata.ignorePrecision();
+        }
+        return ignorePrecision;
+    }
+
+    public int ignorePrecision(DatabaseType database){
+        if(null != typeMetadata) {
+            return MetadataAdapterHolder.ignorePrecision(database, typeMetadata);
+        }else{
+            return ignorePrecision();
+        }
+    }
+    public String getDefine() {
+        return define;
+    }
+
+    public Column setDefine(String define) {
+        this.define = define;
+        return this;
+    }
+
+    public String getFinalType() {
+        return finalType;
+    }
+
+    public Column setFinalType(String finalType) {
+        this.finalType = finalType;
+        return this;
+    }
+
+    /**
+     * 是否需要指定精度 主要用来识别能取出精度，但DDL不需要精度的类型
+     * 精确判断通过adapter
+     * @return boolean
+     */
+    public int ignoreScale(){
+        if(-1 != ignoreScale){
+            return ignoreScale;
+        }
+        if(null != typeMetadata){
+            return typeMetadata.ignoreScale();
+        }
+        return ignoreScale;
     }
     public String toString(){
         StringBuilder builder = new StringBuilder();
@@ -1222,6 +1518,5 @@ public class Column extends BaseMetadata<Column> implements Serializable {
     public String getKeyword() {
         return this.keyword;
     }
-
 }
 

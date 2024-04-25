@@ -52,7 +52,7 @@ public class ConfigTable {
 	protected static Hashtable<String, Object> configs;
 	protected static long lastLoadTime 					= 0					;	// 最后一次加载时间
 	protected static int reload 						= 0					;	// 重新加载间隔
-	protected static final String version 				= "8.7.1-jdk21-SNAPSHOT"	;	// 版本号
+	protected static final String version 				= "8.7.1-SNAPSHOT"	;	// 版本号
 	protected static final String minVersion 			= "000"				;	// 版本号
 	protected static boolean isLoading 					= false				;	// 是否加载配置文件中
 	private static boolean listener_running 			= false				;	// 监听是否启动
@@ -68,7 +68,9 @@ public class ConfigTable {
 	public static int  DEBUG_LVL										= 0				;   //
 	public static boolean IS_LOG_SQL									= true			;	// 执行SQL时是否输出日志
 	public static boolean IS_LOG_SLOW_SQL								= true			;	// 执行慢SQL时是否输出日志
-	public static boolean IS_LOG_SQL_TIME								= true			;	// 执行SQL时是否输出日志
+	public static boolean IS_LOG_SQL_TIME								= true			;	// 执行SQL时是否输出耗时日志
+	public static boolean IS_LOG_ADAPTER_MATCH							= false			;	// 是否输出adapter匹配过程日志
+
 	public static boolean IS_THROW_CONVERT_EXCEPTION					= false			;   // 是否抛出convert异常提示()
 	public static boolean IS_PRINT_EXCEPTION_STACK_TRACE				= false			;   // 捕捉但未抛出的异常是否显示详细信息
 	public static long SLOW_SQL_MILLIS									= 0				; 	// 慢SQL, 如果配置了>0的毫秒数, 在SQL执行超出时限后会输出日志, 并调用DMListener.slow
@@ -92,7 +94,7 @@ public class ConfigTable {
 	public static boolean IS_LOWER_KEY 									= false			;	// DataRow是否自动转换成小写
 	public static boolean IS_KEY_IGNORE_CASE 							= true			;	// DataRow是否忽略大小写
 	public static boolean IS_THROW_SQL_QUERY_EXCEPTION 					= true			;	// SQL查询异常时是否抛出
-	public static boolean IS_THROW_SQL_UPDATE_EXCEPTION 				= true			;	// SQL执行异常时是否抛出
+	public static boolean IS_THROW_SQL_UPDATE_EXCEPTION 				= true			;	// 命令执行异常时是否抛出
 	public static boolean IS_UPDATE_NULL_COLUMN							= false			;	// DataRow是否更新nul值的列(针对DataRow)
 	public static boolean IS_UPDATE_EMPTY_COLUMN						= false			;	// DataRow是否更新空值的列
 	public static boolean IS_INSERT_NULL_COLUMN							= false			;	// DataRow是否插入nul值的列
@@ -101,7 +103,7 @@ public class ConfigTable {
 	public static boolean IS_UPDATE_EMPTY_FIELD							= false			;	// Entity是否更新空值的属性
 	public static boolean IS_INSERT_NULL_FIELD							= false			;	// Entity是否更新nul值的属性
 	public static boolean IS_INSERT_EMPTY_FIELD							= false			;	// Entity是否更新空值的属性
-	public static boolean IS_KEYHOLDER_IDENTITY							= true			;   // 是否返回自增ID(一般在批量操作时才需要在ConfigStore中定义)
+	public static boolean IS_KEY_HOLDER_IDENTITY						= true			;   // 是否返回自增ID(一般在批量操作时才需要在ConfigStore中定义)
 	public static String LIST2STRING_FORMAT								= "concat"		;	// List/Array转换成String后的格式 concat:A, B, C json:["A","B","C"]
 	public static boolean IS_REPLACE_EMPTY_NULL							= true			;   // 是否把""替换成null
 	public static boolean IS_SQL_DELIMITER_OPEN 						= false			;	// 是否开启 界定符
@@ -118,7 +120,10 @@ public class ConfigTable {
 	public static String DEFAULT_PRIMARY_KEY							= "ID"			;	// 默认主键
 	public static boolean IS_OPEN_TRANSACTION_MANAGER 					= true			;	// 是否需要提供事务管理器, 会根据数据源生成相应的事务管理器
 	public static boolean IS_OPEN_PRIMARY_TRANSACTION_MANAGER 			= false			;	// 是否需要设置一个主事务管理器, 多数据源时为注解事务指定一个事务管理器
+	public static String ALTER_COLUMN_TYPE_SUFFIX						= "___"			;	// ORACLE系修改数据类型过程中，需要中间列，这里指定中间列名称的后缀
 	public static int AFTER_ALTER_COLUMN_EXCEPTION_ACTION				= 1000			;   // DDL修改列异常后 -1：抛出异常 0:中断修改 1:删除列 n:总行数小于多少时更新值否则触发另一个监听
+	public static int SQL_QUERY_TIMEOUT									= -1			;	// 等待 查询SQL 语句完成的最大时间(s), 超过则抛出异常
+	public static int SQL_UPDATE_TIMEOUT								= -1			;	// 等待 更新SQL 语句完成的最大时间(s), 超过则抛出异常
 	public static boolean IS_DDL_AUTO_DROP_COLUMN						= false			;   // DDL执行时是否自动删除定义中不存在的列
 	public static boolean IS_METADATA_AUTO_CHECK_COLUMN_PRIMARY			= false			;   // 查询列时，是否自动检测主键标识
 	public static String SQL_STORE_DIR									= null			;	// 自定义SQL目录(包括MyBatis) 默认${classpath}/sql .表示项目根目录 ${classpath}表示classes目录
@@ -133,7 +138,11 @@ public class ConfigTable {
 	public static int ENTITY_FIELD_UPDATE_DEPENDENCY					= 0				;   // 实体类属性依赖层级 > 0:更新属性关联表
 	public static int ENTITY_FIELD_DELETE_DEPENDENCY					= 0				;   // 实体类属性依赖层级 > 0:删除属性关联表
 	public static Compare ENTITY_FIELD_SELECT_DEPENDENCY_COMPARE		= Compare.EQUAL ;	// 实体类属性依赖查询方式 EQUAL:逐行查询 IN:一次查询
-
+	public static int IGNORE_GRAPH_QUERY_RESULT_TOP_KEY					= 0				;   // 是否忽略查询结果中顶层的key,可能返回多个结果集(0-不忽略 1-忽略 2-如果1个结果集则忽略 多个则保留)
+	public static int IGNORE_GRAPH_QUERY_RESULT_TABLE 					= 0				;   // 是否忽略查询结果中的表名,数据可能存在于多个表中(0-不忽略 CRM_USER.id 1-忽略 id 2-如果1个表则忽略 多个表则保留)
+	public static int MERGE_GRAPH_QUERY_RESULT_TABLE 					= 0				;	// 是否合并查询结果中的表,合并后会少一层表名被合并到key中(如果不忽略表名)(0-不合并 1-合并 2-如果1个表则合并 多个表则不合并)
+	// 0{"HR_USER":{"name":"n22","id":22},"CRM_USER":{"name":"n22","id":22}}
+	// 1{"HR_USER.name":"n22","HR_USER.id":22,"CRM_USER.name":"n22","CRM_USER.id":22}}
 	public static String HTTP_PARAM_KEY_CASE							= "camel"		;	// http参数格式 camel:小驼峰 Camel:大驼峰 lower:小写 upper:大写  service.column2param会把 USER_NAME 转成userName
 	public static String TABLE_METADATA_CACHE_KEY						= ""			;	// 表结构缓存key
 	public static int TABLE_METADATA_CACHE_SECOND						= 3600*24		;	// 表结构缓存时间(没有设置缓存key的情况下生效)(-1:表示永不失效)
@@ -322,6 +331,7 @@ public class ConfigTable {
 		// 加载配置文件
 		loadConfig(flag);
 	}
+
 	/**
 	 * 加载配置文件
 	 * 首先加载anyline-config.xml
@@ -930,7 +940,12 @@ public class ConfigTable {
 	public int AFTER_ALTER_COLUMN_EXCEPTION_ACTION() {
 		return AFTER_ALTER_COLUMN_EXCEPTION_ACTION;
 	}
-
+	public int SQL_QUERY_TIMEOUT(){
+		return SQL_QUERY_TIMEOUT;
+	}
+	public int SQL_UPDATE_TIMEOUT(){
+		return SQL_UPDATE_TIMEOUT;
+	}
 	public boolean  IS_DDL_AUTO_DROP_COLUMN() {
 		return IS_DDL_AUTO_DROP_COLUMN;
 	}
@@ -1005,7 +1020,15 @@ public class ConfigTable {
 	public String GENERATOR_TABLES() {
 		return GENERATOR_TABLES;
 	}
-
+	public int IGNORE_GRAPH_QUERY_RESULT_TOP_KEY(){
+		return IGNORE_GRAPH_QUERY_RESULT_TOP_KEY;
+	}
+	public int IGNORE_GRAPH_QUERY_RESULT_TABLE(){
+		return IGNORE_GRAPH_QUERY_RESULT_TABLE;
+	}
+	public int MERGE_GRAPH_QUERY_RESULT_TABLE(){
+		return MERGE_GRAPH_QUERY_RESULT_TABLE;
+	}
 
 
 	public static void closeAllSqlLog(){

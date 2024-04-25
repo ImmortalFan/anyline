@@ -61,6 +61,7 @@ public class DefaultOrderStore implements OrderStore{
 	public void order(String col, String type) {
 		order(col, type, true);
 	}
+
 	/** 
 	 * 排序多列以, 分隔
 	 * order("CD","DESC");
@@ -102,8 +103,8 @@ public class DefaultOrderStore implements OrderStore{
 	} 
 	public String getRunText(String delimiter){
 		StringBuilder builder = new StringBuilder(); 
-		if(null != orders && orders.size() > 0){
-			builder.append(" ORDER BY "); 
+		if(null != orders && !orders.isEmpty()){
+			builder.append("\nORDER BY ");
 			for(int i=0; i<orders.size(); i++){
 				Order order = orders.get(i);
 				if(null == order){
@@ -120,8 +121,14 @@ public class DefaultOrderStore implements OrderStore{
  
 	public void clear(){
 		orders.clear(); 
-	} 
+	}
 	public List<Order> getOrders(){
-		return this.orders; 
-	} 
+		return this.orders;
+	}
+	public boolean isEmpty(){
+		if(null != orders){
+			return orders.isEmpty();
+		}
+		return true;
+	}
 } 

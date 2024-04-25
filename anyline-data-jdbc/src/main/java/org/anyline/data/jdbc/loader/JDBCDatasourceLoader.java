@@ -21,6 +21,9 @@ import org.anyline.data.datasource.DatasourceHolder;
 import org.anyline.data.jdbc.datasource.JDBCDatasourceHolder;
 import org.anyline.data.jdbc.runtime.JDBCRuntimeHolder;
 import org.anyline.data.listener.DatasourceLoader;
+import org.anyline.data.runtime.DataRuntime;
+import org.anyline.data.runtime.RuntimeHolder;
+import org.anyline.util.BasicUtil;
 import org.anyline.util.SpringContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,21 +59,43 @@ public class JDBCDatasourceLoader implements DatasourceLoader {
             try{
                 jdbc = SpringContextUtil.getBean(JdbcTemplate.class);
             }catch (Exception e){}
-
+            DataRuntime runtime = null;
             if(null != jdbc){
-                JDBCRuntimeHolder.reg("default", jdbc, null);
-                loadDefault = false;
+                try {
+                    runtime = JDBCRuntimeHolder.reg("default", jdbc, null);
+                    loadDefault = false;
+                }catch (Exception e){
+                    runtime = null;
+                }
             }else{
                 DataSource datasource = null;
                 try{
                     datasource = SpringContextUtil.getBean(DataSource.class);
-                }catch (Exception e){}
+                }catch (Exception e){
+                    runtime = null;
+                }
                 if(null != datasource){
                     try {
-                        JDBCDatasourceHolder.reg("default", datasource, false);
+                        runtime = JDBCDatasourceHolder.reg("default", datasource, false);
                         loadDefault = false;
                     }catch (Exception e){
+                        runtime = null;
                         e.printStackTrace();
+                    }
+                }
+            }
+            //有不支持通过connection返回获取连接信息的驱动，所以从配置文件中获取
+            if(null != runtime) {
+                String driver = DatasourceHolder.value(env, "spring.datasource.,anyline.datasource.", "driver,driver-class,driver-class-name", String.class, null);
+                String url = DatasourceHolder.value(env, "spring.datasource.,anyline.datasource.", "url,jdbc-url", String.class, null);
+                runtime.setDriver(driver);
+                runtime.setUrl(url);
+                if (BasicUtil.isNotEmpty(url)) {
+                    runtime.setAdapterKey(RuntimeHolder.parseAdapterKey(url));
+                }else{
+                    String adapterKey = DatasourceHolder.value(env, "spring.datasource.,anyline.datasource.", "adapter", String.class, null);
+                    if(BasicUtil.isNotEmpty(adapterKey)){
+                        runtime.setAdapterKey(adapterKey);
                     }
                 }
             }

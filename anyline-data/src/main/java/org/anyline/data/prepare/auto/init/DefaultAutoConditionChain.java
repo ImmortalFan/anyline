@@ -21,7 +21,7 @@ import org.anyline.data.param.Config;
 import org.anyline.data.param.ConfigChain;
 import org.anyline.data.prepare.Condition;
 import org.anyline.data.prepare.ConditionChain;
-import org.anyline.data.prepare.init.DefaultConditionChain;
+import org.anyline.data.prepare.init.AbstractConditionChain;
 import org.anyline.data.run.RunValue;
 import org.anyline.data.runtime.DataRuntime;
 import org.anyline.entity.Compare;
@@ -30,7 +30,7 @@ import org.anyline.util.BasicUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DefaultAutoConditionChain extends DefaultConditionChain implements ConditionChain {
+public class DefaultAutoConditionChain extends AbstractConditionChain implements ConditionChain {
 	public DefaultAutoConditionChain(){}
 	public DefaultAutoConditionChain(ConfigChain chain){
 		if(null == chain){
@@ -46,7 +46,7 @@ public class DefaultAutoConditionChain extends DefaultConditionChain implements 
 		this.integrality(chain.integrality());
 	}
 	@Override
-	public String getRunText(String prefix, DataRuntime runtime){
+	public String getRunText(String prefix, DataRuntime runtime, boolean placeholder){
 		runValues = new ArrayList<>();
 		int size = conditions.size(); 
 		if(size == 0){
@@ -56,15 +56,10 @@ public class DefaultAutoConditionChain extends DefaultConditionChain implements 
 		String txt = "";
 		for(int i=0; i<size; i++){
 			Condition condition = conditions.get(i);
-//			if(condition.isContainer()){
-//				txt = ((ConditionChain) condition).getRunText(adapter);
-//			}else{
-//				txt = condition.getRunText(adapter);
-//			}
 			if(null == condition || condition.isVariableSlave()){
 				continue;
 			}
-			txt = condition.getRunText(prefix, runtime);
+			txt = condition.getRunText(prefix, runtime, placeholder);
 			if(BasicUtil.isEmpty(txt)){
 				continue;
 			}
@@ -86,7 +81,7 @@ public class DefaultAutoConditionChain extends DefaultConditionChain implements 
 				// if(i>0 /*&& !condition.isContainer()*/){
 
 				if(joinSize>0){
-					String chk = txt.toLowerCase().trim().replace("\n"," ").replace("\t"," ");
+					String chk = txt.toLowerCase().trim().replace("\n"," ").replace("\t"," ").trim();
 					if(!chk.startsWith("and ") && !chk.startsWith("or ") && !chk.startsWith("and(") && !chk.startsWith("or(")){
 						subBuilder.append(condition.getJoin());
 					}

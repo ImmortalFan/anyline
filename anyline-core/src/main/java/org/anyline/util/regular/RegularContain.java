@@ -89,7 +89,7 @@ public class RegularContain implements Regular{
 	 * @param idx		指定提取位置  idx		指定提取位置
 	 * @return List
 	 */ 
-	public List<String> fetch(String src, String regx, int idx) throws Exception{
+	public List<String> fetch(String src, String regx, int idx) throws Exception {
 		List<String> list = new ArrayList<>();
 		 
 		try{
@@ -110,9 +110,10 @@ public class RegularContain implements Regular{
 		} 
 		return list; 
 	} 
-	public List<String> fetch(String src, String regx) throws Exception{
+	public List<String> fetch(String src, String regx) throws Exception {
 		return fetch(src, regx, 0);
 	}
+
 	/** 
 	 * 过滤 保留匹配项 
 	 * @param src  src

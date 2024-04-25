@@ -14,6 +14,8 @@
 	<packaging>pom</packaging>
 
     <modules>
+		<module>anyline-data-jdbc-nebula</module>
 		<module>anyline-data-jdbc-neo4j</module>
+		<module>anyline-data-nebula</module>
     </modules>
 </project>

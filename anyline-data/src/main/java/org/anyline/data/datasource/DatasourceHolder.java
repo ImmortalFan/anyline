@@ -42,7 +42,9 @@ import org.anyline.data.runtime.DataRuntime;
 import org.anyline.data.runtime.RuntimeHolder;
 import org.anyline.metadata.type.DatabaseType;
 import org.anyline.proxy.DatasourceHolderProxy;
+import org.anyline.util.BasicUtil;
 import org.anyline.util.BeanUtil;
+import org.anyline.util.regular.RegularUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -78,6 +80,11 @@ public abstract class DatasourceHolder {
 		return RuntimeHolder.keys();
 	}
 
+	/**
+	 * 数据源对应的数据库类型
+	 * @param datasource 数据源名称
+	 * @return 数据库类型
+	 */
 	public static DatabaseType dialect(String datasource){
 		return types.get(datasource);
 	}
@@ -97,16 +104,71 @@ public abstract class DatasourceHolder {
 	public static Object value(Environment env, String prefix, String name){
 		return value(env, prefix, name, Object.class, null);
 	}
-	public static <T> T value(Environment env, String prefix, String name, Class<T> clazz, T def){
+
+	/**
+	 * 从配置文件中取值
+	 * @param env Environment
+	 * @param prefix 前缀 如果有多个用,分隔如如spring.datasource,anyline.datasource
+	 * @param key 如果有多个用,分隔如driver,driver-class
+	 * @param clazz 返回数据类型
+	 * @param def 默认值
+	 * @return T
+	 * @param <T> T
+	 */
+	public static <T> T value(Environment env, String prefix, String key, Class<T> clazz, T def){
+		if(null != env && null != prefix && null != key) {
+			String ps[] = prefix.split(",");
+			String ks[] = key.split(",");
+			for(String p:ps) {
+				for (String k : ks) {
+					String value = BeanUtil.value(p, env, k);
+					if (null == value) {
+						HashSet<String> alias = DataSourceKeyMap.alias(k);
+						if (null != alias) {
+							for (String item : alias) {
+								if (null == value) {
+									value = BeanUtil.value(p, env, item);
+								}
+								if (BasicUtil.isNotEmpty(value)) {
+									break;
+								}
+							}
+						}
+					}
+					if (BasicUtil.isNotEmpty(value)) {
+						return (T) ConvertAdapter.convert(value, clazz, false);
+					}
+				}
+			}
+		}
+		return def;
+	}
+
+	public static Object value(Map map, String keys){
+		return value(map, keys, Object.class, null);
+	}
+
+	/**
+	 * 从map中取值
+	 * @param map map
+	 * @param keys 多个key以,分隔
+	 * @param clazz 返回值类型
+	 * @param def 默认值
+	 * @return T
+	 * @param <T> T
+	 */
+	public static <T> T value(Map map, String keys, Class<T> clazz, T def){
 		T result = null;
-		if(null != env && null != prefix && null != name) {
-			String value = BeanUtil.value(prefix, env, name);
-			if (null == value) {
-				HashSet<String> alias = DataSourceKeyMap.alias(name);
+		String[] ks = keys.split(",");
+		Object value = null;
+		for(String key:ks){
+			value = map.get(key);
+			if(null == value) {
+				HashSet<String> alias = DataSourceKeyMap.alias(key);
 				if (null != alias) {
 					for (String item : alias) {
 						if (null == value) {
-							value = BeanUtil.value(prefix, env, item);
+							value = map.get(item);
 						}
 						if (null != value) {
 							break;
@@ -115,32 +177,7 @@ public abstract class DatasourceHolder {
 				}
 			}
 			if(null != value){
-				result = (T) ConvertAdapter.convert(value, clazz, false);
-			}
-			if(null == result){
-				result = def;
-			}
-		}
-		return result;
-	}
-
-	public static Object value(Map map, String name){
-		return value(map, name, Object.class, null);
-	}
-	public static <T> T value(Map map, String name, Class<T> clazz, T def){
-		T result = null;
-		Object value = map.get(name);
-		if(null == value) {
-			HashSet<String> alias = DataSourceKeyMap.alias(name);
-			if (null != alias) {
-				for (String item : alias) {
-					if (null == value) {
-						value = map.get(item);
-					}
-					if (null != value) {
-						break;
-					}
-				}
+				break;
 			}
 		}
 		if(null != value){
@@ -152,7 +189,7 @@ public abstract class DatasourceHolder {
 		return result;
 	}
 
-	protected static void check(String key, boolean override) throws Exception{
+	protected static void check(String key, boolean override) throws Exception {
 		if(contains(key)){
 			if(!override){
 				throw new Exception("[重复注册][thread:"+Thread.currentThread().getId()+"][key:"+key+"]");
@@ -162,7 +199,7 @@ public abstract class DatasourceHolder {
 			}
 		}
 	}
-	public static DataRuntime temporary(Object datasource, String database, DriverAdapter adapter) throws Exception{
+	public static DataRuntime temporary(Object datasource, String database, DriverAdapter adapter) throws Exception {
 		return DatasourceHolderProxy.temporary(datasource, database, adapter);
 	}
 	public abstract DataRuntime callTemporary(Object datasource, String database, DriverAdapter adapter) throws Exception;
@@ -184,13 +221,13 @@ public abstract class DatasourceHolder {
 	public abstract boolean callValidate(DataRuntime runtime);
 
 
-	public static boolean hit(String ds) throws Exception{
+	public static boolean hit(String ds) throws Exception {
 		return hit(RuntimeHolder.runtime(ds));
 	}
-	public static boolean hit() throws Exception{
+	public static boolean hit() throws Exception {
 		return hit(RuntimeHolder.runtime());
 	}
-	public static boolean hit(DataRuntime runtime)  throws Exception{
+	public static boolean hit(DataRuntime runtime)  throws Exception {
 		return DatasourceHolderProxy.hit(runtime);
 	}
 	public abstract boolean callHit(DataRuntime runtime) throws Exception;
@@ -214,4 +251,5 @@ public abstract class DatasourceHolder {
 	}
 
 	public abstract  List<String> callCopy(DataRuntime runtime);
+
 }

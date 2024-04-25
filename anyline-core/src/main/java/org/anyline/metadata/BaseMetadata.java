@@ -16,13 +16,78 @@
 
 package org.anyline.metadata;
 
+import org.anyline.entity.DataRow;
+import org.anyline.metadata.type.DatabaseType;
 import org.anyline.util.BasicUtil;
 import org.anyline.util.BeanUtil;
 
 import java.util.*;
 
 public class BaseMetadata<T extends BaseMetadata> {
+    public enum TYPE implements Type{
+        TABLE(1)            , // 继承子表、父表、分区表、主表、点类型、边类型
+        VIEW(2)             , // 视图
+        COLUMN(4)           , // 列
+        PRIMARY(8)          , // 主键
+        FOREIGN(16)         , // 外键
+        INDEX(32)           , // 索引
+        CONSTRAINT(64)      , // 约束
+        SCHEMA(128)         , // SCHEMA
+        CATALOG(256)        , // CATALOG
 
+        FUNCTION(512)       , // 函数
+        PROCEDURE(1024)     , // 存储过程
+        TRIGGER(2048)       , // 触发器
+        SEQUENCE(4096)      , // 序列
+        SYNONYM(8192)       , // 同义词
+        DDL(16384)            // DDL
+        ;
+        public final int value;
+        TYPE(int value){
+            this.value = value;
+        }
+        public int value(){
+            return value;
+        }
+    }
+    public static boolean check(int strut, Type type){
+        int tp = type.value();
+        return ((strut & tp) == tp);
+    }
+    private static Map<Integer, Type> types = new HashMap<>();
+    static {
+        for(TYPE type: TYPE.values()){
+            types.put(type.value, type);
+        }
+    }
+    public static Map<Integer, Type> types(){
+        return types;
+    }
+    public static Type type(int type){
+        return types().get(type);
+    }
+    public static List<Type> types(int types){
+        List<Type> list = new ArrayList<>();
+        int count = 0;
+        while (types >= 1) {
+            int temp = types % 2;
+            types = (types - temp) / 2;
+            if (temp == 1) {
+                Type t = null;
+                if (count == 0){
+                    t = type(1);
+                }else{
+                    t = type((2 << (count - 1)));
+                }
+                if(null != t){
+                    list.add(t);
+                }
+            }
+            count++;
+        }
+        return list;
+    }
+    protected DatabaseType database = DatabaseType.NONE;
     protected String datasource                   ; // 数据源
     protected Catalog catalog                     ; // 数据库 catalog与schema 不同有数据库实现方式不一样
     protected Schema schema                       ; // dbo mysql中相当于数据库名  查数据库列表 是用SHOW SCHEMAS 但JDBC con.getCatalog()返回数据库名 而con.getSchema()返回null
@@ -32,15 +97,16 @@ public class BaseMetadata<T extends BaseMetadata> {
     protected boolean execute = true              ; // DDL是否立即执行, false:只创建SQL不执行可以通过ddls()返回生成的SQL
     protected String text;
     protected String id;
+    protected String user                         ; // 所属用户
     protected Long objectId;
 
-    protected Table table;
+    protected Table<?> table;
     protected String definition;
 
     protected T origin;
     protected T update;
-    protected boolean setmap = false              ;  //执行了upate()操作后set操作是否映射到update上(除了table, catalog, schema, name, drop, action)
-    protected boolean getmap = false              ;  //执行了upate()操作后get操作是否映射到update上(除了table, catalog, schema, name, drop, action)
+    protected boolean setmap = false              ;  //执行了update()操作后set操作是否映射到update上(除了table, catalog, schema, name, drop, action)
+    protected boolean getmap = false              ;  //执行了update()操作后get操作是否映射到update上(除了table, catalog, schema, name, drop, action)
 
     protected boolean drop = false                ;
     protected ACTION.DDL action = null            ; //ddl命令 add drop alter
@@ -48,6 +114,8 @@ public class BaseMetadata<T extends BaseMetadata> {
     protected String identity                     ;
     protected Object extend                       ; //扩展属性
     protected Date checkSchemaTime                ;
+    protected LinkedHashMap<String, Object> property;
+    protected DataRow metadata = new DataRow()   ;
     public String getIdentity(){
         if(null == identity){
             identity = BasicUtil.nvl(getCatalogName(), "") + "_" + BasicUtil.nvl(getSchemaName(), "") + "_" + BasicUtil.nvl(getTableName(false), "") + "_" + BasicUtil.nvl(getName(), "") ;
@@ -74,6 +142,50 @@ public class BaseMetadata<T extends BaseMetadata> {
         return names;
     }
 
+    /**
+     * 排序
+     * @param positions 列名,排序...
+     * @param columns 列
+     * @param <T> T
+     */
+    public static <T extends BaseMetadata> void sort(LinkedHashMap<String, Integer> positions, LinkedHashMap<String, T> columns){
+        if(null == positions || positions.isEmpty()){
+            return;
+        }
+        List<T> list = new ArrayList<>();
+        list.addAll(columns.values());
+
+        Collections.sort(list, new Comparator<T>() {
+            @Override
+            public int compare(T o1, T o2) {
+                Integer p1 = positions.get(o1.getName().toUpperCase());
+                Integer p2 = positions.get(o2.getName().toUpperCase());
+                if(p1 == p2){
+                    return 0;
+                }
+                if (null == p1) {
+                    return 1;
+                }
+                if (null == p2) {
+                    return -1;
+                }
+                return p1 > p2 ? 1:-1;
+            }
+        });
+
+        columns.clear();
+        for(T column:list){
+            columns.put(column.getName().toUpperCase(), column);
+        }
+    }
+
+    public DatabaseType getDatabase() {
+        return database;
+    }
+
+    public void setDatabase(DatabaseType database) {
+        this.database = database;
+    }
     public String getDatasource() {
         return datasource;
     }
@@ -92,8 +204,16 @@ public class BaseMetadata<T extends BaseMetadata> {
         return catalog.getName();
     }
 
+    public DataRow getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(DataRow metadata) {
+        this.metadata = metadata;
+    }
+
     public T setCatalog(String catalog) {
-        if(null == catalog){
+        if(BasicUtil.isEmpty(catalog)){
             this.catalog = null;
         }else {
             this.catalog = new Catalog(catalog);
@@ -128,6 +248,14 @@ public class BaseMetadata<T extends BaseMetadata> {
     public T setSchema(Schema schema) {
         this.schema = schema;
         return (T)this;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
     }
 
     public Date getCheckSchemaTime() {
@@ -203,8 +331,7 @@ public class BaseMetadata<T extends BaseMetadata> {
     }
 
     public T delete() {
-        this.drop = true;
-        return (T)this;
+        return drop();
     }
 
     public boolean isDelete() {
@@ -226,8 +353,9 @@ public class BaseMetadata<T extends BaseMetadata> {
         return (T)this;
     }
 
-    public void drop() {
+    public T drop() {
         this.drop = true;
+        return (T)this;
     }
 
 
@@ -255,7 +383,7 @@ public class BaseMetadata<T extends BaseMetadata> {
 
     /**
      * 相关表
-     * @param update 是否检测upate
+     * @param update 是否检测update
      * @return table
      */
     public Table getTable(boolean update) {
@@ -291,6 +419,30 @@ public class BaseMetadata<T extends BaseMetadata> {
         return (T)this;
     }
 
+    public LinkedHashMap<String, Object> getProperty() {
+        if(getmap && null != update){
+            return update.getProperty();
+        }
+        return property;
+    }
+
+    public T setProperty(String key, Object value) {
+        if(getmap && null != update){
+            return (T)update.setProperty(key, value);
+        }
+        if(null == this.property){
+            this.property = new LinkedHashMap<>();
+        }
+        this.property.put(key, value);
+        return (T)this;
+    }
+    public T setProperty(LinkedHashMap<String, Object> property) {
+        if(getmap && null != update){
+            return (T)update.setProperty(property);
+        }
+        this.property = property;
+        return (T)this;
+    }
     public String getDefinition() {
         if(getmap && null != update){
             return  update.definition;
@@ -307,7 +459,12 @@ public class BaseMetadata<T extends BaseMetadata> {
         return (T)this;
     }
 
-
+    public boolean isRename(){
+        if(null != update){
+            return !BasicUtil.equalsIgnoreCase(name, update.getName());
+        }
+        return false;
+    }
     public String getDdl() {
         if(null != ddls && ddls.size()>0){
             return ddls.get(0);
@@ -437,10 +594,10 @@ public class BaseMetadata<T extends BaseMetadata> {
     }
     public static  <T extends BaseMetadata> T search(List<T> list, String catalog, String name){
         for(T item:list){
-            if(BasicUtil.equalsIgnoreCase(item.getCatalogName(), catalog)
-                    && BasicUtil.equalsIgnoreCase(item.getName(), name)
-            ){
-                return item;
+            if(BasicUtil.equalsIgnoreCase(item.getName(), name)){
+                if(BasicUtil.equalsIgnoreCase(item.getCatalogName(), catalog)){
+                    return item;
+                }
             }
         }
         return null;

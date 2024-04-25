@@ -91,6 +91,12 @@ public interface ACTION {
         FUNCTION_DROP     (CMD.DROP, "函数删除"),
         FUNCTION_RENAME   (CMD.RENAME, "函数重命名"),
 
+
+        SEQUENCE_CREATE   (CMD.CREATE, "序列创建"),
+        SEQUENCE_ALTER    (CMD.ALTER, "序列修改"),
+        SEQUENCE_DROP     (CMD.DROP, "序列删除"),
+        SEQUENCE_RENAME   (CMD.RENAME, "序列重命名"),
+
         TRIGGER_ADD   (CMD.CREATE, "触发器创建"),
         TRIGGER_ALTER    (CMD.ALTER, "触发器修改"),
         TRIGGER_DROP     (CMD.DROP, "触发器删除"),
@@ -104,6 +110,9 @@ public interface ACTION {
         }
         public CMD getCmd() {
             return cmd;
+        }
+        public String getTitle(){
+            return this.title;
         }
     }
 
@@ -125,6 +134,9 @@ public interface ACTION {
         private final String title;
         SWITCH(String title){
             this.title = title;
+        }
+        public String getTitle(){
+            return this.title;
         }
     }
 

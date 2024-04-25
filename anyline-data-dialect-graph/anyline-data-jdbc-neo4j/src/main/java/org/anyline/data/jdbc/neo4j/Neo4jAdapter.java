@@ -19,8 +19,8 @@ package org.anyline.data.jdbc.neo4j;
 
 import org.anyline.adapter.EntityAdapter;
 import org.anyline.data.jdbc.adapter.JDBCAdapter;
-import org.anyline.data.jdbc.adapter.init.DefaultJDBCAdapter;
-import org.anyline.data.jdbc.neo4j.entity.Neo4jDataRow;
+import org.anyline.data.jdbc.adapter.init.AbstractJDBCAdapter;
+import org.anyline.data.jdbc.neo4j.entity.Neo4jRow;
 import org.anyline.data.param.ConfigStore;
 import org.anyline.data.param.init.DefaultConfigStore;
 import org.anyline.data.prepare.RunPrepare;
@@ -52,9 +52,9 @@ import java.sql.ResultSet;
 import java.util.*;
 
 @Repository("anyline.data.jdbc.adapter.neo4j")
-public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, InitializingBean {
+public class Neo4jAdapter extends AbstractJDBCAdapter implements JDBCAdapter, InitializingBean {
     
-    public DatabaseType typeMetadata(){
+    public DatabaseType type(){
         return DatabaseType.Neo4j;
     }
     public Neo4jAdapter(){
@@ -207,18 +207,18 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
         }
         // CREATE (emp:Employee{id:123, name:"zh"})
 
-        PrimaryGenerator generator = checkPrimaryGenerator(this.typeMetadata(), dest.getName());
+        PrimaryGenerator generator = checkPrimaryGenerator(this.type(), dest.getName());
         DataRow row = null;
         if(obj instanceof DataRow){
             row = (DataRow)obj;
             if(row.hasPrimaryKeys() && null != generator){
-                generator.create(row, this.typeMetadata(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), row.getPrimaryKeys(), null);
+                generator.create(row, this.type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), row.getPrimaryKeys(), null);
                 //createPrimaryValue(row, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), row.getPrimaryKeys(), null);
             }
         }else{
             boolean create = EntityAdapterProxy.createPrimaryValue(obj, columns);
             if(!create && null != generator){
-                generator.create(obj, this.typeMetadata(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), columns, null);
+                generator.create(obj, this.type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), columns, null);
                 //createPrimaryValue(obj, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), null, null);
             }
         }
@@ -364,7 +364,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
         long fr = System.currentTimeMillis();
         /*执行SQL*/
         if (ConfigTable.IS_LOG_SQL && log.isInfoEnabled()) {
-            log.info("{}[sql:\n{}\n]\n[param:{}]", random, sql, LogUtil.param(values));
+            log.info("{}[cmd:\n{}\n]\n[param:{}]", random, sql, LogUtil.param(values));
         }
         long millis = -1;
         try{
@@ -406,12 +406,12 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
             }
             if(ConfigTable.IS_THROW_SQL_UPDATE_EXCEPTION){
                 SQLUpdateException ex = new SQLUpdateException("insert异常:"+e.toString(), e);
-                ex.setSql(sql);
+                ex.setCmd(sql);
                 ex.setValues(values);
                 throw ex;
             }else{
                 if(ConfigTable.IS_LOG_SQL_WHEN_ERROR){
-                    log.error("{}[{}][sql:\n{}\n]\n[param:{}]", random, LogUtil.format("插入异常:", 33)+e.toString(), sql, LogUtil.param(run.getInsertColumns(), values));
+                    log.error("{}[{}][cmd:\n{}\n]\n[param:{}]", random, LogUtil.format("插入异常:", 33)+e.toString(), sql, LogUtil.param(run.getInsertColumns(), values));
                 }
             }
         }finally {
@@ -441,7 +441,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
      * -----------------------------------------------------------------------------------------------------------------
      * String mergeFinalQuery(DataRuntime runtime, Run run)
      * StringBuilder createConditionLike(DataRuntime runtime, StringBuilder builder, Compare compare)
-     * StringBuilder createConditionIn(DataRuntime runtime, StringBuilder builder, Compare compare, Object value)
+     * StringBuilder createConditionIn(DataRuntime runtime, StringBuilder builder, Compare compare, Object value, boolean placeholder)
      * List<Map<String, Object>> process(DataRuntime runtime, List<Map<String, Object>> list)
      *
      * protected void fillQueryContent(DataRuntime runtime, XMLRun run)
@@ -529,7 +529,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
      * @return StringBuilder
      */
     @Override
-    public RunValue createConditionLike(DataRuntime runtime, StringBuilder builder, Compare compare, Object value){
+    public RunValue createConditionLike(DataRuntime runtime, StringBuilder builder, Compare compare, Object value, boolean placeholder){
         if(compare == Compare.LIKE){
             builder.append(" CONTAINS ?");
         }else if(compare == Compare.LIKE_PREFIX || compare == Compare.START_WITH){
@@ -543,7 +543,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
     }
 
     @Override
-    public Object createConditionFindInSet(DataRuntime runtime, StringBuilder builder, String column, Compare compare, Object value) {
+    public Object createConditionFindInSet(DataRuntime runtime, StringBuilder builder, String column, Compare compare, Object value, boolean placeholder) {
         return null;
     }
 
@@ -555,7 +555,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
      * @return StringBuilder
      */
     @Override
-    public StringBuilder createConditionIn(DataRuntime runtime, StringBuilder builder, Compare compare, Object value){
+    public StringBuilder createConditionIn(DataRuntime runtime, StringBuilder builder, Compare compare, Object value, boolean placeholder){
         if(compare== Compare.NOT_IN){
             builder.append(" NOT");
         }
@@ -717,7 +717,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
         }
 
         builder.append(result);
-        run.appendCondition();
+        run.appendCondition(true);
         run.appendGroup();
         // appendOrderStore();
         run.checkValid();
@@ -787,10 +787,10 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
         }
 
        */
-        builder.append(" WHERE 1=1 ");
+        //builder.append(" WHERE 1=1 ");
         /*添加查询条件*/
         // appendConfigStore();
-        run.appendCondition();
+        run.appendCondition(this, true, true);
         run.appendGroup();
         run.appendOrderStore();
         run.checkValid();
@@ -851,7 +851,7 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
             primaryKeys.putAll(EntityAdapterProxy.primaryKeys(obj.getClass()));
         }else{
             primaryKeys = new LinkedHashMap<>();
-            primaryKeys.put(Neo4jDataRow.DEFAULT_PRIMARY_KEY, new Column(Neo4jDataRow.DEFAULT_PRIMARY_KEY));
+            primaryKeys.put(Neo4jRow.DEFAULT_PRIMARY_KEY, new Column(Neo4jRow.DEFAULT_PRIMARY_KEY));
         }
         // 不更新主键 除非显示指定
         for(String pk:primaryKeys.keySet()){
@@ -860,8 +860,8 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
             }
         }
         //不更新默认主键  除非显示指定
-        if(!columns.containsKey(Neo4jDataRow.DEFAULT_PRIMARY_KEY.toUpperCase())) {
-            keys.remove(Neo4jDataRow.DEFAULT_PRIMARY_KEY.toUpperCase());
+        if(!columns.containsKey(Neo4jRow.DEFAULT_PRIMARY_KEY.toUpperCase())) {
+            keys.remove(Neo4jRow.DEFAULT_PRIMARY_KEY.toUpperCase());
         }
 
 
@@ -901,30 +901,12 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
                 }
             }
             builder.append(JDBCAdapter.BR);
-            builder.append("\nWHERE 1=1").append(JDBCAdapter.BR_TAB);
-            if(null == configs){
-                configs = new DefaultConfigStore();
-            }
-            if(null == configs) {
-                for (Column column : primaryKeys.values()) {
-                    String pk = column.getName();
-                    builder.append(" AND ");
-                    delimiter(builder, pk).append(" = ?");
-                    updateColumns.add(pk);
-                    if (EntityAdapterProxy.hasAdapter(obj.getClass())) {
-                        Field field = EntityAdapterProxy.field(obj.getClass(), pk);
-                        // values.add(BeanUtil.getFieldValue(obj, field));
-                        run.addValues(Compare.EQUAL, new Column(pk), BeanUtil.getFieldValue(obj, field), ConfigTable.IS_AUTO_SPLIT_ARRAY);
-                    } else {
-                        // values.add(BeanUtil.getFieldValue(obj, pk));
-                        run.addValues(Compare.EQUAL, new Column(pk), BeanUtil.getFieldValue(obj, pk), ConfigTable.IS_AUTO_SPLIT_ARRAY);
-                    }
-                }
-            }else{
+           // builder.append("\nWHERE 1=1").append(JDBCAdapter.BR_TAB);
+
                 run.setConfigStore(configs);
                 run.init();
-                run.appendCondition();
-            }
+                run.appendCondition(this, true, true);
+
             // run.addValues(values);
         }
         run.setUpdateColumns(updateColumns);
@@ -950,8 +932,8 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
             }
         }
         //不更新默认主键  除非显示指定
-        if(!columns.containsKey(Neo4jDataRow.DEFAULT_PRIMARY_KEY.toUpperCase())) {
-            cols.remove(Neo4jDataRow.DEFAULT_PRIMARY_KEY.toUpperCase());
+        if(!columns.containsKey(Neo4jRow.DEFAULT_PRIMARY_KEY.toUpperCase())) {
+            cols.remove(Neo4jRow.DEFAULT_PRIMARY_KEY.toUpperCase());
         }
 
 
@@ -985,22 +967,12 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
                 }
             }
             builder.append(JDBCAdapter.BR);
-            builder.append("\nWHERE 1=1").append(JDBCAdapter.BR_TAB);
-            if(null == configs) {
-                for (String pk : primaryKeys) {
-                    builder.append(" AND ");
-                    delimiter(builder, pk).append(" = ?");
-                    updateColumns.add(pk);
-                    // values.add(row.get(pk));
-                    run.addValues(Compare.EQUAL, new Column(pk), row.get(pk), ConfigTable.IS_AUTO_SPLIT_ARRAY);
-                }
-            }else{
                 run.setConfigStore(configs);
                 run.init();
-                run.appendCondition();
+                run.appendCondition(this, true, true);
             }
             // run.addValues(values);
-        }
+
         run.setUpdateColumns(updateColumns);
         run.setBuilder(builder);
 
@@ -1034,19 +1006,19 @@ public class Neo4jAdapter extends DefaultJDBCAdapter implements JDBCAdapter, Ini
             }
         }
 
-        builder.append("\nWHERE 1=1\n\t");
+        //builder.append("\nWHERE 1=1\n\t");
 
 
 
         /*添加查询条件*/
         // appendConfigStore();
-        run.appendCondition();
+        run.appendCondition(this, true, true);
         run.appendGroup();
         run.appendOrderStore();
         run.checkValid();
     }
     @Override
-    public Run buildDeleteRunFromTable(DataRuntime runtime, int batch, String table, String key, Object values){
+    public Run buildDeleteRunFromTable(DataRuntime runtime, int batch, String table, ConfigStore configs,String key, Object values){
         if(null == table || null == key || null == values){
             return null;
         }

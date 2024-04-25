@@ -64,6 +64,21 @@ public enum Compare {
             return false;
         }
     },
+    EQUALS(11, "等于","eq"," == ? ")			{
+        public boolean compare(Object value, Object target) {
+            if(null == target){
+                if(null == value){
+                    return true;
+                }else {
+                    return false;
+                }
+            }
+            return target.toString().equalsIgnoreCase(value.toString());
+        }
+        public boolean isMultipleValue(){
+            return false;
+        }
+    },
     GREAT(20, "大于","gt"," > ? ")			{
         public boolean compare(Object value, Object target) {
             if(null == target || null == value){
@@ -160,7 +175,7 @@ public enum Compare {
     },
     START_WITH(51, "like ?%",""," LIKE ")		{
         public int getCode(){return 51;}
-        public String getSQL(){return " LIKE ";}
+        public String formula(){return " LIKE ";}
         public String getName(){return "like ?%";}
         public boolean compare(Object value, Object target) {
             if(null == target || null == value){
@@ -189,6 +204,20 @@ public enum Compare {
                 return false;
             }
             return value.toString().toUpperCase().endsWith(target.toString().toUpperCase());
+        }
+        public boolean isMultipleValue(){
+            return false;
+        }
+    },
+    /**
+     * 这个专用来实现所有列LIKE
+     */
+    LIKES(59, "like %?%",""," LIKE ")			{
+        public boolean compare(Object value, Object target) {
+            if(null == target || null == value){
+                return false;
+            }
+            return value.toString().toUpperCase().contains(target.toString().toUpperCase());
         }
         public boolean isMultipleValue(){
             return false;
@@ -264,6 +293,17 @@ public enum Compare {
     NULL(90, "空",""," IS NULL ")			{
         public boolean compare(Object value, Object target) {
             if(null == value){
+                return true;
+            }
+            return false;
+        }
+        public boolean isMultipleValue(){
+            return false;
+        }
+    },
+    EMPTY(91, "空",""," IS EMPTY ")			{
+        public boolean compare(Object value, Object target) {
+            if(BasicUtil.isEmpty(true, value)){
                 return true;
             }
             return false;
@@ -384,6 +424,17 @@ public enum Compare {
             return false;
         }
     },
+    NOT_EMPTY(191, "非空",""," IS NOT EMPTY ")			{
+        public boolean compare(Object value, Object target) {
+            if(BasicUtil.isEmpty(true, value)){
+                return false;
+            }
+            return true;
+        }
+        public boolean isMultipleValue(){
+            return false;
+        }
+    },
     //正则表达式，注意不是每个数据库都支持
     REGEX(999, "正则","regex","")			{
         public boolean compare(Object value, Object target) {
@@ -413,12 +464,12 @@ public enum Compare {
 
     private final int code;
     private final String operator;
-    private final String sql;
+    private final String formula;
     private final String name;
-    Compare(int code, String name, String operator, String sql){
+    Compare(int code, String name, String operator, String formula){
         this.code = code;
         this.name = name;
-        this.sql = sql;
+        this.formula = formula;
         this.operator = operator;
     }
 
@@ -427,8 +478,20 @@ public enum Compare {
      * @return boolean
      */
     public abstract boolean isMultipleValue();
-    public String getSQL(){
-        return sql;
+    public String formula(){
+        return formula;
+    }
+
+    public String formula(Object value, boolean placeholder){
+        //如果不需要占位符，必须在上一步把需要的引号加上
+        if(!placeholder){
+            String str = "";
+            if(null != value){
+                str = value.toString();
+            }
+            return formula.replace("?", str);
+        }
+        return formula;
     }
     public String getOperator(){
         return operator;
@@ -441,8 +504,8 @@ public enum Compare {
     }
 
     public enum EMPTY_VALUE_SWITCH {
-          IGNORE   //忽略当前条件  其他条件继续执行
-       , BREAK	   //中断执行 整个SQL不执行
+         IGNORE   //忽略当前条件  其他条件继续执行
+       , BREAK	   //中断执行 整个命令不执行
        , NULL	   //生成 WHERE ID IS NULL
        , SRC	   //原样处理 会生成 WHERE ID = NULL
        , NONE	   //根据条件判断 ++或+

@@ -33,6 +33,7 @@ import org.anyline.metadata.Schema;
 import org.anyline.metadata.Table;
 import org.anyline.proxy.EntityAdapterProxy;
 import org.anyline.util.BasicUtil;
+import org.anyline.util.ConfigTable;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Repository;
 
@@ -59,7 +60,7 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
 	 */
 	@Override
 	public boolean match(DataRuntime runtime, boolean compensate) {
-        List<String> keywords = typeMetadata().keywords(); //关键字+jdbc-url前缀+驱动类
+        List<String> keywords = type().keywords(); //关键字+jdbc-url前缀+驱动类
         String feature = runtime.getFeature();//数据源特征中包含上以任何一项都可以通过
         boolean chk = match(feature, keywords, compensate);
         if(chk) {
@@ -67,6 +68,9 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
             if (null != version && version.contains(".")) {
                 version = version.split("\\.")[0];
                 double v = BasicUtil.parseDouble(version, 0d);
+                if(ConfigTable.IS_LOG_ADAPTER_MATCH){
+                    log.warn("[adapter match][SQL Server版本检测][result:{}][runtime version:{}][adapter:{}]", false, version, this.getClass());
+                }
                 if (v < 9.0) {
                     return true;
                 }
@@ -146,7 +150,7 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
         }
 
         LinkedHashMap<String, Column> pks = null;
-        PrimaryGenerator generator = checkPrimaryGenerator(typeMetadata(), dest.getName());
+        PrimaryGenerator generator = checkPrimaryGenerator(type(), dest.getName());
         if(null != generator){
             pks = set.getRow(0).getPrimaryColumns();
             columns.putAll(pks);
@@ -174,12 +178,12 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
             }
             if(row.hasPrimaryKeys() && BasicUtil.isEmpty(row.getPrimaryValue())){
                 if(null != generator){
-                    generator.create(row, typeMetadata(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
+                    generator.create(row, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
                 }
                 //createPrimaryValue(row, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
             }
             builder.append("\n SELECT ");
-            builder.append(insertValue(runtime, run, row, true, true, false, false, columns));
+            builder.append(insertValue(runtime, run, row, i==0, true, true, false, false, columns));
             if(i<dataSize-1){
                 //多行数据之间的分隔符
                 builder.append("\n UNION ALL ");
@@ -209,7 +213,7 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
             return;
         }
 
-        PrimaryGenerator generator = checkPrimaryGenerator(typeMetadata(), dest.getName());
+        PrimaryGenerator generator = checkPrimaryGenerator(type(), dest.getName());
         LinkedHashMap<String, Column> pks = null;
         if(null != generator) {
             Object entity = list.iterator().next();
@@ -243,10 +247,10 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
             }else{*/
                 boolean create = EntityAdapterProxy.createPrimaryValue(obj, pks);
                 if(!create && null != generator){
-                    generator.create(obj, typeMetadata(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
+                    generator.create(obj, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
                     //createPrimaryValue(obj, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), null, null);
                 }
-            builder.append(insertValue(runtime, run, obj, true, true, false, false, columns));
+            builder.append(insertValue(runtime, run, obj, idx==0,true, true, false, false, columns));
            // }
             if(idx<dataSize-1){
                 //多行数据之间的分隔符
@@ -266,13 +270,15 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
      * @return String
      */
     @Override
-    public List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types) throws Exception{List<Run> runs = new ArrayList<>();
+    public List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, int types) throws Exception {List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
         StringBuilder builder = run.getBuilder();
 		builder.append("SELECT M.*, SCHEMA_NAME(M.SCHEMA_ID) AS TABLE_SCHEMA, F.VALUE AS TABLE_COMMENT FROM SYS.TABLES AS M \n")
-				.append("LEFT JOIN SYS.EXTENDED_PROPERTIES AS F ON M.OBJECT_ID = F.MAJOR_ID AND F.MINOR_ID=0\n")
-				.append("WHERE 1=1 ");
+				.append("LEFT JOIN SYS.EXTENDED_PROPERTIES AS F ON M.OBJECT_ID = F.MAJOR_ID AND F.MINOR_ID=0 \n");
+        if(BasicUtil.isNotEmpty(pattern) || BasicUtil.isNotEmpty(schema)){
+            builder.append(conditionHead());
+        }
 		if(BasicUtil.isNotEmpty(pattern)){
 			builder.append(" AND M.NAME LIKE '").append(pattern).append("'");
 		}
@@ -289,16 +295,16 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
      */
     public List<Run> buildAppendCommentRun(DataRuntime runtime, Table table) throws Exception {
         List<Run> runs = new ArrayList<>();
-        Run run = new SimpleRun(runtime);
-        runs.add(run);
-        StringBuilder builder = run.getBuilder();
         String comment = table.getComment();
         if(BasicUtil.isNotEmpty(comment)){
+            Run run = new SimpleRun(runtime);
+            runs.add(run);
+            StringBuilder builder = run.getBuilder();
             builder.append("EXEC sp_addextendedproperty ");
             builder.append("'MS_Description', ");
             builder.append("N'").append(comment).append("', ");
             builder.append("'USER', ");
-            builder.append("'").append(table.getSchema()).append("', ");
+            builder.append("'").append(table.getSchemaName()).append("', ");
             builder.append("'TABLE', ");
             builder.append("'").append(table.getName()).append("'");
         }
@@ -307,13 +313,13 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
     }
 
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, Table table) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, Table table) throws Exception {
         List<Run> runs = new ArrayList<>();
-        Run run = new SimpleRun(runtime);
-        runs.add(run);
-        StringBuilder builder = run.getBuilder();
         String comment = table.getComment();
         if(BasicUtil.isNotEmpty(comment)){
+            Run run = new SimpleRun(runtime);
+            runs.add(run);
+            StringBuilder builder = run.getBuilder();
             builder.append("EXEC sp_updateextendedproperty ");
             builder.append("'MS_Description', ");
             builder.append("N'").append(comment).append("', ");
@@ -334,12 +340,11 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
      */
     public List<Run> buildAppendCommentRun(DataRuntime runtime, Column column) throws Exception {
         List<Run> runs = new ArrayList<>();
-        Run run = new SimpleRun(runtime);
-        runs.add(run);
-        StringBuilder builder = run.getBuilder();
         String comment = column.getComment();
         if(BasicUtil.isNotEmpty(comment)){
-
+            Run run = new SimpleRun(runtime);
+            runs.add(run);
+            StringBuilder builder = run.getBuilder();
             Schema schema = column.getSchema();
             if(BasicUtil.isEmpty(schema)){
                 schema = column.getTable(true).getSchema();
@@ -374,11 +379,8 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
      * @return String
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, Column column) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, Column column) throws Exception {
         List<Run> runs = new ArrayList<>();
-        Run run = new SimpleRun(runtime);
-        runs.add(run);
-        StringBuilder builder = run.getBuilder();
         String comment = null;
         if(null != column.getUpdate()){
             comment = column.getUpdate().getComment();
@@ -386,6 +388,9 @@ public class MSSQL2000Adapter extends MSSQLAdapter implements JDBCAdapter, Initi
             comment = column.getComment();
         }
         if(BasicUtil.isNotEmpty(comment)){
+            Run run = new SimpleRun(runtime);
+            runs.add(run);
+            StringBuilder builder = run.getBuilder();
             Schema schema = column.getSchema();
             if(BasicUtil.isEmpty(schema)){
                 schema = column.getTable(true).getSchema();

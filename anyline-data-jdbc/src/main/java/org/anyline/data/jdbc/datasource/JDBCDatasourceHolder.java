@@ -118,7 +118,7 @@ public class JDBCDatasourceHolder extends DatasourceHolder {
 	 * @return DataSource
 	 * @throws Exception 异常 Exception
 	 */
-	public static String reg(String key, String pool, String driver, String url, String user, String password) throws Exception{
+	public static String reg(String key, String pool, String driver, String url, String user, String password) throws Exception {
 		Map<String, Object> param = new HashMap<>();
 		param.put("type", pool);
 		param.put("driver", driver);
@@ -127,6 +127,7 @@ public class JDBCDatasourceHolder extends DatasourceHolder {
 		param.put("password", password);
 		return reg(key, param);
 	}
+
 	/**
 	 * 注册数据源(生产环境不要调用这个方法，这里只设置几个必需参数用来测试)
 	 * @param key 切换数据源依据 默认key=dataSource
@@ -137,25 +138,44 @@ public class JDBCDatasourceHolder extends DatasourceHolder {
 	 * @return DataSource
 	 * @throws Exception 异常 Exception
 	 */
-	public static String reg(String key, DatabaseType type, String url, String user, String password) throws Exception{
+	public static String reg(String key, DatabaseType type, String url, String user, String password) throws Exception {
 		return reg(key, DATASOURCE_TYPE_DEFAULT, type.driver(), url, user, password);
 	}
 
-	public static String reg(String key, Map<String, Object> param, boolean override) throws Exception{
+	public static String reg(String key, Map<String, Object> param, boolean override) throws Exception {
 		String ds_id = inject(key, param, override);
 		return init(key, ds_id, override);
 	}
 
-	public static String reg(String key, Map<String, Object> param) throws Exception{
+	public static String reg(String key, Map<String, Object> param) throws Exception {
 		return reg(key, param, true);
 	}
-	public static DataSource reg(String key, DataSource ds, boolean override) throws Exception{
+	public static DataRuntime reg(String key, DataSource ds, boolean override) throws Exception {
 		return init(key, ds, override);
 	}
-	public static DataSource reg(String key, DataSource ds) throws Exception{
+	public static DataRuntime reg(String key, DataSource ds) throws Exception {
 		return init(key, ds, false);
 	}
-
+	public static DataRuntime reg(String key, DataSource ds, DatabaseType type, boolean override) throws Exception {
+		DataRuntime runtime = init(key, ds, override);
+		if(null != runtime && null != type){
+			runtime.setAdapterKey(type.name());
+		}
+		return runtime;
+	}
+	public static DataRuntime reg(String key, DataSource ds, DatabaseType type) throws Exception {
+		DataRuntime runtime = init(key, ds, false);
+		if(null != runtime && null != type){
+			runtime.setAdapterKey(type.name());
+		}
+		return runtime;
+	}
+	public static DataSource reg(String key, Connection connection, boolean override){
+		return null;
+	}
+	public static DataSource reg(String key, Connection connection){
+		return reg(key, connection, false);
+	}
 	public static String reg(String key, String prefix, Environment env) {
 		try {
 			if(BasicUtil.isNotEmpty(prefix) && !prefix.endsWith(".")){
@@ -189,6 +209,7 @@ public class JDBCDatasourceHolder extends DatasourceHolder {
 		}
 		return null;
 	}
+
 	/**
 	 * 根据params创建数据源, 同时注入到spring上下文
 	 * @param key 调用或注销数据源时需要用到  如ServiceProxy.service(key)
@@ -196,7 +217,7 @@ public class JDBCDatasourceHolder extends DatasourceHolder {
 	 * @return bean.id
 	 * @throws Exception Exception
 	 */
-	private static String inject(String key, Map params, boolean over) throws Exception{
+	private static String inject(String key, Map params, boolean over) throws Exception {
 		return inject(key, null, params, null, over);
 	}
 
@@ -210,7 +231,7 @@ public class JDBCDatasourceHolder extends DatasourceHolder {
 	 * @return bean.di
 	 * @throws Exception Exception
 	 */
-	private static String inject(String key, String prefix, Map params, Environment env, boolean override) throws Exception{
+	private static String inject(String key, String prefix, Map params, Environment env, boolean override) throws Exception {
 		Map<String, Object> cache = DatasourceHolder.params.get(key);
 		if(null == cache){
 			cache = new HashMap<>();
@@ -308,7 +329,7 @@ public class JDBCDatasourceHolder extends DatasourceHolder {
 	 * @return DataSource
 	 * @throws Exception 异常 Exception
 	 */
-	private static String init(String key, String datasource, boolean override) throws Exception{
+	private static String init(String key, String datasource, boolean override) throws Exception {
 		if(null != datasource) {
 			check(key, override);
 			regTransactionManager(key, datasource);
@@ -317,18 +338,36 @@ public class JDBCDatasourceHolder extends DatasourceHolder {
 				Map<String, Object> param = params.get(key);
 				if(null != param) {
 					runtime.setDriver(param.get("driver") + "");
-					runtime.setUrl(param.get("url") + "");
+					String url = param.get("url") + "";
+					runtime.setUrl(url);
+					String adapter = param.get("adapter")+"";
+					if(BasicUtil.isEmpty(adapter)){
+						adapter = RuntimeHolder.parseAdapterKey(url);
+					}
+					runtime.setAdapterKey(adapter);
+					String catalog = param.get("catalog")+"";
+					if(BasicUtil.isEmpty(catalog)){
+						catalog = RuntimeHolder.parseCatalog(url);
+					}
+					runtime.setCatalog(catalog);
+
+					String schema = param.get("schema")+"";
+					if(BasicUtil.isEmpty(schema)){
+						schema = RuntimeHolder.parseSchema(url);
+					}
+					runtime.setSchema(schema);
 				}
 			}
 		}
 		return datasource;
 	}
-	private static DataSource init(String key, DataSource datasource, boolean override) throws Exception{
+	private static DataRuntime init(String key, DataSource datasource, boolean override) throws Exception {
+		DataRuntime runtime = null;
 		if(null != datasource) {
 			if(null != factory) {
 				check(key, override);
 				regTransactionManager(key, datasource);
-				JDBCRuntimeHolder.reg(key, datasource);
+				runtime =JDBCRuntimeHolder.reg(key, datasource);
 			}else{
 				//spring还没加载完先缓存起来，最后统一注册
 				if(!caches.containsKey(key) || override){
@@ -336,9 +375,12 @@ public class JDBCDatasourceHolder extends DatasourceHolder {
 				}
 			}
 		}
-		return datasource;
+		return runtime;
 	}
 
+	/**
+	 * 在spring启动之前注册的数据源
+	 */
 	public static void loadCache(){
 		for(String key:caches.keySet()){
 			DataSource ds = caches.get(key);
@@ -357,6 +399,7 @@ public class JDBCDatasourceHolder extends DatasourceHolder {
 	private static DataRuntime exeTemporary(Object datasource, String database, DriverAdapter adapter) throws Exception {
 		return JDBCRuntimeHolder.temporary( datasource, database, adapter);
 	}
+
 	/**
 	 * 检测数据源是否连接正常
 	 * @param ds 数据源名称
@@ -377,13 +420,13 @@ public class JDBCDatasourceHolder extends DatasourceHolder {
 	}
 
 
-	public static boolean validate(JdbcTemplate jdbc) throws Exception{
+	public static boolean validate(JdbcTemplate jdbc) throws Exception {
 		return validate(jdbc.getDataSource());
 	}
-	public static boolean validate(DataSource ds) throws Exception{
+	public static boolean validate(DataSource ds) throws Exception {
 		Connection con = null;
 		try{
-			con = ds.getConnection();
+			con = DataSourceUtils.getConnection(ds);
 		}finally {
 			if (null != con && !DataSourceUtils.isConnectionTransactional(con, ds)) {
 				DataSourceUtils.releaseConnection(con, ds);
@@ -391,7 +434,7 @@ public class JDBCDatasourceHolder extends DatasourceHolder {
 		}
 		return true;
 	}
-	public static boolean exeValidate(DataRuntime runtime) throws Exception{
+	public static boolean exeValidate(DataRuntime runtime) throws Exception {
 		JdbcTemplate jdbc = (JdbcTemplate) runtime.getProcessor();
 		return validate(jdbc);
 	}
@@ -567,6 +610,7 @@ public class JDBCDatasourceHolder extends DatasourceHolder {
 		transactionStatus.put(status, datasource);
 		return status;
 	}
+
 	/**
 	 * 启动事务
 	 * @param datasource 数据源
@@ -597,6 +641,7 @@ public class JDBCDatasourceHolder extends DatasourceHolder {
 	public static TransactionStatus start(DefaultTransactionDefinition definition){
 		return start(RuntimeHolder.runtime().getKey(), definition);
 	}
+
 	/**
 	 * 开启事务
 	 * @param behavior 事务传播方式<br/>
@@ -627,7 +672,11 @@ public class JDBCDatasourceHolder extends DatasourceHolder {
 		}else {
 			dtm = (DataSourceTransactionManager) SpringContextUtil.getBean(DataRuntime.ANYLINE_TRANSACTION_BEAN_PREFIX +  datasource);
 		}
-		dtm.commit(status);
+		if(null != dtm) {
+			dtm.commit(status);
+		}else{
+			log.error("[提交事务][datasource:{}][result:false][message:管理管理器不存在]", datasource);
+		}
 		transactionStatus.remove(status);
 	}
 
@@ -643,7 +692,11 @@ public class JDBCDatasourceHolder extends DatasourceHolder {
 		}else {
 			dtm = (DataSourceTransactionManager) SpringContextUtil.getBean(DataRuntime.ANYLINE_TRANSACTION_BEAN_PREFIX +  datasource);
 		}
-		dtm.rollback(status);
+		if(null != dtm) {
+			dtm.rollback(status);
+		}else{
+			log.error("[回滚事务][datasource:{}][result:false][message:管理管理器不存在]", datasource);
+		}
 		transactionStatus.remove(status);
 	}
 

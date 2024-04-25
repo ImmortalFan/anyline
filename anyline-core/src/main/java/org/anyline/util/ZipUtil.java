@@ -79,9 +79,8 @@ public class ZipUtil {
 		}
 		return true;
 	}
-
 	public static String read(File zip, String item, Charset charset){
-		InputStream in = null;
+		InputStream in = read(zip, item);
 		ZipFile _zip = null;
 		if(!zip.exists()){
 			log.error("[文件不存在][path:{}]", zip.getAbsolutePath());
@@ -103,12 +102,26 @@ public class ZipUtil {
 			}
 		}
 	}
+	public static InputStream read(File zip, String item) {
+		InputStream in = null;
+		ZipFile _zip = null;
+		if (!zip.exists()) {
+			log.error("[文件不存在][path:{}]", zip.getAbsolutePath());
+			return null;
+		}
+		try {
+			_zip = new ZipFile(zip);
+			ZipEntry _item = _zip.getEntry(item);
+			in = _zip.getInputStream(_item);
+			return in;
+		} catch (Exception e) {
+			return null;
+		}
+	}
 	public static String read(File zip, String item, String charset){
 		return read(zip, item, Charset.forName(charset));
 	}
-	public static String read(File zip, String item){
-		return read(zip, item, Charset.forName("UTF-8"));
-	}
+
 	/**
 	 * 替换内容
 	 * @param zip 源文件
@@ -333,6 +346,7 @@ public class ZipUtil {
 		files.add(item);
 		return append(files, zip);
 	}
+
 	/** 
 	 * 压缩文件 
 	 *  

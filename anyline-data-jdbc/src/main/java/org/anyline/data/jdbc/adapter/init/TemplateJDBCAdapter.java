@@ -6,6 +6,7 @@ import org.anyline.entity.DataRow;
 import org.anyline.metadata.BaseMetadata;
 import org.anyline.metadata.Column;
 import org.anyline.metadata.Table;
+import org.anyline.metadata.type.TypeMetadata;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.jdbc.support.rowset.SqlRowSetMetaData;
@@ -18,7 +19,7 @@ import java.sql.ResultSetMetaData;
 import java.util.LinkedHashMap;
 
 //@Repository("anyline.data.jdbc.adapter.数据库类型简写")
-public abstract class TemplateJDBCAdapter extends DefaultJDBCAdapter {
+public abstract class TemplateJDBCAdapter extends AbstractJDBCAdapter {
 
 /*    public DatabaseType type(){
         return DatabaseType.NONE;
@@ -28,8 +29,12 @@ public abstract class TemplateJDBCAdapter extends DefaultJDBCAdapter {
         super();
         delimiterFr = "`";
         delimiterTo = "`";
-        for (MySQLColumnTypeAlias alias: MySQLColumnTypeAlias.values()){
-            types.put(alias.name(), alias.standard());
+        for(MySQLGenusTypeMetadataAlias alias:MySQLGenusTypeMetadataAlias.values()){
+            reg(alias);
+        }
+        for (MySQLTypeMetadataAlias alias: MySQLTypeMetadataAlias.values()){
+			reg(alias);
+			alias(alias.name(), alias.standard());
         }
         for(MySQLWriter writer: MySQLWriter.values()){
             reg(writer.supports(), writer.writer());
@@ -49,7 +54,7 @@ public abstract class TemplateJDBCAdapter extends DefaultJDBCAdapter {
     /* *****************************************************************************************************************
      *
      * 													复制过程
-     * 1.添加ColumnTypeAlias
+     * 1.添加TypeMetadataAlias
      * 2.如果有类型转换需要添加writer reader
      * 3.放工以上注释
      * 4.复制TemplateAdapter到这里
@@ -88,17 +93,15 @@ public abstract class TemplateJDBCAdapter extends DefaultJDBCAdapter {
 	 * @param meta BaseMetadata
 	 * @param catalog catalog
 	 * @param schema schema
-	 * @param override 如果meta中有值，是否覆盖
+     * @param overrideMeta 如果meta中有值，是否覆盖
+     * @param overrideRuntime 如果runtime中有值，是否覆盖，注意结果集中可能跨多个schema，所以一般不要覆盖runtime,从con获取的可以覆盖ResultSet中获取的不要覆盖
 	 * @param <T> BaseMetadata
 	 */
 	@Override
-    public <T extends BaseMetadata> void correctSchemaFromJDBC(T meta, String catalog, String schema, boolean override){
-        super.correctSchemaFromJDBC(meta, catalog, schema, override);
+    public <T extends BaseMetadata> void correctSchemaFromJDBC(DataRuntime runtime, T meta, String catalog, String schema, boolean overrideRuntime, boolean overrideMeta){
+        super.correctSchemaFromJDBC(runtime, meta, catalog, schema, overrideRuntime, overrideMeta);
     }
-	@Override
-	public <T extends BaseMetadata> void correctSchemaFromJDBC(T meta, String catalog, String schema){
-		super.correctSchemaFromJDBC(meta, catalog, schema);
-	}
+
 	/**
 	 * 在调用jdbc接口前处理业务中的catalog, schema, 部分数据库(如mysql)业务系统与dbc标准可能不一致根据实际情况处理<br/>
 	 * @param catalog catalog
@@ -123,8 +126,40 @@ public abstract class TemplateJDBCAdapter extends DefaultJDBCAdapter {
         return super.identity(runtime, random, data, configs, keyholder);
     }
 
-    public String insertHead(ConfigStore configs){
-        return super.insertHead(configs);
+    /**
+     * column[结果集封装]<br/>(方法1)<br/>
+     * 元数据长度列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta TypeMetadata
+     * @return String
+     */
+    @Override
+    public String columnMetadataLengthRefer(DataRuntime runtime, TypeMetadata meta){
+        return super.columnMetadataLengthRefer(runtime, meta);
+    }
+
+    /**
+     * column[结果集封装]<br/>(方法1)<br/>
+     * 元数据数字有效位数列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta TypeMetadata
+     * @return String
+     */
+    @Override
+    public String columnMetadataPrecisionRefer(DataRuntime runtime, TypeMetadata meta){
+        return super.columnMetadataPrecisionRefer(runtime, meta);
+    }
+
+    /**
+     * column[结果集封装]<br/>(方法1)<br/>
+     * 元数据数字小数位数列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta TypeMetadata
+     * @return String
+     */
+    @Override
+    public String columnMetadataScaleRefer(DataRuntime runtime, TypeMetadata meta){
+        return super.columnMetadataScaleRefer(runtime, meta);
     }
     public String insertFoot(ConfigStore configs, LinkedHashMap<String, Column> columns){
         return super.insertFoot(configs, columns);
@@ -162,7 +197,7 @@ public abstract class TemplateJDBCAdapter extends DefaultJDBCAdapter {
      */
 
     @Override
-    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, DatabaseMetaData dbmd, Table table, String pattern) throws Exception{
+    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, DatabaseMetaData dbmd, Table table, String pattern) throws Exception {
         return super.columns(runtime, create, columns, dbmd, table, pattern);
     }
 
@@ -194,7 +229,7 @@ public abstract class TemplateJDBCAdapter extends DefaultJDBCAdapter {
      * @throws Exception
      */
     @Override
-    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, Table table, SqlRowSet set) throws Exception{
+    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, Table table, SqlRowSet set) throws Exception {
         return super.columns(runtime, create, columns, table, set);
     }
 

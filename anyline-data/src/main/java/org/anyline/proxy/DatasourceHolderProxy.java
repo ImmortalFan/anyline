@@ -84,6 +84,12 @@ public class DatasourceHolderProxy {
                 }
             }
         }
+        if(holders.isEmpty()){
+            log.warn("[没有可用的DatasourceHolder][有可能是容器中没有注入JDBCDatasourceHolder/ElasticSearchDatasourceHolder等]");
+        }
+        if(null == holder){
+            log.warn("[定位DatasourceHolder失败][class:{}]", clazz.getName());
+        }
         return holder;
     }
 
@@ -95,7 +101,7 @@ public class DatasourceHolderProxy {
      * @return DataRuntime
      * @throws Exception 异常 Exception
      */
-    public static DataRuntime temporary(Object datasource, String database, DriverAdapter adapter) throws Exception{
+    public static DataRuntime temporary(Object datasource, String database, DriverAdapter adapter) throws Exception {
         DataRuntime runtime = null;
         if(null != datasource){
             Class clazz = datasource.getClass();
@@ -118,7 +124,7 @@ public class DatasourceHolderProxy {
         }
         return false;
     }
-    public static boolean hit(DataRuntime runtime) throws Exception{
+    public static boolean hit(DataRuntime runtime) throws Exception {
         DatasourceHolder holder = holder(runtime);
         return holder.callHit(runtime);
     }

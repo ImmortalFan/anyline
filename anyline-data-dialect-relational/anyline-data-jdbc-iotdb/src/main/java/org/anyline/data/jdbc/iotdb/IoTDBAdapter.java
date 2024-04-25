@@ -31,7 +31,7 @@ import org.springframework.stereotype.Repository;
 @Repository("anyline.data.jdbc.adapter.iotdb")
 public class IoTDBAdapter extends MySQLGenusAdapter implements JDBCAdapter, InitializingBean {
 
-	public DatabaseType typeMetadata(){
+	public DatabaseType type(){
 		return DatabaseType.IoTDB;
 	}
 
@@ -48,8 +48,9 @@ public class IoTDBAdapter extends MySQLGenusAdapter implements JDBCAdapter, Init
 		super();
 		delimiterFr = "`";
 		delimiterTo = "`";
-		for (IoTDBColumnTypeAlias alias: IoTDBColumnTypeAlias.values()){
-			types.put(alias.name(), alias.standard());
+		for (IoTDBTypeMetadataAlias alias: IoTDBTypeMetadataAlias.values()){
+			reg(alias);
+			alias(alias.name(), alias.standard());
 		}
 	}
 

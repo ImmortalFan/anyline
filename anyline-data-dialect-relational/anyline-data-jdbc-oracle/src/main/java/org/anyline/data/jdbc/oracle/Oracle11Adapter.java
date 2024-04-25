@@ -23,6 +23,7 @@ import org.anyline.data.runtime.DataRuntime;
 import org.anyline.entity.OrderStore;
 import org.anyline.entity.PageNavi;
 import org.anyline.util.BasicUtil;
+import org.anyline.util.ConfigTable;
 import org.anyline.util.regular.RegularUtil;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Repository;
@@ -35,10 +36,14 @@ import java.util.List;
  */
 @Repository("anyline.data.jdbc.adapter.oracle.11")
 public class Oracle11Adapter extends OracleAdapter implements JDBCAdapter, InitializingBean {
+
     public String version(){
         return "11";
     }
 
+    public Oracle11Adapter() {
+        super();
+    }
 	/**
 	 * 验证运行环境与当前适配器是否匹配<br/>
 	 * 默认不连接只根据连接参数<br/>
@@ -49,7 +54,7 @@ public class Oracle11Adapter extends OracleAdapter implements JDBCAdapter, Initi
 	 */
 	@Override
 	public boolean match(DataRuntime runtime, boolean compensate) {
-        List<String> keywords = typeMetadata().keywords(); //关键字+jdbc-url前缀+驱动类
+        List<String> keywords = type().keywords(); //关键字+jdbc-url前缀+驱动类
         String feature = runtime.getFeature();//数据源特征中包含上以任何一项都可以通过
         boolean chk = super.match(feature, keywords, compensate);
         if(chk) {
@@ -60,6 +65,9 @@ public class Oracle11Adapter extends OracleAdapter implements JDBCAdapter, Initi
                 if(null != version){
                     //11.2.0.1.0
                     version = version.split("\\.")[0];
+                }
+                if(ConfigTable.IS_LOG_ADAPTER_MATCH){
+                    log.warn("[adapter match][Oracle版本检测][result:{}][runtime version:{}][adapter:{}]", false, version, this.getClass());
                 }
                 double v = BasicUtil.parseDouble(version, 0d);
                 if(v < 12.0){

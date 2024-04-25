@@ -53,7 +53,7 @@ public class DefaultSQLStore extends SQLStore {
 	}
 
 	private static String root; //sql目录 多个以, 分隔 .表示项目当前目录 ${classpath}表示classes目录
-	private static String[] cuts = "sql, classes".split(",");
+	private static String[] cuts = "sql,classes".split(",");
 	private static long lastLoadTime = 0;
 
 	static {
@@ -91,17 +91,19 @@ public class DefaultSQLStore extends SQLStore {
 		lastLoadTime = System.currentTimeMillis();
 	}
 	private static synchronized void parse(String path) {
-		//\D:\ \target\anyline-simple-data-jdbc-xml-8.6.5.jar!\BOOT-INF\classes!\sql
+		//windows \D:\ \target\anyline-simple-data-jdbc-xml-8.6.5.jar!\BOOT-INF\classes!\sql
+		//linux  /anyline-simple-data-jdbc-xml-8.7.1-SNAPSHOT.jar!/BOOT-INF/classes!/sql
 		if(path.contains("jar!")){
 			//jar内部
-			String sub = path.substring(path.indexOf("jar!")+4).replace("!/","") + FileUtil.getFileSeparator();
+			String separator = FileUtil.getFileSeparator();
+			String sub = path.substring(path.indexOf("jar!")+4).replace("!"+separator,separator) + separator;
 			sub = sub.toLowerCase();
  			//sub:  \BOOT-INF\classes!\sql\
 			sub = sub.replace("!","");
-			if(sub.startsWith("/") || sub.startsWith("\\")){
+			if(sub.startsWith(separator)){
 				sub = sub.substring(1);
 			}
-			sub = sub.replace("\\","/");
+			sub = sub.replace("\\","/"); //子目录以/分隔(不区分操作系统)
 			sub = sub.replace("//","/");
 			try {
 				File file = new File(System.getProperty("java.class.path"));
@@ -154,6 +156,7 @@ public class DefaultSQLStore extends SQLStore {
 			e.printStackTrace();
 		}
 	}
+
 	/**
 	 * 解析目录或文件或jar
 	 * 遇到二级jar map中添加两个 一个带二级jar前缀 一个不带 遇到重名标记重复, 调用时抛出异常, 需要添加jar前缀才可以定位到
@@ -285,6 +288,7 @@ public class DefaultSQLStore extends SQLStore {
 		}
 		return result;
 	}
+
 	/**
      * 解析SQL
 	 * @param prefix 用来标记SQL.ID(需要多个前缀的以, 分隔)如 crm.hr.user.f1:USER_LIST  prefix = crm.hr.user.f1

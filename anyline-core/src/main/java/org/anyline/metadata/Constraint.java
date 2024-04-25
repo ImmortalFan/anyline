@@ -17,17 +17,21 @@
 
 package org.anyline.metadata;
 
+import org.anyline.entity.Order;
 import org.anyline.util.BasicUtil;
 import org.anyline.util.BeanUtil;
 
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 public class Constraint<E extends Constraint> extends BaseMetadata<E> implements Serializable {
+    protected String keyword = "CONSTRAINT"           ;
     public enum TYPE{
-        PRIMARY_KEY, UNIQUE, NOT_NULL, FOREIGN_KEY, DEFAULT
+        PRIMARY_KEY, UNIQUE, NOT_NULL, FOREIGN_KEY, CHECK, DEFAULT
     }
     protected TYPE type;
     protected LinkedHashMap<String, Column> columns = new LinkedHashMap<>();
+    protected LinkedHashMap<String, Integer> positions = new LinkedHashMap<>();
+    protected LinkedHashMap<String, Order.TYPE> orders = new LinkedHashMap<>();
     public Constraint(){
     }
 
@@ -93,7 +97,7 @@ public class Constraint<E extends Constraint> extends BaseMetadata<E> implements
     public E setType(String type) {
         if(null != type){
             type = type.toUpperCase();
-            if(type.contains("PRIMARY")){
+            if(type.contains("PRIMARY") || type.equals("P")){
                 this.type = TYPE.PRIMARY_KEY;
             }else if(type.contains("FOREIGN")){
                 this.type = TYPE.FOREIGN_KEY;
@@ -101,6 +105,10 @@ public class Constraint<E extends Constraint> extends BaseMetadata<E> implements
                 this.type = TYPE.UNIQUE;
             }else if(type.contains("NOT")){
                 this.type = TYPE.NOT_NULL;
+            }else if(type.contains("DEFAULT")){
+                this.type = TYPE.DEFAULT;
+            }else if(type.contains("CHECK") || type.equals("C")){
+                this.type = TYPE.CHECK;
             }
         }
         return (E)this;
@@ -111,6 +119,8 @@ public class Constraint<E extends Constraint> extends BaseMetadata<E> implements
             return update.columns;
         }
         return columns;
+
+
     }
     public Column getColumn(String name) {
         if(getmap && null != update){
@@ -139,13 +149,39 @@ public class Constraint<E extends Constraint> extends BaseMetadata<E> implements
     }
 
     public E addColumn(String column, String order){
-        return addColumn(new Column(column).setOrder(order));
+        return addColumn(column, order, 0);
     }
     public E addColumn(String column, String order, int position){
-        return addColumn(new Column(column).setOrder(order).setPosition(position));
+        positions.put(column.toUpperCase(), position);
+        Order.TYPE type = Order.TYPE.ASC;
+        if(null != order && order.toUpperCase().contains("DESC")){
+            type = Order.TYPE.DESC;
+        }
+        setOrder(column, type);
+        return addColumn(new Column(column));
     }
 
 
+    public E setOrders(LinkedHashMap<String, Order.TYPE> orders) {
+        this.orders = orders;
+        return (E)this;
+    }
+
+    public E setOrder(String column, Order.TYPE order) {
+        this.orders.put(column.toUpperCase(), order);
+        return (E)this;
+    }
+    public E setOrder(Column column, Order.TYPE order) {
+        this.orders.put(column.getName().toUpperCase(), order);
+        return (E)this;
+    }
+    public Order.TYPE getOrder(String column){
+        return orders.get(column.toUpperCase());
+    }
+
+    public String getKeyword() {
+        return this.keyword;
+    }
     public E clone(){
         E copy = super.clone();
 

@@ -113,6 +113,7 @@ public class ConfigParser {
 		result = parseEncrypt(result);
 		return result;
 	}
+
 	/**
 	 *
 	 * @param config +id.field:key | key
@@ -194,7 +195,7 @@ public class ConfigParser {
 				int len = tmps.length;
 				for(int i=1; i<len; i++){
 					String arg = tmps[i];
-					arg.replace("'","").replace("\"","");
+					arg = arg.replace("'","").replace("\"","");
 					result.addArg(arg);
 				}
 				config = tmps[0];
@@ -205,6 +206,7 @@ public class ConfigParser {
 		result.setKey(config);
 		return result;
 	}
+
 	/**
 	 * 解析 比较方式
 	 * @param result  result
@@ -229,13 +231,20 @@ public class ConfigParser {
 		} else if (key.startsWith("<")) {
 			result.setCompare(Compare.LESS);
 			key = key.substring(1);
-		} else if (key.startsWith("[") && key.endsWith("]")) {
+		} else if ((key.startsWith("[") || key.startsWith("![")) && key.endsWith("]")) {
 			// [1,2,3]或[1,2,3]:[1,2,3]
 			// id:[id:cd:{[1,2,3]}]
 			result.setCompare(Compare.IN);
+			if(key.startsWith("!")){
+				result.setCompare(Compare.NOT_IN);
+			}
 			result.setParamFetchType(ParseResult.FETCH_REQUEST_VALUE_TYPE_MULTIPLE);
 			if(isKey){
-				key = key.substring(1,key.length()-1);
+				if(key.startsWith("!")){
+					key = key.substring(2, key.length() - 1);
+				}else {
+					key = key.substring(1, key.length() - 1);
+				}
 			}
 
 		} else if (key.startsWith("%")) {
@@ -259,7 +268,9 @@ public class ConfigParser {
 			result.setVar(var);
 		}
 		return result;
-	}/**
+	}
+
+	/**
 	 * 解析默认值
 	 * @param result  result
 	 * @return ParseResult
@@ -293,6 +304,7 @@ public class ConfigParser {
 		}
 		return result;
 	}
+
 	/**
 	 * 解析加密方式
 	 * @param result  result
@@ -361,7 +373,7 @@ public class ConfigParser {
 			String className = parser.getClazz();
 			String methodName = parser.getMethod();
 			// int fetchValueType = parser.getParamFetchType();
-			int fetchValueType = Config.FETCH_REQUEST_VALUE_TYPE_MULTIPLE;
+			int fetchValueType = parser.getParamFetchType();//Config.FETCH_REQUEST_VALUE_TYPE_MULTIPLE;
 			boolean isKeyEncrypt = parser.isKeyEncrypt();
 			boolean isValueEncrypt = parser.isValueEncrypt();
 
@@ -425,6 +437,7 @@ public class ConfigParser {
 		}
 		return list;
 	}
+
 	/**
 	 * 默认值
 	 * @param values values
@@ -443,15 +456,7 @@ public class ConfigParser {
 					// col:value
 					key = key.substring(2, key.length()-1);
 					if(ParseResult.FETCH_REQUEST_VALUE_TYPE_MULTIPLE == parser.getParamFetchType()){
-						if(key.startsWith("[") && key.endsWith("]")){
-							key = key.substring(1, key.length()-1);
-						}
-						String tmps[] = key.split(",");
-						for(String tmp:tmps){
-							if(BasicUtil.isNotEmpty(tmp)){
-								result.add(tmp);
-							}
-						}
+						result = parseArrayValue(key);
 					}else{
 						if(BasicUtil.isNotEmpty(key)){
 							result.add(key);
@@ -481,21 +486,31 @@ public class ConfigParser {
 		String value = parser.getKey();
 		if(BasicUtil.isNotEmpty(value)){
 			if(ParseResult.FETCH_REQUEST_VALUE_TYPE_MULTIPLE == parser.getParamFetchType()){
-				if(value.startsWith("[") && value.endsWith("]")){
-					value = value.substring(1, value.length()-1);
-				}
-				String[] values = value.split(",");
-				for(String tmp:values){
-					if(BasicUtil.isNotEmpty(tmp)){
-						result.add(tmp);
-					}
-				}
+				result = parseArrayValue(value);
 			}else{
 				result.add(parser.getKey());
 			}
 		}
 		if(BasicUtil.isEmpty(true, result)){
 			result = getDefValues(parser);
+		}
+		return result;
+	}
+
+	/**
+	 * 解析,分隔的参数值(主要来自http参数)
+	 * @return list
+	 */
+	public static List<Object> parseArrayValue(String value){
+		List<Object> result = new ArrayList<>();
+		if(value.startsWith("[") && value.endsWith("]")){
+			value = value.substring(1, value.length()-1);
+		}
+		String[] values = value.split(",");
+		for(String tmp:values){
+			if(BasicUtil.isNotEmpty(tmp)){
+				result.add(tmp);
+			}
 		}
 		return result;
 	}
@@ -511,15 +526,7 @@ public class ConfigParser {
 			for(ParseResult def:defs){
 				String key = def.getKey();
 				if(ParseResult.FETCH_REQUEST_VALUE_TYPE_MULTIPLE == parser.getParamFetchType()){
-					if(key.startsWith("[") && key.endsWith("]")){
-						key = key.substring(1, key.length()-1);
-					}
-					String tmps[] = key.split(",");
-					for(String tmp:tmps){
-						if(BasicUtil.isNotEmpty(tmp)){
-							result.add(tmp);
-						}
-					}
+					result = parseArrayValue(key);
 				}else{
 					if(BasicUtil.isNotEmpty(key)){
 						result.add(key);
@@ -532,6 +539,7 @@ public class ConfigParser {
 		}
 		return result;
 	}
+
 	/**
 	 * 生成SQL签名,用来唯一标签一条SQL
 	 * @param page  page
@@ -659,6 +667,7 @@ public class ConfigParser {
 		}
 		return decrypt(value.trim(), ENCRYPT_TYPE_VALUE);
 	}
+
 	/**
 	 * 加密
 	 *
@@ -733,6 +742,7 @@ public class ConfigParser {
 			return false;
 		}
 	}
+
 	/**
 	 * 解密
 	 *
@@ -762,6 +772,7 @@ public class ConfigParser {
 		}
 		return result;
 	}
+
 	/**
 	 * 解密
 	 *
@@ -952,7 +963,7 @@ public class ConfigParser {
 	private static String getRuntimeValueFormDecryptMap(Map<String,Object> values, String key, boolean valueEncrypt) {
 		String result = null;
 		List<Object> list = getRuntimeValuesFromDecryptMap(values, key,valueEncrypt);
-		if (null != list && list.size() > 0) {
+		if (null != list && !list.isEmpty()) {
 			Object tmp = list.get(0);
 			if (null != tmp) {
 				result = tmp.toString().trim();
@@ -1021,6 +1032,7 @@ public class ConfigParser {
 				Object obj = values.get(key);
 				if(null != obj){
 					if (obj instanceof Collection) {
+						//集合
 						Collection cols = (Collection)obj;
 						for (Object value : cols) {
 							if (null == value) {
@@ -1041,11 +1053,14 @@ public class ConfigParser {
 							result.add(value);
 						}
 					}else{
+						//单个值
+						String value = null;
 						if (valueEncrypt) {
-							result.add(decryptParamValue(obj.toString()));
+							value = decryptParamValue(obj.toString());
 						}else{
-							result.add(obj.toString());
+							value = obj.toString();
 						}
+						result.add(value);
 					}
 				}else{
 					//result.add("");
@@ -1125,6 +1140,7 @@ public class ConfigParser {
 
 		return src;
 	}
+
 	/**
 	 * 密文中插入版本号位置
 	 *

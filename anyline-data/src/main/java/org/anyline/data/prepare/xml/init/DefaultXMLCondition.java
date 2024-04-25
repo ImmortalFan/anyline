@@ -20,7 +20,7 @@ package org.anyline.data.prepare.xml.init;
 import org.anyline.data.prepare.Condition;
 import org.anyline.data.prepare.RunPrepare;
 import org.anyline.data.prepare.Variable;
-import org.anyline.data.prepare.init.DefaultCondition;
+import org.anyline.data.prepare.init.AbstractCondition;
 import org.anyline.data.prepare.init.DefaultVariable;
 import org.anyline.data.run.RunValue;
 import org.anyline.data.runtime.DataRuntime;
@@ -39,7 +39,7 @@ import java.util.List;
  * @author zh 
  * 
  */ 
-public class DefaultXMLCondition extends DefaultCondition implements Condition {
+public class DefaultXMLCondition extends AbstractCondition implements Condition {
 	private String text;
 	 
 	 
@@ -113,10 +113,10 @@ public class DefaultXMLCondition extends DefaultCondition implements Condition {
 			List<List<String>> keys = null;
 			// AND CD = {CD} || CD LIKE '%{CD}%' || CD IN ({CD}) || CD = ${CD} || CD = #{CD}
 			//{CD} 用来兼容旧版本，新版本中不要用，避免与josn格式冲突
-			keys = RegularUtil.fetchs(text, RunPrepare.SQL_PARAM_VARIABLE_REGEX_EL, Regular.MATCH_MODE.CONTAIN);
+			keys = RegularUtil.fetchs(text, RunPrepare.SQL_VAR_PLACEHOLDER_REGEX, Regular.MATCH_MODE.CONTAIN);
 			if(keys.isEmpty()){
 				// AND CD = :CD || CD LIKE ':CD' || CD IN (:CD) || CD = ::CD
-				keys = RegularUtil.fetchs(text, RunPrepare.SQL_PARAM_VARIABLE_REGEX, Regular.MATCH_MODE.CONTAIN);
+				keys = RegularUtil.fetchs(text, RunPrepare.SQL_VAR_PLACEHOLDER_REGEX_EXT, Regular.MATCH_MODE.CONTAIN);
 			} 
 			if(BasicUtil.isNotEmpty(true,keys)){
 				setVariableType(VARIABLE_PLACEHOLDER_TYPE_KEY); 
@@ -191,7 +191,7 @@ public class DefaultXMLCondition extends DefaultCondition implements Condition {
 
 
 	@Override
-	public String getRunText(String prefix, DataRuntime runtime) {
+	public String getRunText(String prefix, DataRuntime runtime, boolean placeholder) {
 		String result = text; 
 		runValues = new ArrayList<>();
 		if(null == variables){

@@ -25,7 +25,7 @@ import org.anyline.data.param.ConfigStore;
 import org.anyline.data.prepare.Condition;
 import org.anyline.data.prepare.Group;
 import org.anyline.data.prepare.GroupStore;
-import org.anyline.data.prepare.init.DefaultGroup;
+import org.anyline.data.prepare.init.AbstractGroup;
 import org.anyline.data.prepare.init.DefaultGroupStore;
 import org.anyline.data.run.Run;
 import org.anyline.entity.*;
@@ -45,31 +45,31 @@ import java.util.*;
  * 
  */ 
 public class DefaultConfigStore implements ConfigStore {
-	private static final long serialVersionUID = -2098827041540802313L;
-	protected StreamHandler handler								    ; // 流式读取时handler
 	protected Class clazz										    ;
+	protected StreamHandler handler								    ; // 流式读取时handler
 	protected ConfigChain chain										; // 条件集合
 	protected PageNavi navi											; // 分页参数
 	protected OrderStore orders										; // 排序依据
 	protected GroupStore groups;
+	protected String having;
 	protected List<String> queryColumns     = new ArrayList<>()		; // 查询的列
 	protected List<String> excludeColumns 	= new ArrayList<>()		; // 不查询的列
-	protected List<Object> values											; // 保存values后续parse用到
+	protected List<Object> values									; // 保存values后续parse用到
+	protected boolean cascade				= false					; // 是否开启级联操作
 
 	protected Boolean override              = null                  ; //如果数据库中存在相同数据(根据overrideBy)是否覆盖 true或false会检测数据库null不检测
 	protected List<String> overrideByColumns		= null			; //中存在相同数据(根据overrideBy)是否覆盖 true或false会检测数据库null不检测
 	protected Constraint overrideByConstraint		= null			; //中存在相同数据(根据Constraint)是否覆盖 true或false会检测数据库null不检测
-	protected List<String> primaryKeys    	= new ArrayList()       ; // 主键
+	protected List<String> primaryKeys    	= new ArrayList<>()     ; // 主键
 	protected boolean integrality 			= true					; // 是否作为一个整体，不可分割，与其他条件合并时以()包围
 	protected List<Run> runs				= new ArrayList<>()		; // 执行过的命令 包括ddl dml
 	protected KeyAdapter.KEY_CASE kc 		= null					; //
 	protected boolean execute				= true  				;
 	protected String datasource				= null					; // 查询或操作的数据源
-	protected String dest					= null					; // 查询或操作的目标(表,存储过程,sql等)
+	protected String dest					= null					; // 查询或操作的目标(表,存储过程, sql等)
 	protected Catalog catalog				= null					;
 	protected Schema schema					= null					;
 	protected Table table					= null					;
-	protected List<String> keys				= new ArrayList<>();
 
 	@Override
 	public Table table() {
@@ -172,7 +172,7 @@ public class DefaultConfigStore implements ConfigStore {
 	}
 
 	/**
-	 * 设置查询或操作的目标(表,存储过程,sql等)
+	 * 设置查询或操作的目标(表, 存储过程, sql等)
 	 * @param dest 查询或操作的目标
 	 * @return ConfigStore
 	 */
@@ -186,7 +186,7 @@ public class DefaultConfigStore implements ConfigStore {
 	}
 
 	/**
-	 * 查询或操作的目标(表,存储过程,sql等)
+	 * 查询或操作的目标(表,存储过程, sql等)
 	 * @return String
 	 */
 	@Override
@@ -203,7 +203,6 @@ public class DefaultConfigStore implements ConfigStore {
 			this.schema = configs.schema();
 			this.table = configs.table();
 			this.datasource = configs.datasource();
-			this.keys = configs.keys();
 			this.execute = configs.execute();
 			this.clazz = configs.getClass();
 			this.integrality = configs.integrality();
@@ -218,13 +217,13 @@ public class DefaultConfigStore implements ConfigStore {
 	 */
 	@Override
 	public ConfigStore keys(String ... keys) {
-		if(null == this.keys){
-			this.keys = new ArrayList<>();
+		if(null == this.primaryKeys){
+			this.primaryKeys = new ArrayList<>();
 		}else {
-			this.keys.clear();
+			this.primaryKeys.clear();
 		}
 		for(String key:keys){
-			this.keys.add(key);
+			this.primaryKeys.add(key);
 		}
 		return this;
 	}
@@ -235,7 +234,7 @@ public class DefaultConfigStore implements ConfigStore {
 	 */
 	@Override
 	public List<String> keys() {
-		return keys;
+		return primaryKeys;
 	}
 
 	public DefaultConfigStore init(){
@@ -287,7 +286,7 @@ public class DefaultConfigStore implements ConfigStore {
 			return null; 
 		} 
 		DefaultConfig conf = null;
-		if(config.indexOf("|") != -1){
+		if(config.contains("|")){
 			conf = new DefaultConfigChain(config);
 		}else{
 			conf = new DefaultConfig(config);
@@ -410,6 +409,7 @@ public class DefaultConfigStore implements ConfigStore {
 		this.setPageNavi(navi);
 		return this;
 	}
+
 	/**
 	 * 起止行 下标从0开始
 	 * @param offset 指定第一个返回记录行的偏移量（即从哪一行开始返回） 初始行的偏移量为0
@@ -428,6 +428,26 @@ public class DefaultConfigStore implements ConfigStore {
 		return this;
 	}
 
+	/**
+	 * 设置是否需要是查询总行数<br/>
+	 * maps国为性能考虑默认不查总行数，通过这个配置强制开启总行数查询，执行完成后会在page navi中存放总行数结果
+	 * @param required 是否
+	 * @return this
+	 */
+	public ConfigStore total(boolean required){
+		if(null == navi) {
+			navi = new DefaultPageNavi();
+		}
+		navi.total(required);
+		return this;
+	}
+
+	public Boolean requiredTotal(){
+		if(null != navi){
+			return navi.requiredTotal();
+		}
+		return null;
+	}
 	@Override
 	public boolean integrality() {
 		return integrality;
@@ -527,6 +547,7 @@ public class DefaultConfigStore implements ConfigStore {
 		}
 		return columns;
 	}
+
 	/**
 	 * 读取主键
 	 * 主键为空时且容器有主键时,读取容器主键,否则返回默认主键
@@ -542,7 +563,7 @@ public class DefaultConfigStore implements ConfigStore {
 
 	public String getPrimaryKey() {
 		List<String> keys = getPrimaryKeys();
-		if (null != keys && keys.size() > 0) {
+		if (null != keys && !keys.isEmpty()) {
 			return keys.get(0);
 		}
 		return null;
@@ -553,7 +574,7 @@ public class DefaultConfigStore implements ConfigStore {
 	 * @return boolean
 	 */
 	public boolean hasSelfPrimaryKeys() {
-		if (null != primaryKeys && primaryKeys.size() > 0) {
+		if (null != primaryKeys && !primaryKeys.isEmpty()) {
 			return true;
 		} else {
 			return false;
@@ -562,6 +583,7 @@ public class DefaultConfigStore implements ConfigStore {
 	@Override
 	public ConfigStore and(EMPTY_VALUE_SWITCH swt, String text){
 		Config conf = new DefaultConfig();
+		conf.setSwitch(swt);
 		conf.setText(text);
 		chain.addConfig(conf);
 		return this;
@@ -574,8 +596,8 @@ public class DefaultConfigStore implements ConfigStore {
 			compare = Compare.AUTO;
 		}
 		int compareCode = compare.getCode();
-		if(null == prefix && var.contains(".")){
-			prefix = var.substring(0,var.indexOf("."));
+		if(null == prefix && null != var && var.contains(".")){
+			prefix = var.substring(0, var.indexOf("."));
 			var = var.substring(var.indexOf(".")+1);
 		}
 		if(null == swt || EMPTY_VALUE_SWITCH.NONE == swt) {
@@ -595,7 +617,7 @@ public class DefaultConfigStore implements ConfigStore {
 			if(BasicUtil.isNotEmpty(prefix)){
 				column = prefix + "." + var;
 			}
-			String txt = column + compare.getSQL();
+			String txt = column + compare.formula();
 			return and(swt, txt);
 		}
 
@@ -750,7 +772,7 @@ public class DefaultConfigStore implements ConfigStore {
 			if(BasicUtil.isNotEmpty(prefix)){
 				column = prefix + "." + var;
 			}
-			String txt = column + compare.getSQL();
+			String txt = column + compare.formula();
 			return ands(swt, txt);
 		}
 
@@ -821,16 +843,17 @@ public class DefaultConfigStore implements ConfigStore {
 	}
 
 	/**
-	 * 根据占位符下标赋值
+	 * 根据占位符下标赋值,注意不需要提供下标,按顺序提供值即可
 	 * @param values values
 	 * @return this
 	 */
 	@Override
 	public ConfigStore params(Object... values) {
 		if(null == this.values){
-			this.values = Arrays.asList(values);
-		}else{
-			this.values.add(Arrays.asList(values));
+			this.values = new ArrayList<>();
+		}
+		if(null != values){
+            this.values.addAll(Arrays.asList(values));
 		}
 		return this;
 	}
@@ -987,7 +1010,7 @@ public class DefaultConfigStore implements ConfigStore {
 						if(BasicUtil.isNotEmpty(prefix)){
 							column = prefix + "." + var;
 						}
-						String txt = column + compare.getSQL();
+						String txt = column + compare.formula();
 						conf.setText(txt);
 					}else {
 						conf.setCompare(compare);
@@ -1073,7 +1096,7 @@ public class DefaultConfigStore implements ConfigStore {
 					if(BasicUtil.isNotEmpty(prefix)){
 						column = prefix + "." + var;
 					}
-					String txt = column + compare.getSQL();
+					String txt = column + compare.formula();
 					conf.setText(txt);
 				}else {
 					conf.setCompare(compare);
@@ -1138,10 +1161,50 @@ public class DefaultConfigStore implements ConfigStore {
 			navi.addParam(key, values); 
 		} 
 	}
-	@Override 
+	@Override
 	public ConfigChain getConfigChain(){
-		return chain; 
-	} 
+		return chain;
+	}
+
+	@Override
+	public boolean isEmptyCondition(){
+		if(null != chain){
+			return chain.isEmpty();
+		}
+		return true;
+	}
+
+	@Override
+	public boolean isEmpty(){
+		if(null != handler){
+			return false;
+		}
+		if(null !=chain && !chain.isEmpty()){
+			return false;
+		}
+		if(null != navi){
+			return false;
+		}
+		if(null != orders && !orders.isEmpty()){
+			return false;
+		}
+		if(null != groups && !groups.isEmpty()){
+			return false;
+		}
+		if(null != having){
+			return false;
+		}
+		if(null != queryColumns && !queryColumns.isEmpty()){
+			return false;
+		}
+		if(null != excludeColumns && !excludeColumns.isEmpty()){
+			return false;
+		}
+		if(null != values && !values.isEmpty()){
+			return false;
+		}
+		return true;
+	}
 	/** 
 	 * 添加排序 
 	 * @param order  order
@@ -1194,6 +1257,11 @@ public class DefaultConfigStore implements ConfigStore {
 	} 
 	@Override 
 	public OrderStore getOrders() {
+		if(null == orders || orders.getOrders().isEmpty()){
+			if(null != navi){
+				orders = navi.getOrders();
+			}
+		}
 		return orders; 
 	} 
 	@Override 
@@ -1217,7 +1285,7 @@ public class DefaultConfigStore implements ConfigStore {
 
 	@Override 
 	public ConfigStore group(String column){
-		return group(new DefaultGroup(column));
+		return group(new AbstractGroup(column));
 	} 
 	public GroupStore getGroups() {
 		return groups; 
@@ -1225,8 +1293,20 @@ public class DefaultConfigStore implements ConfigStore {
 	public ConfigStore setGroups(GroupStore groups) {
 		this.groups = groups;
 		return this; 
-	} 
-	@Override 
+	}
+
+	@Override
+	public ConfigStore having(String having) {
+		this.having = having;
+		return this;
+	}
+
+	@Override
+	public String getHaving() {
+		return having;
+	}
+
+	@Override
 	public PageNavi getPageNavi() {
 		return navi; 
 	}
@@ -1257,7 +1337,7 @@ public class DefaultConfigStore implements ConfigStore {
 		Config config = chain.getConfig(null,var);
 		if(null != config){
 			List<Object> values = config.getValues();
-			if(null != values && values.size() > 0){
+			if(null != values && !values.isEmpty()){
 				return values.get(0);
 			}
 		}
@@ -1286,7 +1366,7 @@ public class DefaultConfigStore implements ConfigStore {
 		Config config = chain.getConfig(null, var,compare);
 		if(null != config){
 			List<Object> values = config.getValues();
-			if(null != values && values.size() > 0){
+			if(null != values && !values.isEmpty()){
 				return values.get(0);
 			}
 		}
@@ -1310,6 +1390,7 @@ public class DefaultConfigStore implements ConfigStore {
 		result.chain = chain;
 		return result;
 	}
+
 	/**
 	 * 开启记录总数懒加载 
 	 * @param ms 缓存有效期(毫秒)
@@ -1379,6 +1460,18 @@ public class DefaultConfigStore implements ConfigStore {
 		return excludeColumns;
 	}
 
+	/**
+	 * 级联(如删除点相关的边)
+	 * @param cascade  是否开启
+	 * @return ConfigStore
+	 */
+	public ConfigStore cascade(boolean cascade){
+		this.cascade = cascade;
+		return this;
+	}
+	public boolean cascade(){
+		return this.cascade;
+	}
 	@Override
 	public boolean isValid() {
 		if(null != chain){

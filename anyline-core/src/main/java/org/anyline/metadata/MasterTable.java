@@ -22,9 +22,28 @@ import org.anyline.entity.DataRow;
 import org.anyline.util.BeanUtil;
 
 import java.io.Serializable;
-import java.util.LinkedHashMap;
+import java.util.*;
 
-public class MasterTable extends Table<MasterTable>  implements Serializable {
+public class MasterTable extends Table<MasterTable> implements Serializable {
+    public enum TYPE implements Type{
+        NORMAL(1);
+        public final int value;
+        TYPE(int value){
+            this.value = value;
+        }
+        public int value(){
+            return value;
+        }
+    }
+    private static Map<Integer, Type> types = new HashMap<>();
+    static {
+        for(TYPE type: TYPE.values()){
+            types.put(type.value, type);
+        }
+    }
+    public static Map<Integer, Type> types(){
+        return types;
+    }
     protected String keyword = "STABLE"             ;
     private LinkedHashMap<String, Table> partitions  ; // 分区表
     protected MasterTable update;
@@ -50,30 +69,6 @@ public class MasterTable extends Table<MasterTable>  implements Serializable {
         this.name = name;
     }
 
-
-    public Partition getPartition() {
-        if(getmap && null != update){
-            return update.partitionBy;
-        }
-        return partitionBy;
-    }
-
-    public MasterTable setPartition(Partition partition) {
-        if(setmap && null != update){
-            update.setPartition(partition);
-            return this;
-        }
-        this.partitionBy = partition;
-        return this;
-    }
-    public MasterTable setPartition(Partition.TYPE type, String ... columns){
-        Partition partition = new Partition(type, columns);
-        this.partitionBy = partition;
-        return this;
-    }
-    public String getKeyword() {
-        return this.keyword;
-    }
 
     public LinkedHashMap<String, Table> getPartitions() {
         if(getmap && null != update){
@@ -117,6 +112,9 @@ public class MasterTable extends Table<MasterTable>  implements Serializable {
     }
 
 
+    public String getKeyword() {
+        return this.keyword;
+    }
     public String toString(){
         return this.keyword+":"+name;
     }

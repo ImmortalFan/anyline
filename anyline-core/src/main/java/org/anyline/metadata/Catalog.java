@@ -20,20 +20,22 @@ import org.anyline.util.BasicUtil;
 import java.io.Serializable;
 
 public class Catalog extends BaseMetadata<Catalog> implements Serializable {
+    protected String keyword = "CATALOG"           ;
     public Catalog(){
 
     }
     public Catalog(String name){
         this.name = name;
     }
-    public String toString(){
-        return name;
-    }
     public boolean isEmpty(){
         if(null == name || name.trim().isEmpty()){
             return true;
         }
         return false;
+    }
+
+    public String getKeyword() {
+        return this.keyword;
     }
     public boolean equals(Catalog catalog){
         return equals(catalog, true);

@@ -25,7 +25,7 @@ import org.anyline.data.prepare.ConditionChain;
 import org.anyline.data.prepare.RunPrepare;
 import org.anyline.data.prepare.Variable;
 import org.anyline.data.prepare.auto.AutoPrepare;
-import org.anyline.data.prepare.init.DefaultPrepare;
+import org.anyline.data.prepare.init.AbstractRunPrepare;
 import org.anyline.entity.Compare;
 import org.anyline.entity.Order;
 import org.anyline.entity.Join;
@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class DefaultAutoPrepare extends DefaultPrepare implements AutoPrepare {
+public class DefaultAutoPrepare extends AbstractRunPrepare implements AutoPrepare {
 	protected String datasoruce;
 	protected Catalog catalog;
 	protected Schema schema;
@@ -57,6 +57,7 @@ public class DefaultAutoPrepare extends DefaultPrepare implements AutoPrepare {
 	public RunPrepare init(){
 		return this;
 	}
+
 	/**
 	 * 设置数据源
 	 * table(c1, c2)[pk1, pk2]
@@ -100,6 +101,7 @@ public class DefaultAutoPrepare extends DefaultPrepare implements AutoPrepare {
 		chain.addCondition(condition);
 		return this;
 	}
+
 	/**
 	 * 添加静态文本查询条件
 	 */
@@ -117,6 +119,7 @@ public class DefaultAutoPrepare extends DefaultPrepare implements AutoPrepare {
 		}
 		return this;
 	}
+
 	/*******************************************************************************************
 	 *
 	 * 										赋值
@@ -145,7 +148,7 @@ public class DefaultAutoPrepare extends DefaultPrepare implements AutoPrepare {
 		}
 		if(columns.contains(",")){
 			// 多列
-			parseMultColumns(false, columns);
+			parseMultiColumns(false, columns);
 		}else{
 			// 单列
 			if(columns.startsWith("!")){
@@ -175,7 +178,7 @@ public class DefaultAutoPrepare extends DefaultPrepare implements AutoPrepare {
 		}
 		if(columns.contains(",")){
 			// 多列
-			parseMultColumns(true, columns);
+			parseMultiColumns(true, columns);
 		}else{
 			// 单列
 			if(!excludes.contains(columns)) {
@@ -186,12 +189,11 @@ public class DefaultAutoPrepare extends DefaultPrepare implements AutoPrepare {
 		return this;
 	}
 
-
 	/**
 	 * 解析多列
 	 * @param src src
 	 */
-	protected void parseMultColumns(boolean exclude, String src){
+	protected void parseMultiColumns(boolean exclude, String src){
 		List<String> cols = new ArrayList<>();
 		// 拆分转义字段(${}) CD, ${ISNULL(NM, '') AS NM}, ${CASE WHEN AGE>0 THEN 0 AGE ELSE 0 END AS AGE}, TITLE
 		while(src.contains("${")){
@@ -226,6 +228,7 @@ public class DefaultAutoPrepare extends DefaultPrepare implements AutoPrepare {
 			}
 		}
 	}
+
 	/**
 	 * 解析name
 	 * 支持的格式(以下按先后顺序即可)

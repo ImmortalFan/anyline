@@ -20,6 +20,7 @@ package org.anyline.service.init;
 import org.anyline.cache.CacheElement;
 import org.anyline.cache.CacheProvider;
 import org.anyline.dao.AnylineDao;
+import org.anyline.data.adapter.DriverAdapter;
 import org.anyline.data.cache.CacheUtil;
 import org.anyline.data.cache.PageLazyStore;
 import org.anyline.data.param.ConfigStore;
@@ -32,6 +33,9 @@ import org.anyline.data.util.DataSourceUtil;
 import org.anyline.entity.*;
 import org.anyline.exception.AnylineException;
 import org.anyline.metadata.*;
+import org.anyline.metadata.differ.MetadataDiffer;
+import org.anyline.metadata.graph.EdgeTable;
+import org.anyline.metadata.graph.VertexTable;
 import org.anyline.metadata.type.DatabaseType;
 import org.anyline.proxy.CacheProxy;
 import org.anyline.proxy.EntityAdapterProxy;
@@ -60,9 +64,17 @@ public class DefaultService<E> implements AnylineService<E> {
     @Qualifier("anyline.dao")
     protected AnylineDao dao;
 
+
+
     public String datasource() {
         return dao.runtime().datasource();
     }
+
+    @Override
+    public DriverAdapter adapter() {
+        return dao.runtime().getAdapter();
+    }
+
     protected static CacheProvider cacheProvider;
 
     public CacheProvider getCacheProvider() {
@@ -114,7 +126,35 @@ public class DefaultService<E> implements AnylineService<E> {
         return EntityAdapterProxy.column2param(columns);
     }
 
-    
+
+    /**
+     * 按条件查询
+     *
+     * @param prepare    构建最终执行命令的全部参数，包含表（或视图｜函数｜自定义SQL)查询条件 排序 分页等
+     * @param configs    根据http等上下文构造查询条件
+     * @param obj        根据obj的field/value构造查询条件(支侍Map和Object)(查询条件只支持 =和in)
+     * @param conditions 固定查询条件
+     * @return DataSet
+     */
+    @Override
+    public List<Map<String, Object>> maps(RunPrepare prepare, ConfigStore configs, Object obj, String... conditions) {
+        List<Map<String, Object>> maps = null;
+        conditions = BasicUtil.compress(conditions);
+        try {
+            configs = append(configs, obj);
+            if(null != prepare.getRuntime()){
+                maps = ServiceProxy.service(prepare.getRuntime()).getDao().maps(prepare, configs, conditions);
+            }else {
+                maps = dao.maps(prepare, configs, conditions);
+            }
+        } catch (Exception e) {
+            maps = new ArrayList<Map<String, Object>>();
+            if(ConfigTable.IS_THROW_SQL_QUERY_EXCEPTION){
+                throw e;
+            }
+        }
+        return maps;
+    }
     @Override 
     public List<Map<String, Object>> maps(String dest, ConfigStore configs, Object obj, String... conditions) {
         String[] ps = DataSourceUtil.parseRuntime(dest);
@@ -165,6 +205,7 @@ public class DefaultService<E> implements AnylineService<E> {
         }
         return maps;
     }
+
 
     @Override 
     public DataSet caches(String cache, String dest, ConfigStore configs, Object obj, String... conditions) {
@@ -218,7 +259,7 @@ public class DefaultService<E> implements AnylineService<E> {
         }
         store.setPageNavi(navi);
         DataSet set = querys(dest, store, obj, conditions);
-        if (null != set && set.size() > 0) {
+        if (null != set && !set.isEmpty()) {
             DataRow row = set.getRow(0);
             return row;
         }
@@ -239,7 +280,7 @@ public class DefaultService<E> implements AnylineService<E> {
         }
         store.setPageNavi(navi);
         DataSet set = querys(dest, store, obj, conditions);
-        if (null != set && set.size() > 0) {
+        if (null != set && !set.isEmpty()) {
             DataRow row = set.getRow(0);
             return row;
         }
@@ -378,7 +419,7 @@ public class DefaultService<E> implements AnylineService<E> {
         }
         configs.setPageNavi(navi);
         EntitySet<T> list = selects(clazz, configs, entity, conditions);
-        if (null != list && list.size() > 0) {
+        if (null != list && !list.isEmpty()) {
             return list.get(0);
         }
         if (ConfigTable.IS_RETURN_EMPTY_INSTANCE_REPLACE_NULL) {
@@ -422,7 +463,7 @@ public class DefaultService<E> implements AnylineService<E> {
         }
         configs.setPageNavi(navi);
         EntitySet<T> list = selects(dest, clazz, configs, entity, conditions);
-        if (null != list && list.size() > 0) {
+        if (null != list && !list.isEmpty()) {
             return list.get(0);
         }
         if (ConfigTable.IS_RETURN_EMPTY_INSTANCE_REPLACE_NULL) {
@@ -447,7 +488,7 @@ public class DefaultService<E> implements AnylineService<E> {
         }
         configs.setPageNavi(navi);
         EntitySet<T> list = selects(dest, clazz, configs, entity, conditions);
-        if (null != list && list.size() > 0) {
+        if (null != list && !list.isEmpty()) {
             return list.get(0);
         }
         if (ConfigTable.IS_RETURN_EMPTY_INSTANCE_REPLACE_NULL) {
@@ -542,7 +583,7 @@ public class DefaultService<E> implements AnylineService<E> {
         }
         store.setPageNavi(navi);
         DataSet set = querys(table, store, obj, conditions);
-        if (null != set && set.size() > 0) {
+        if (null != set && !set.isEmpty()) {
             DataRow row = set.getRow(0);
             return row;
         }
@@ -881,6 +922,9 @@ public class DefaultService<E> implements AnylineService<E> {
      */
     @Override
     public long update(int batch, String dest, Object data, ConfigStore configs, List<String> columns) {
+        if(!checkCondition(data, configs)){
+            return -1;
+        }
         String[] ps = DataSourceUtil.parseRuntime(dest);
         if(null != ps[0]){
             return ServiceProxy.service(ps[0]).update(batch, ps[1], data, configs, columns);
@@ -890,6 +934,9 @@ public class DefaultService<E> implements AnylineService<E> {
 
     @Override
     public long update(int batch, Table dest, Object data, ConfigStore configs, List<String> columns) {
+        if(!checkCondition(data, configs)){
+            return -1;
+        }
         String[] ps = DataSourceUtil.parseRuntime(dest);
         if(null != ps[0]){
             return ServiceProxy.service(ps[0]).update(batch, dest, data, configs, columns);
@@ -897,8 +944,45 @@ public class DefaultService<E> implements AnylineService<E> {
         return dao.update(batch, dest, data, configs, columns);
     }
 
+    /**
+     * update/delete 前检测是否有过滤条件
+     * @param data Entity | DataRow
+     * @param configs ConfigStore
+     * @return boolean 返回false表示没有过滤条件 应该中断执行
+     */
+    protected boolean checkCondition(Object data, ConfigStore configs, String ... conditions){
+        if(null != configs){
+            if(!configs.isEmptyCondition()){
+                return true;
+            }
+        }
+        if(null != conditions && conditions.length > 0){
+            return true;
+        }
+        if(null != data) {
+            if (data instanceof DataRow) {
+                DataRow row = (DataRow) data;
+                if (BasicUtil.isNotEmpty(row.getPrimaryValue())) {
+                    return true;
+                }
+            }else if(data instanceof Collection){
+                return true;
+            }else{
+                if(!EntityAdapterProxy.primaryValue(data).isEmpty()){
+                    return true;
+                }
+            }
+        }
+        log.warn("[没有update或delete过滤条件]");
+        return false;
+    }
 
-
+    protected boolean checkCondition(Object data){
+        return checkCondition(data, null);
+    }
+    protected boolean checkCondition(ConfigStore configs, String ... conditions){
+        return checkCondition(null, configs, conditions);
+    }
     /* *****************************************************************************************************************
      * 													SAVE
      ******************************************************************************************************************/
@@ -1047,7 +1131,7 @@ public class DefaultService<E> implements AnylineService<E> {
     @Override 
     public DataRow query(Procedure procedure, String... inputs) {
         DataSet set = querys(procedure, 0, 0, inputs);
-        if (set.size() > 0) {
+        if (!set.isEmpty()) {
             return set.getRow(0);
         }
         if (ConfigTable.IS_RETURN_EMPTY_INSTANCE_REPLACE_NULL) {
@@ -1056,9 +1140,19 @@ public class DefaultService<E> implements AnylineService<E> {
         return null;
     }
 
-    public long execute(int batch, String sql, List<Object> values){
-        dao.execute(batch, sql, values);
-        return 0;
+    public long execute(int batch, String sql, Collection<Object> values){
+        RunPrepare prepare = createRunPrepare(sql);
+        if (null == prepare) {
+            return -1;
+        }
+        return dao.execute(batch, prepare, values);
+    }
+    public long execute(int batch, int vol, String sql, Collection<Object> values){
+        RunPrepare prepare = createRunPrepare(sql);
+        if (null == prepare) {
+            return -1;
+        }
+        return dao.execute(batch, vol, prepare, values);
     }
     @Override 
     public long execute(String src, ConfigStore configs, String... conditions) {
@@ -1105,6 +1199,9 @@ public class DefaultService<E> implements AnylineService<E> {
 
     @Override
     public long delete(Table dest, DataRow row, String... columns) {
+        if(!checkCondition(row)){
+            return -1;
+        }
         String[] ps = DataSourceUtil.parseRuntime(dest);
         if(null != ps[0]){
             return ServiceProxy.service(ps[0]).delete(ps[1], row, columns);
@@ -1117,6 +1214,9 @@ public class DefaultService<E> implements AnylineService<E> {
     public long delete(Object obj, String... columns) {
         if (null == obj) {
             return 0;
+        }
+        if(!checkCondition(obj)){
+            return -1;
         }
         Table dest = null;
         if (obj instanceof DataRow) {
@@ -1149,6 +1249,9 @@ public class DefaultService<E> implements AnylineService<E> {
         }
         DataRow row = DataRow.parseArray(kvs);
         row.setPrimaryKey(row.keys());
+        if(!checkCondition(row)){
+            return -1;
+        }
         return dao.delete(table, row);
     }
 
@@ -1161,6 +1264,9 @@ public class DefaultService<E> implements AnylineService<E> {
         }
         DataRow row = DataRow.parseArray(kvs);
         row.setPrimaryKey(row.keys());
+        if(!checkCondition(row)){
+            return -1;
+        }
         return dao.delete(table, row);
     }
 
@@ -1247,6 +1353,9 @@ public class DefaultService<E> implements AnylineService<E> {
         if(null != ps[0]){
             return ServiceProxy.service(ps[0]).delete(ps[1], configs, conditions);
         }
+        if(!checkCondition(configs, conditions)){
+            return -1;
+        }
         return dao.delete(table, configs, conditions);
     }
 
@@ -1256,6 +1365,9 @@ public class DefaultService<E> implements AnylineService<E> {
         String[] ps = DataSourceUtil.parseRuntime(table);
         if(null != ps[0]){
             return ServiceProxy.service(ps[0]).delete(ps[1], configs, conditions);
+        }
+        if(!checkCondition(configs, conditions)){
+            return -1;
         }
         return dao.delete(table, configs, conditions);
     }
@@ -1394,6 +1506,25 @@ public class DefaultService<E> implements AnylineService<E> {
         return new DefaultConfigStore();
     }
 
+
+    /**
+     * 根据差异生成SQL
+     * @param differ differ
+     * @return sqls
+     */
+    @Override
+    public List<String> ddls(MetadataDiffer differ){
+        return dao.ddls(differ);
+    }
+    /**
+     * 根据差异生成SQL
+     * @param differs differs
+     * @return sqls
+     */
+    @Override
+    public List<String> ddls(List<MetadataDiffer> differs){
+        return dao.ddls(differs);
+    }
     /**
      * 解析SQL中指定的主键table(col1, col2)&lt;pk1, pk2&gt;
      *
@@ -1442,6 +1573,8 @@ public class DefaultService<E> implements AnylineService<E> {
             String id = table.getId();
             pks = Column.names(table.primarys());
             if (null != src && src.replace("\n","").replace("\r","").trim().matches("^[a-zA-Z]+\\s+.+")) {
+                //SELECT * FROM SSO_USER
+                //MATCH (e:CRM_USER:HR_USER) RETURN e
                 if (ConfigTable.isSQLDebug()) {
                     log.debug("[解析SQL类型] [类型:JAVA定义] [src:{}]", src);
                 }
@@ -1463,7 +1596,7 @@ public class DefaultService<E> implements AnylineService<E> {
                 prepare = new DefaultTablePrepare(table);
             }
         }
-        if (null != prepare && null != pks && pks.size() > 0) {
+        if (null != prepare && null != pks && !pks.isEmpty()) {
             prepare.setPrimaryKey(pks);
         }
         return prepare;
@@ -1608,7 +1741,7 @@ public class DefaultService<E> implements AnylineService<E> {
         return metadata;
     }
     @Override 
-    public List<String> tables(Catalog catalog, Schema schema, String name, String types) {
+    public List<String> tables(Catalog catalog, Schema schema, String name, int types) {
         LinkedHashMap<String, Table> tables = metadata.tables(catalog, schema, name, types);
         List<String> list = new ArrayList<>();
         for (Table table : tables.values()) {
@@ -1620,7 +1753,7 @@ public class DefaultService<E> implements AnylineService<E> {
 
     
     @Override 
-    public List<String> views(boolean greedy, Catalog catalog, Schema schema, String name, String types) {
+    public List<String> views(boolean greedy, Catalog catalog, Schema schema, String name, int types) {
         LinkedHashMap<String, View> views = metadata.views(greedy, catalog, schema, name, types);
         List<String> list = new ArrayList<>();
         for (View view : views.values()) {
@@ -1631,8 +1764,8 @@ public class DefaultService<E> implements AnylineService<E> {
 
     
     @Override 
-    public List<String> mtables(boolean greedy, Catalog catalog, Schema schema, String name, String types) {
-        LinkedHashMap<String, MasterTable> tables = metadata.mtables(greedy, catalog, schema, name, types);
+    public List<String> masterTables(boolean greedy, Catalog catalog, Schema schema, String name, int types) {
+        LinkedHashMap<String, MasterTable> tables = metadata.masterTables(greedy, catalog, schema, name, types);
         List<String> list = new ArrayList<>();
         for (MasterTable table : tables.values()) {
             list.add(table.getName());
@@ -1818,10 +1951,10 @@ public class DefaultService<E> implements AnylineService<E> {
          * 													table
          * -----------------------------------------------------------------------------------------------------------------
          * boolean exists(Table table)
-         * LinkedHashMap<String, Table> tables(Catalog catalog, Schema schema, String name, String types)
-         * LinkedHashMap<String, Table> tables(Schema schema, String name, String types)
-         * LinkedHashMap<String, Table> tables(String name, String types)
-         * LinkedHashMap<String, Table> tables(String types)
+         * LinkedHashMap<String, Table> tables(Catalog catalog, Schema schema, String name, int types)
+         * LinkedHashMap<String, Table> tables(Schema schema, String name, int types)
+         * LinkedHashMap<String, Table> tables(String name, int types)
+         * LinkedHashMap<String, Table> tables(int types)
          * LinkedHashMap<String, Table> tables()
          * Table table(Catalog catalog, Schema schema, String name)
          * Table table(Schema schema, String name)
@@ -1837,77 +1970,89 @@ public class DefaultService<E> implements AnylineService<E> {
         }
 
         @Override
-        public <T extends Table>  List<T> tables(boolean greedy, Catalog catalog, Schema schema, String name, String types, boolean strut) {
+        public <T extends Table>  List<T> tables(boolean greedy, Catalog catalog, Schema schema, String name, int types, int struct) {
             String[] ps = DataSourceUtil.parseRuntime(name);
             if(null != ps[0]){
-                return ServiceProxy.service(ps[0]).metadata().tables(greedy, catalog, schema, ps[1], types, strut);
+                return ServiceProxy.service(ps[0]).metadata().tables(greedy, catalog, schema, ps[1], types, struct);
             }
-            if(null == types){
-                types = "TABLE";
-            }
-            return dao.tables(greedy, catalog, schema, name, types, strut);
+            return dao.tables(greedy, catalog, schema, name, types, struct);
         }
         @Override
-        public <T extends Table>  LinkedHashMap<String, T> tables(Catalog catalog, Schema schema, String name, String types, boolean strut) {
+        public <T extends Table>  LinkedHashMap<String, T> tables(Catalog catalog, Schema schema, String name, int types, int struct) {
             String[] ps = DataSourceUtil.parseRuntime(name);
             if(null != ps[0]){
-                return ServiceProxy.service(ps[0]).metadata().tables(catalog, schema, ps[1], types, strut);
+                return ServiceProxy.service(ps[0]).metadata().tables(catalog, schema, ps[1], types, struct);
             }
-            if(null == types){
-                types = "TABLE";
-            }
-            return dao.tables(catalog, schema, name, types, strut);
+            return dao.tables(catalog, schema, name, types, struct);
         }
 
 
-        private void struct(Table table){
+        private void struct(Table table, int struct){
+            //是否查询详细结构(1列、2主键、4索引、8外键、16约束、128DDL等)
             LinkedHashMap<String, Column> columns = table.getColumns();
-            if(null == columns || columns.size() == 0) {//上一步ddl是否加载过以下内容
-                columns = columns(table);
-                table.setColumns(columns);
-                table.setTags(tags(table));
-                PrimaryKey pk = primary(table);
-                if (null != pk) {
-                    for (Column col : pk.getColumns().values()) {
-                        Column column = columns.get(col.getName().toUpperCase());
-                        if (null != column) {
-                            column.primary(true);
-                            BeanUtil.copyFieldValue(col, column);
+            if(BaseMetadata.check(struct, BaseMetadata.TYPE.COLUMN)) {
+                if(null == columns || columns.size() == 0) {//上一步ddl是否加载过以下内容
+                    columns = columns(table);
+                    table.setColumns(columns);
+                    table.setTags(tags(table));
+                }
+            }
+
+            if(BaseMetadata.check(struct, BaseMetadata.TYPE.PRIMARY)) {
+                PrimaryKey pk = table.getPrimaryKey();
+                if(null == pk){
+                    pk = primary(table);
+                    if (null != pk) {
+                        for (Column col : pk.getColumns().values()) {
+                            Column column = columns.get(col.getName().toUpperCase());
+                            if (null != column) {
+                                column.primary(true);
+                                BeanUtil.copyFieldValue(col, column);
+                            }
                         }
                     }
+                    table.setPrimaryKey(pk);
                 }
-                table.setPrimaryKey(pk);
-                table.setIndexs(indexs(table));
-                table.setConstraints(constraints(table));
-                if(null == table.ddl()){
+            }
+            if(BaseMetadata.check(struct, BaseMetadata.TYPE.INDEX)) {
+                LinkedHashMap<String, Index> indexs = table.getIndexes();
+                if(null == indexs || indexs.isEmpty()) {
+                    table.setIndexes(indexs(table));
+                }
+            }
+            if(BaseMetadata.check(struct, BaseMetadata.TYPE.CONSTRAINT)) {
+                LinkedHashMap<String, Constraint> constraints = table.getConstraints();
+                if(null == constraints || constraints.isEmpty()) {
+                    table.setConstraints(constraints(table));
+                }
+            }
+            if(BaseMetadata.check(struct, BaseMetadata.TYPE.DDL)) {
+                if (null == table.ddl()) {
                     ddl(table);
                 }
             }
+
         }
         @Override
-        public Table table(boolean greedy, Catalog catalog, Schema schema, String name, boolean struct) {
+        public Table table(boolean greedy, Catalog catalog, Schema schema, String name, int struct) {
             Table table = null;
-            List<Table> tables = tables(greedy, catalog, schema, name, null);
-            if (tables.size() > 0) {
+            List<Table> tables = tables(greedy, catalog, schema, name, Table.TYPE.NORMAL.value);
+            if (!tables.isEmpty()) {
                 table = tables.get(0);
-                if(null != table && struct) {
-                    ddl(table);
-                    LinkedHashMap<String, Column> columns = table.getColumns();
-                    if(null == columns || columns.size() == 0) {//上一步ddl是否加载过以下内容
-                        struct(table);
-                    }
+                if(null != table && struct>0) {
+                    struct(table, struct);
                 }
             }
             return table;
         }
         @Override
-        public Table table(Catalog catalog, Schema schema, String name, boolean struct) {
+        public Table table(Catalog catalog, Schema schema, String name, int struct) {
             Table table = null;
-            LinkedHashMap<String, Table> tables = tables(catalog, schema, name, null);
-            if (tables.size() > 0) {
+            LinkedHashMap<String, Table> tables = tables(catalog, schema, name, Table.TYPE.NORMAL.value);
+            if (!tables.isEmpty()) {
                 table = tables.values().iterator().next();
-                if(null != table && struct) {
-                   struct(table);
+                if(null != table && struct > 0) {
+                   struct(table, struct);
                 }
             }
             return table;
@@ -1924,13 +2069,255 @@ public class DefaultService<E> implements AnylineService<E> {
         }
 
         /* *****************************************************************************************************************
+         * 													VertexTable
+         * -----------------------------------------------------------------------------------------------------------------
+         * boolean exists(VertexTable vertexTable)
+         * LinkedHashMap<String, VertexTable> vertexTables(Catalog catalog, Schema schema, String name, int types)
+         * LinkedHashMap<String, VertexTable> vertexTables(Schema schema, String name, int types)
+         * LinkedHashMap<String, VertexTable> vertexTables(String name, int types)
+         * LinkedHashMap<String, VertexTable> vertexTables(int types)
+         * LinkedHashMap<String, VertexTable> vertexTables()
+         * VertexTable vertexTable(Catalog catalog, Schema schema, String name)
+         * VertexTable vertexTable(Schema schema, String name)
+         * VertexTable vertexTable(String name)
+         ******************************************************************************************************************/
+
+        @Override
+        public boolean exists(boolean greedy, VertexTable meta) {
+            if (null != vertexTable(greedy, meta.getCatalog(), meta.getSchema(), meta.getName(), false)) {
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public <T extends VertexTable>  List<T> vertexTables(boolean greedy, Catalog catalog, Schema schema, String name, int types, int struct) {
+            String[] ps = DataSourceUtil.parseRuntime(name);
+            if(null != ps[0]){
+                return ServiceProxy.service(ps[0]).metadata().vertexTables(greedy, catalog, schema, ps[1], types, struct);
+            }
+            return dao.vertexTables(greedy, catalog, schema, name, types, struct);
+        }
+        @Override
+        public <T extends VertexTable>  LinkedHashMap<String, T> vertexTables(Catalog catalog, Schema schema, String name, int types, int struct) {
+            String[] ps = DataSourceUtil.parseRuntime(name);
+            if(null != ps[0]){
+                return ServiceProxy.service(ps[0]).metadata().vertexTables(catalog, schema, ps[1], types, struct);
+            }
+            return dao.vertexTables(catalog, schema, name, types, struct);
+        }
+
+
+        private void struct(VertexTable vertexTable, int struct){
+            //是否查询详细结构(1列、2主键、4索引、8外键、16约束、128DDL等)
+            LinkedHashMap<String, Column> columns = vertexTable.getColumns();
+            if(BaseMetadata.check(struct, BaseMetadata.TYPE.COLUMN)) {
+                if(null == columns || columns.size() == 0) {//上一步ddl是否加载过以下内容
+                    columns = columns(vertexTable);
+                    vertexTable.setColumns(columns);
+                    vertexTable.setTags(tags(vertexTable));
+                }
+            }
+
+            if(BaseMetadata.check(struct, BaseMetadata.TYPE.PRIMARY)) {
+                PrimaryKey pk = vertexTable.getPrimaryKey();
+                if(null == pk){
+                    pk = primary(vertexTable);
+                    if (null != pk) {
+                        for (Column col : pk.getColumns().values()) {
+                            Column column = columns.get(col.getName().toUpperCase());
+                            if (null != column) {
+                                column.primary(true);
+                                BeanUtil.copyFieldValue(col, column);
+                            }
+                        }
+                    }
+                    vertexTable.setPrimaryKey(pk);
+                }
+            }
+            if(BaseMetadata.check(struct, BaseMetadata.TYPE.INDEX)) {
+                LinkedHashMap<String, Index> indexs = vertexTable.getIndexes();
+                if(null == indexs || indexs.isEmpty()) {
+                    vertexTable.setIndexes(indexs(vertexTable));
+                }
+            }
+            if(BaseMetadata.check(struct, BaseMetadata.TYPE.CONSTRAINT)) {
+                LinkedHashMap<String, Constraint> constraints = vertexTable.getConstraints();
+                if(null == constraints || constraints.isEmpty()) {
+                    vertexTable.setConstraints(constraints(vertexTable));
+                }
+            }
+            if(BaseMetadata.check(struct, BaseMetadata.TYPE.DDL)) {
+                if (null == vertexTable.ddl()) {
+                    ddl(vertexTable);
+                }
+            }
+
+        }
+        @Override
+        public VertexTable vertexTable(boolean greedy, Catalog catalog, Schema schema, String name, int struct) {
+            VertexTable vertexTable = null;
+            List<VertexTable> vertexTables = vertexTables(greedy, catalog, schema, name, VertexTable.TYPE.NORMAL.value);
+            if (!vertexTables.isEmpty()) {
+                vertexTable = vertexTables.get(0);
+                if(null != vertexTable && struct>0) {
+                    struct(vertexTable, struct);
+                }
+            }
+            return vertexTable;
+        }
+        @Override
+        public VertexTable vertexTable(Catalog catalog, Schema schema, String name, int struct) {
+            VertexTable vertexTable = null;
+            LinkedHashMap<String, VertexTable> vertexTables = vertexTables(catalog, schema, name, VertexTable.TYPE.NORMAL.value);
+            if (!vertexTables.isEmpty()) {
+                vertexTable = vertexTables.values().iterator().next();
+                if(null != vertexTable && struct > 0) {
+                    struct(vertexTable, struct);
+                }
+            }
+            return vertexTable;
+        }
+
+        @Override
+        public List<String> ddl(VertexTable meta, boolean init) {
+            String[] ps = DataSourceUtil.parseRuntime(meta);
+            if(null != ps[0]){
+                meta.setName(ps[1]);
+                return ServiceProxy.service(ps[0]).metadata().ddl(meta, init);
+            }
+            return dao.ddl(meta, init);
+        }
+
+        /* *****************************************************************************************************************
+         * 													EdgeTable
+         * -----------------------------------------------------------------------------------------------------------------
+         * boolean exists(EdgeTable edgeTable)
+         * LinkedHashMap<String, EdgeTable> edgeTables(Catalog catalog, Schema schema, String name, int types)
+         * LinkedHashMap<String, EdgeTable> edgeTables(Schema schema, String name, int types)
+         * LinkedHashMap<String, EdgeTable> edgeTables(String name, int types)
+         * LinkedHashMap<String, EdgeTable> edgeTables(int types)
+         * LinkedHashMap<String, EdgeTable> edgeTables()
+         * EdgeTable edgeTable(Catalog catalog, Schema schema, String name)
+         * EdgeTable edgeTable(Schema schema, String name)
+         * EdgeTable edgeTable(String name)
+         ******************************************************************************************************************/
+
+        @Override
+        public boolean exists(boolean greedy, EdgeTable meta) {
+            if (null != edgeTable(greedy, meta.getCatalog(), meta.getSchema(), meta.getName(), false)) {
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public <T extends EdgeTable>  List<T> edgeTables(boolean greedy, Catalog catalog, Schema schema, String name, int types, int struct) {
+            String[] ps = DataSourceUtil.parseRuntime(name);
+            if(null != ps[0]){
+                return ServiceProxy.service(ps[0]).metadata().edgeTables(greedy, catalog, schema, ps[1], types, struct);
+            }
+            return dao.edgeTables(greedy, catalog, schema, name, types, struct);
+        }
+        @Override
+        public <T extends EdgeTable>  LinkedHashMap<String, T> edgeTables(Catalog catalog, Schema schema, String name, int types, int struct) {
+            String[] ps = DataSourceUtil.parseRuntime(name);
+            if(null != ps[0]){
+                return ServiceProxy.service(ps[0]).metadata().edgeTables(catalog, schema, ps[1], types, struct);
+            }
+            return dao.edgeTables(catalog, schema, name, types, struct);
+        }
+
+
+        private void struct(EdgeTable edgeTable, int struct){
+            //是否查询详细结构(1列、2主键、4索引、8外键、16约束、128DDL等)
+            LinkedHashMap<String, Column> columns = edgeTable.getColumns();
+            if(BaseMetadata.check(struct, BaseMetadata.TYPE.COLUMN)) {
+                if(null == columns || columns.size() == 0) {//上一步ddl是否加载过以下内容
+                    columns = columns(edgeTable);
+                    edgeTable.setColumns(columns);
+                    edgeTable.setTags(tags(edgeTable));
+                }
+            }
+
+            if(BaseMetadata.check(struct, BaseMetadata.TYPE.PRIMARY)) {
+                PrimaryKey pk = edgeTable.getPrimaryKey();
+                if(null == pk){
+                    pk = primary(edgeTable);
+                    if (null != pk) {
+                        for (Column col : pk.getColumns().values()) {
+                            Column column = columns.get(col.getName().toUpperCase());
+                            if (null != column) {
+                                column.primary(true);
+                                BeanUtil.copyFieldValue(col, column);
+                            }
+                        }
+                    }
+                    edgeTable.setPrimaryKey(pk);
+                }
+            }
+            if(BaseMetadata.check(struct, BaseMetadata.TYPE.INDEX)) {
+                LinkedHashMap<String, Index> indexs = edgeTable.getIndexes();
+                if(null == indexs || indexs.isEmpty()) {
+                    edgeTable.setIndexes(indexs(edgeTable));
+                }
+            }
+            if(BaseMetadata.check(struct, BaseMetadata.TYPE.CONSTRAINT)) {
+                LinkedHashMap<String, Constraint> constraints = edgeTable.getConstraints();
+                if(null == constraints || constraints.isEmpty()) {
+                    edgeTable.setConstraints(constraints(edgeTable));
+                }
+            }
+            if(BaseMetadata.check(struct, BaseMetadata.TYPE.DDL)) {
+                if (null == edgeTable.ddl()) {
+                    ddl(edgeTable);
+                }
+            }
+
+        }
+        @Override
+        public EdgeTable edgeTable(boolean greedy, Catalog catalog, Schema schema, String name, int struct) {
+            EdgeTable edgeTable = null;
+            List<EdgeTable> edgeTables = edgeTables(greedy, catalog, schema, name, EdgeTable.TYPE.NORMAL.value);
+            if (!edgeTables.isEmpty()) {
+                edgeTable = edgeTables.get(0);
+                if(null != edgeTable && struct>0) {
+                    struct(edgeTable, struct);
+                }
+            }
+            return edgeTable;
+        }
+        @Override
+        public EdgeTable edgeTable(Catalog catalog, Schema schema, String name, int struct) {
+            EdgeTable edgeTable = null;
+            LinkedHashMap<String, EdgeTable> edgeTables = edgeTables(catalog, schema, name, EdgeTable.TYPE.NORMAL.value);
+            if (!edgeTables.isEmpty()) {
+                edgeTable = edgeTables.values().iterator().next();
+                if(null != edgeTable && struct > 0) {
+                    struct(edgeTable, struct);
+                }
+            }
+            return edgeTable;
+        }
+
+        @Override
+        public List<String> ddl(EdgeTable meta, boolean init) {
+            String[] ps = DataSourceUtil.parseRuntime(meta);
+            if(null != ps[0]){
+                meta.setName(ps[1]);
+                return ServiceProxy.service(ps[0]).metadata().ddl(meta, init);
+            }
+            return dao.ddl(meta, init);
+        }
+
+        /* *****************************************************************************************************************
          * 													view
          * -----------------------------------------------------------------------------------------------------------------
          * boolean exists(View view)
-         * LinkedHashMap<String, View> views(Catalog catalog, Schema schema, String name, String types)
-         * LinkedHashMap<String, View> views(Schema schema, String name, String types)
-         * LinkedHashMap<String, View> views(String name, String types)
-         * LinkedHashMap<String, View> views(String types)
+         * LinkedHashMap<String, View> views(Catalog catalog, Schema schema, String name, int types)
+         * LinkedHashMap<String, View> views(Schema schema, String name, int types)
+         * LinkedHashMap<String, View> views(String name, int types)
+         * LinkedHashMap<String, View> views(int types)
          * LinkedHashMap<String, View> views()
          * View view(Catalog catalog, Schema schema, String name)
          * View view(Schema schema, String name)
@@ -1947,7 +2334,7 @@ public class DefaultService<E> implements AnylineService<E> {
         }
 
         @Override
-        public <T extends View> LinkedHashMap<String, T> views(boolean greedy, Catalog catalog, Schema schema, String name, String types) {
+        public <T extends View> LinkedHashMap<String, T> views(boolean greedy, Catalog catalog, Schema schema, String name, int types) {
             String[] ps = DataSourceUtil.parseRuntime(name);
             if(null != ps[0]){
                 return ServiceProxy.service(ps[0]).metadata().views(greedy, catalog, schema, ps[1], types);
@@ -1957,7 +2344,7 @@ public class DefaultService<E> implements AnylineService<E> {
 
 
         @Override
-        public <T extends View> LinkedHashMap<String, T> views(Catalog catalog, Schema schema, String name, String types) {
+        public <T extends View> LinkedHashMap<String, T> views(Catalog catalog, Schema schema, String name, int types) {
             String[] ps = DataSourceUtil.parseRuntime(name);
             if(null != ps[0]){
                 return ServiceProxy.service(ps[0]).metadata().views(catalog, schema, ps[1], types);
@@ -1969,8 +2356,8 @@ public class DefaultService<E> implements AnylineService<E> {
         @Override
         public View view(boolean greedy, Catalog catalog, Schema schema, String name) {
             View view = null;
-            LinkedHashMap<String, View> views = views(greedy, catalog, schema, name, null);
-            if (views.size() > 0) {
+            LinkedHashMap<String, View> views = views(greedy, catalog, schema, name, View.TYPE.NORMAL.value);
+            if (!views.isEmpty()) {
                 view = views.values().iterator().next();
                 view.setColumns(columns(view));
                 ddl(view);
@@ -1993,11 +2380,11 @@ public class DefaultService<E> implements AnylineService<E> {
          * 													master table
          * -----------------------------------------------------------------------------------------------------------------
          * boolean exists(MasterTable table)
-         * LinkedHashMap<String, MasterTable> mtables(Catalog catalog, Schema schema, String name, String types)
-         * LinkedHashMap<String, MasterTable> mtables(Schema schema, String name, String types)
-         * LinkedHashMap<String, MasterTable> mtables(String name, String types)
-         * LinkedHashMap<String, MasterTable> mtables(String types)
-         * LinkedHashMap<String, MasterTable> mtables()
+         * LinkedHashMap<String, MasterTable> masterTables(Catalog catalog, Schema schema, String name, int types)
+         * LinkedHashMap<String, MasterTable> masterTables(Schema schema, String name, int types)
+         * LinkedHashMap<String, MasterTable> masterTables(String name, int types)
+         * LinkedHashMap<String, MasterTable> masterTables(int types)
+         * LinkedHashMap<String, MasterTable> masterTables()
          * MasterTable mtable(Catalog catalog, Schema schema, String name)
          * MasterTable mtable(Schema schema, String name)
          * MasterTable mtable(String name)
@@ -2018,24 +2405,24 @@ public class DefaultService<E> implements AnylineService<E> {
 
 
         @Override
-        public <T extends MasterTable> LinkedHashMap<String, T> mtables(boolean greedy, Catalog catalog, Schema schema, String name, String types) {
+        public <T extends MasterTable> LinkedHashMap<String, T> masterTables(boolean greedy, Catalog catalog, Schema schema, String name, int types) {
             String[] ps = DataSourceUtil.parseRuntime(name);
             if(null != ps[0]){
-                return ServiceProxy.service(ps[0]).metadata().mtables(greedy, catalog, schema, ps[1], types);
+                return ServiceProxy.service(ps[0]).metadata().masterTables(greedy, catalog, schema, ps[1], types);
             }
-            return dao.mtables(greedy, catalog, schema, name, types);
+            return dao.masterTables(greedy, catalog, schema, name, types);
         }
 
         @Override
-        public MasterTable mtable(boolean greedy, Catalog catalog, Schema schema, String name, boolean strut) {
-            LinkedHashMap<String, MasterTable> tables = mtables(greedy, catalog, schema, name, "STABLE");
+        public MasterTable mtable(boolean greedy, Catalog catalog, Schema schema, String name, boolean struct) {
+            LinkedHashMap<String, MasterTable> tables = masterTables(greedy, catalog, schema, name, MasterTable.TYPE.NORMAL.value);
             if (tables.size() == 0) {
                 return null;
             }
             MasterTable table = tables.values().iterator().next();
             table.setColumns(columns(table));
             table.setTags(tags(table));
-            table.setIndexs(indexs(table));
+            table.setIndexes(indexs(table));
             return table;
         }
 
@@ -2053,12 +2440,12 @@ public class DefaultService<E> implements AnylineService<E> {
          * 													partition  table
          * -----------------------------------------------------------------------------------------------------------------
          * boolean exists(PartitionTable table)
-         * LinkedHashMap<String, PartitionTable> ptables(Catalog catalog, Schema schema, String name, String types)
-         * LinkedHashMap<String, PartitionTable> ptables(Schema schema, String name, String types)
-         * LinkedHashMap<String, PartitionTable> ptables(String name, String types)
-         * LinkedHashMap<String, PartitionTable> ptables(String types)
-         * LinkedHashMap<String, PartitionTable> ptables()
-         * LinkedHashMap<String, PartitionTable> ptables(MasterTable master)
+         * LinkedHashMap<String, PartitionTable> partitionTables(Catalog catalog, Schema schema, String name, int types)
+         * LinkedHashMap<String, PartitionTable> partitionTables(Schema schema, String name, int types)
+         * LinkedHashMap<String, PartitionTable> partitionTables(String name, int types)
+         * LinkedHashMap<String, PartitionTable> partitionTables(int types)
+         * LinkedHashMap<String, PartitionTable> partitionTables()
+         * LinkedHashMap<String, PartitionTable> partitionTables(MasterTable master)
          * PartitionTable ptable(Catalog catalog, Schema schema, String name)
          * PartitionTable ptable(Schema schema, String name)
          * PartitionTable ptable(String name)
@@ -2078,93 +2465,93 @@ public class DefaultService<E> implements AnylineService<E> {
         }
 
         @Override
-        public <T extends PartitionTable> LinkedHashMap<String, T> ptables(boolean greedy, MasterTable master, Map<String, Object> tags) {
+        public <T extends PartitionTable> LinkedHashMap<String, T> partitionTables(boolean greedy, MasterTable master, Map<String, Object> tags) {
             String[] ps = DataSourceUtil.parseRuntime(master.getName());
             if(null != ps[0]){
                 master.setName(ps[1]);
-                return ServiceProxy.service(ps[0]).metadata().ptables(greedy, master, tags);
+                return ServiceProxy.service(ps[0]).metadata().partitionTables(greedy, master, tags);
             }
-            return dao.ptables(greedy, master, tags);
+            return dao.partitionTables(greedy, master, tags);
         }
 
 
         @Override
-        public <T extends PartitionTable> LinkedHashMap<String, T> ptables(boolean greedy, MasterTable master, Map<String, Object> tags, String name) {
+        public <T extends PartitionTable> LinkedHashMap<String, T> partitionTables(boolean greedy, MasterTable master, Map<String, Object> tags, String name) {
             String[] ps = DataSourceUtil.parseRuntime(master.getName());
             if(null != ps[0]){
                 master.setName(ps[1]);
-                return ServiceProxy.service(ps[0]).metadata().ptables(greedy, master, tags, name);
+                return ServiceProxy.service(ps[0]).metadata().partitionTables(greedy, master, tags, name);
             }
-            return dao.ptables(greedy, master, tags, name);
+            return dao.partitionTables(greedy, master, tags, name);
         }
 
 
         @Override
-        public <T extends PartitionTable> LinkedHashMap<String, T> ptables(Catalog catalog, Schema schema, String master, String name) {
+        public <T extends PartitionTable> LinkedHashMap<String, T> partitionTables(Catalog catalog, Schema schema, String master, String name) {
             String[] ps = DataSourceUtil.parseRuntime(name);
             if(null != ps[0]){
-                return ServiceProxy.service(ps[0]).metadata().ptables(catalog, schema, master, name);
+                return ServiceProxy.service(ps[0]).metadata().partitionTables(catalog, schema, master, name);
             }
-            return dao.ptables(false, catalog, schema, master, name);
+            return dao.partitionTables(false, catalog, schema, master, name);
         }
 
 
         @Override
-        public <T extends PartitionTable> LinkedHashMap<String, T> ptables(Schema schema, String master, String name) {
-            return ptables(false, null, schema, master, name);
+        public <T extends PartitionTable> LinkedHashMap<String, T> partitionTables(Schema schema, String master, String name) {
+            return partitionTables(false, null, schema, master, name);
         }
 
 
         @Override
-        public <T extends PartitionTable> LinkedHashMap<String, T> ptables(String master, String name) {
-            return ptables(false, null, null, master, name);
+        public <T extends PartitionTable> LinkedHashMap<String, T> partitionTables(String master, String name) {
+            return partitionTables(false, null, null, master, name);
         }
 
 
         @Override
-        public <T extends PartitionTable> LinkedHashMap<String, T> ptables(String master) {
-            return ptables(false, null, null, master, null);
+        public <T extends PartitionTable> LinkedHashMap<String, T> partitionTables(String master) {
+            return partitionTables(false, null, null, master, null);
         }
 
 
         @Override
-        public <T extends PartitionTable> LinkedHashMap<String, T> ptables(MasterTable master) {
-            return dao.ptables(false, master);
+        public <T extends PartitionTable> LinkedHashMap<String, T> partitionTables(MasterTable master) {
+            return dao.partitionTables(false, master);
         }
 
 
         @Override
-        public <T extends PartitionTable> LinkedHashMap<String, T> ptables(MasterTable master, Map<String, Object> tags) {
+        public <T extends PartitionTable> LinkedHashMap<String, T> partitionTables(MasterTable master, Map<String, Object> tags) {
             String[] ps = DataSourceUtil.parseRuntime(master.getName());
             if(null != ps[0]){
                 master.setName(ps[1]);
-                return ServiceProxy.service(ps[0]).metadata().ptables(master, tags);
+                return ServiceProxy.service(ps[0]).metadata().partitionTables(master, tags);
             }
-            return dao.ptables(false, master, tags);
+            return dao.partitionTables(false, master, tags);
         }
 
 
         @Override
-        public <T extends PartitionTable> LinkedHashMap<String, T> ptables(MasterTable master, Map<String, Object> tags, String name) {
+        public <T extends PartitionTable> LinkedHashMap<String, T> partitionTables(MasterTable master, Map<String, Object> tags, String name) {
             String[] ps = DataSourceUtil.parseRuntime(master.getName());
             if(null != ps[0]){
                 master.setName(ps[1]);
-                return ServiceProxy.service(ps[0]).metadata().ptables(master, tags, name);
+                return ServiceProxy.service(ps[0]).metadata().partitionTables(master, tags, name);
             }
-            return dao.ptables(false, master, tags, name);
+            return dao.partitionTables(false, master, tags, name);
         }
 
 
         @Override
         public PartitionTable ptable(boolean greedy, MasterTable master, String name) {
-            LinkedHashMap<String, PartitionTable> tables = ptables(greedy, master, name);
+            LinkedHashMap<String, PartitionTable> tables = partitionTables(greedy, master, name);
             if (tables.size() == 0) {
                 return null;
             }
             PartitionTable table = tables.values().iterator().next();
             table.setColumns(columns(table));
             table.setTags(tags(table));
-            table.setIndexs(indexs(table));
+            table.setIndexes(indexs(table));
             return table;
         }
 
@@ -2178,6 +2565,7 @@ public class DefaultService<E> implements AnylineService<E> {
             }
             return dao.ddl(table);
         }
+
         /* *****************************************************************************************************************
          * 													column
          * -----------------------------------------------------------------------------------------------------------------
@@ -2456,7 +2844,6 @@ public class DefaultService<E> implements AnylineService<E> {
          * 													trigger
          ******************************************************************************************************************/
 
-
         @Override
         public <T extends Trigger> LinkedHashMap<String, T> triggers(boolean greedy, Table table, List<Trigger.EVENT> events) {
             String[] ps = DataSourceUtil.parseRuntime(table);
@@ -2552,6 +2939,43 @@ public class DefaultService<E> implements AnylineService<E> {
             }
             return dao.ddl(function);
         }
+
+        /* *****************************************************************************************************************
+         * 													sequence
+         ******************************************************************************************************************/
+        @Override
+        public <T extends Sequence> List<T> sequences(boolean greedy, Catalog catalog, Schema schema, String name) {
+            String[] ps = DataSourceUtil.parseRuntime(name);
+            if(null != ps[0]){
+                return ServiceProxy.service(ps[0]).metadata().sequences(greedy, catalog, schema, ps[0]);
+            }
+            return dao.sequences(greedy, catalog, schema, name);
+        }
+        @Override
+        public <T extends Sequence> LinkedHashMap<String, T> sequences(Catalog catalog, Schema schema, String name) {
+            String[] ps = DataSourceUtil.parseRuntime(name);
+            if(null != ps[0]){
+                return ServiceProxy.service(ps[0]).metadata().sequences(catalog, schema, ps[0]);
+            }
+            return dao.sequences(catalog, schema, name);
+        }
+        @Override
+        public Sequence sequence(boolean greedy, Catalog catalog, Schema schema, String name) {
+            List<Sequence> sequences = sequences(greedy, catalog, schema, name);
+            if(null != sequences && !sequences.isEmpty()){
+                return sequences.get(0);
+            }
+            return null;
+        }
+        @Override
+        public List<String> ddl(Sequence sequence) {
+            String[] ps = DataSourceUtil.parseRuntime(sequence.getName());
+            if(null != ps[0]){
+                sequence.setName(ps[1]);
+                return ServiceProxy.service(ps[0]).metadata().ddl(sequence);
+            }
+            return dao.ddl(sequence);
+        }
     };
     /* *****************************************************************************************************************
      *
@@ -2585,29 +3009,32 @@ public class DefaultService<E> implements AnylineService<E> {
 
         
         @Override
-        public boolean save(Table table) throws Exception{
+        public boolean save(Table table) throws Exception {
             boolean result = false;
             CacheProxy.clear();
-            Table otable = metadata.table(table.getCatalog(), table.getSchema(), table.getName());
-            if(null != otable){
-                otable.setAutoDropColumn(table.isAutoDropColumn());
-                Table update = (Table)table.getUpdate();
-                if(null == update){
-                    update = table;
+            try {
+                Table otable = metadata.table(table.getCatalog(), table.getSchema(), table.getName());
+                if (null != otable) {
+                    otable.setAutoDropColumn(table.isAutoDropColumn());
+                    Table update = (Table) table.getUpdate();
+                    if (null == update) {
+                        update = table;
+                    }
+                    otable.setUpdate(update, false, false);
+                    sort(table);
+                    result = dao.alter(otable);
+                } else {
+                    sort(table);
+                    result = dao.create(table);
                 }
-                otable.setUpdate(update, false, false);
-                sort(table);
-                result = dao.alter(otable);
-            }else{
-                sort(table);
-                result =  dao.create(table);
+            }finally {
+                CacheProxy.clear();
             }
-            CacheProxy.clear();
             return result;
         }
         
         @Override
-        public boolean create(Table table) throws Exception{
+        public boolean create(Table table) throws Exception {
             sort(table);
             return dao.create(table);
         }
@@ -2626,29 +3053,32 @@ public class DefaultService<E> implements AnylineService<E> {
             }
         }
         @Override
-        public boolean alter(Table table) throws Exception{
+        public boolean alter(Table table) throws Exception {
             CacheProxy.clear();
-            Table update = (Table) table.getUpdate();
-            if(null == update){
-                update = table;
+            try {
+                Table update = (Table) table.getUpdate();
+                if (null == update) {
+                    update = table;
+                }
+                table = metadata().table(table.getCatalog(), table.getSchema(), table.getName());
+                table.setUpdate(update, false, false);
+                boolean result = dao.alter(table);
+                return result;
+            }finally {
+                CacheProxy.clear();
             }
-            table = metadata().table(table.getCatalog(), table.getSchema(), table.getName());
-            table.setUpdate(update, false, false);
-            boolean result = dao.alter(table);
-            CacheProxy.clear();
-            return result;
         }
 
 
         @Override
-        public boolean drop(Table table) throws Exception{
+        public boolean drop(Table table) throws Exception {
             boolean result = dao.drop(table);
             CacheProxy.clear();
             return result;
         }
 
         @Override
-        public boolean rename(Table origin, String name) throws Exception{
+        public boolean rename(Table origin, String name) throws Exception {
             boolean result = dao.rename(origin, name);
             CacheProxy.clear();
             return result;
@@ -2665,52 +3095,63 @@ public class DefaultService<E> implements AnylineService<E> {
 
         
         @Override
-        public boolean save(View view) throws Exception{
+        public boolean save(View view) throws Exception {
             boolean result = false;
             CacheProxy.clear();
-            View oview = metadata.view(view.getCatalog(), view.getSchema(), view.getName());
-            if(null != oview){
-                oview.setAutoDropColumn(view.isAutoDropColumn());
-                View update = (View)view.getUpdate();
-                if(null == update){
-                    update = view;
+            try {
+                View oview = metadata.view(view.getCatalog(), view.getSchema(), view.getName());
+                if (null != oview) {
+                    oview.setAutoDropColumn(view.isAutoDropColumn());
+                    View update = (View) view.getUpdate();
+                    if (null == update) {
+                        update = view;
+                    }
+                    oview.setUpdate(update, false, false);
+                    result = alter(oview);
+                } else {
+                    result = create(view);
                 }
-                oview.setUpdate(update, false, false);
-                result = alter(oview);
-            }else{
-                result =  create(view);
+                return result;
+            }finally {
+                CacheProxy.clear();
             }
-
-            CacheProxy.clear();
-            return result;
         }
         
         @Override
-        public boolean create(View view) throws Exception{
+        public boolean create(View view) throws Exception {
             boolean result =  dao.create(view);
             return result;
         }
         
         @Override
-        public boolean alter(View view) throws Exception{
+        public boolean alter(View view) throws Exception {
             CacheProxy.clear();
-            boolean result = dao.alter(view);
-            CacheProxy.clear();
-            return result;
+            try {
+                boolean result = dao.alter(view);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
 
         
         @Override
-        public boolean drop(View view) throws Exception{
-            boolean result = dao.drop(view);
-            CacheProxy.clear();
-            return result;
+        public boolean drop(View view) throws Exception {
+            try {
+                boolean result = dao.drop(view);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
         @Override
-        public boolean rename(View origin, String name) throws Exception{
-            boolean result = dao.rename(origin, name);
-            CacheProxy.clear();
-            return result;
+        public boolean rename(View origin, String name) throws Exception {
+            try {
+                boolean result = dao.rename(origin, name);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
         /* *****************************************************************************************************************
          * 													master table
@@ -2725,16 +3166,19 @@ public class DefaultService<E> implements AnylineService<E> {
         public boolean save(MasterTable table) throws Exception {
             boolean result = false;
             CacheProxy.clear();
-            MasterTable otable = metadata.mtable(table.getCatalog(), table.getSchema(), table.getName());
-            if(null != otable){
-                otable.setUpdate(table, false, false);
-                result = alter(otable);
-            }else{
-                result =  create(table);
+            try {
+                MasterTable otable = metadata.mtable(table.getCatalog(), table.getSchema(), table.getName());
+                if (null != otable) {
+                    otable.setUpdate(table, false, false);
+                    result = alter(otable);
+                } else {
+                    result = create(table);
+                }
+                return result;
+            }finally {
+                CacheProxy.clear();
             }
 
-            CacheProxy.clear();
-            return result;
         }
         
         @Override
@@ -2747,23 +3191,33 @@ public class DefaultService<E> implements AnylineService<E> {
         @Override
         public boolean alter(MasterTable table) throws Exception {
             CacheProxy.clear();
-            boolean result = dao.alter(table);
-            CacheProxy.clear();
-            return result;
+            try {
+                boolean result = dao.alter(table);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
 
         
         @Override
         public boolean drop(MasterTable table) throws Exception {
-            boolean result = dao.drop(table);
-            CacheProxy.clear();
-            return result;
+            try {
+                boolean result = dao.drop(table);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
         @Override
-        public boolean rename(MasterTable origin, String name) throws Exception{
-            boolean result = dao.rename(origin, name);
-            CacheProxy.clear();
-            return result;
+        public boolean rename(MasterTable origin, String name) throws Exception {
+            try {
+                boolean result = dao.rename(origin, name);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
+
         }
 
         /* *****************************************************************************************************************
@@ -2779,16 +3233,18 @@ public class DefaultService<E> implements AnylineService<E> {
         public boolean save(PartitionTable table) throws Exception {
             boolean result = false;
             CacheProxy.clear();
-            PartitionTable otable = metadata.ptable(table.getCatalog(), table.getSchema(), table.getMasterName(), table.getName());
-            if(null != otable){
-                otable.setUpdate(table, false, false);
-                result = alter(otable);
-            }else{
-                result =  create(table);
+            try {
+                PartitionTable otable = metadata.ptable(table.getCatalog(), table.getSchema(), table.getMasterName(), table.getName());
+                if (null != otable) {
+                    otable.setUpdate(table, false, false);
+                    result = alter(otable);
+                } else {
+                    result = create(table);
+                }
+                return result;
+            }finally {
+                CacheProxy.clear();
             }
-
-            CacheProxy.clear();
-            return result;
         }
 
         
@@ -2802,23 +3258,32 @@ public class DefaultService<E> implements AnylineService<E> {
         @Override
         public boolean alter(PartitionTable table) throws Exception {
             CacheProxy.clear();
-            boolean result = dao.alter(table);
-            CacheProxy.clear();
-            return result;
+            try {
+                boolean result = dao.alter(table);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
 
         
         @Override
         public boolean drop(PartitionTable table) throws Exception {
-            boolean result = dao.drop(table);
-            CacheProxy.clear();
-            return result;
+            try {
+                boolean result = dao.drop(table);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
         @Override
-        public boolean rename(PartitionTable origin, String name) throws Exception{
-            boolean result = dao.rename(origin, name);
-            CacheProxy.clear();
-            return result;
+        public boolean rename(PartitionTable origin, String name) throws Exception {
+            try {
+                boolean result = dao.rename(origin, name);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
 
 
@@ -2844,58 +3309,73 @@ public class DefaultService<E> implements AnylineService<E> {
 
         
         @Override
-        public boolean save(Column column) throws Exception{
+        public boolean save(Column column) throws Exception {
             boolean result = false;
             CacheProxy.clear();
-            Table table = metadata.table(column.getCatalog(), column.getSchema(), column.getTableName(true));
-            if(null == table){
-                throw new AnylineException("表不存在:"+column.getTableName(true));
+            try {
+                Table table = metadata.table(column.getCatalog(), column.getSchema(), column.getTableName(true));
+                if (null == table) {
+                    throw new AnylineException("表不存在:" + column.getTableName(true));
+                }
+                LinkedHashMap<String, Column> columns = table.getColumns();
+                Column origin = columns.get(column.getName().toUpperCase());
+                if (null == origin) {
+                    result = add(columns, column);
+                } else {
+                    result = alter(table, column);
+                }
+                return result;
+            }finally {
+                CacheProxy.clear();
             }
-            LinkedHashMap<String, Column> columns = table.getColumns();
-            Column original = columns.get(column.getName().toUpperCase());
-            if(null == original){
-                result = add(columns, column);
-            }else {
-                result = alter(table, column);
-            }
-            CacheProxy.clear();
-            return result;
         }
 
         @Override
-        public boolean add(Column column) throws Exception{
+        public boolean add(Column column) throws Exception {
             CacheProxy.clear();
-            LinkedHashMap<String, Column> columns = metadata.columns(column.getCatalog(), column.getSchema(), column.getTableName(true));
-            boolean result = add(columns, column);
-            CacheProxy.clear();
-            return result;
-        }
-
-        @Override
-        public boolean alter(Column column) throws Exception{
-            CacheProxy.clear();
-            Table table = metadata.table(column.getCatalog(), column.getSchema(), column.getTableName(true));
-            boolean result = alter(table, column);
-            CacheProxy.clear();
-            return result;
-        }
-
-
-        @Override
-        public boolean drop(Column column) throws Exception{
-            boolean result = dao.drop(column);
-            CacheProxy.clear();
-            return result;
-        }
-
-        private boolean add(LinkedHashMap<String, Column> columns, Column column) throws Exception{
-            CacheProxy.clear();
-            boolean result =  dao.add(column);
-            if(result) {
-                columns.put(column.getName(), column);
+            try {
+                LinkedHashMap<String, Column> columns = metadata.columns(column.getCatalog(), column.getSchema(), column.getTableName(true));
+                boolean result = add(columns, column);
+                return result;
+            }finally {
+                CacheProxy.clear();
             }
+        }
+
+        @Override
+        public boolean alter(Column column) throws Exception {
             CacheProxy.clear();
-            return result;
+            try {
+                Table table = metadata.table(column.getCatalog(), column.getSchema(), column.getTableName(true));
+                boolean result = alter(table, column);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
+        }
+
+
+        @Override
+        public boolean drop(Column column) throws Exception {
+            try {
+                boolean result = dao.drop(column);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
+        }
+
+        private boolean add(LinkedHashMap<String, Column> columns, Column column) throws Exception {
+            CacheProxy.clear();
+            try {
+                boolean result = dao.add(column);
+                if (result) {
+                    columns.put(column.getName().toUpperCase(), column);
+                }
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
         /**
          * 修改列
@@ -2904,43 +3384,49 @@ public class DefaultService<E> implements AnylineService<E> {
          * @return boolean
          * @throws Exception 异常 sql异常
          */
-        private boolean alter(Table table, Column column) throws Exception{
+        private boolean alter(Table table, Column column) throws Exception {
             boolean result = false;
             CacheProxy.clear();
-            LinkedHashMap<String, Column> columns = table.getColumns();
-            Column original = columns.get(column.getName().toUpperCase());
-
-            Column update = column.getUpdate();
-            if(null == update){
-                update = column.clone();
-            }
-            original.setUpdate(update, false, false);
-            String name = original.getName();
             try {
-                result = dao.alter(table, original);
-            }finally {
-                original.setName(name);
-            }
-            if(result) {
-                columns.remove(original.getName());
+                LinkedHashMap<String, Column> columns = table.getColumns();
+                Column origin = columns.get(column.getName().toUpperCase());
 
-                BeanUtil.copyFieldValueWithoutNull(original, update);
-                original.setUpdate(update, false, false);
-                BeanUtil.copyFieldValue(column, original);
-                column.setUpdate(update, false, false);
-                columns.put(original.getName(), original);
+                Column update = column.getUpdate();
+                if (null == update) {
+                    update = column.clone();
+                }
+                origin.setUpdate(update, false, false);
+                String name = origin.getName();
+                try {
+                    result = dao.alter(table, origin);
+                } finally {
+                    origin.setName(name);
+                }
+                if (result) {
+                    columns.remove(origin.getName());
+
+                    BeanUtil.copyFieldValueWithoutNull(origin, update);
+                    origin.setUpdate(update, false, false);
+                    BeanUtil.copyFieldValue(column, origin);
+                    column.setUpdate(update, false, false);
+                    columns.put(origin.getName().toUpperCase(), origin);
+                }
+                column.setTable(table);
+                return result;
+            }finally {
+                CacheProxy.clear();
             }
-            column.setTable(table);
-            CacheProxy.clear();
-            return result;
         }
 
         @Override
-        public boolean rename(Column origin, String name) throws Exception{
-            origin.setNewName(name);
-            boolean result = alter(origin);//dao.rename(origin, name);
-            CacheProxy.clear();
-            return result;
+        public boolean rename(Column origin, String name) throws Exception {
+            try {
+                origin.setNewName(name);
+                boolean result = alter(origin);//dao.rename(origin, name);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
 
         /* *****************************************************************************************************************
@@ -2965,60 +3451,75 @@ public class DefaultService<E> implements AnylineService<E> {
 
 
         @Override
-        public boolean save(Tag tag) throws Exception{
+        public boolean save(Tag tag) throws Exception {
             boolean result = false;
             CacheProxy.clear();
-            Table table = metadata.table(tag.getCatalog(), tag.getSchema(), tag.getTableName(true));
-            if(null == table){
-                throw new AnylineException("表不存在:"+tag.getTableName(true));
+            try {
+                Table table = metadata.table(tag.getCatalog(), tag.getSchema(), tag.getTableName(true));
+                if (null == table) {
+                    throw new AnylineException("表不存在:" + tag.getTableName(true));
+                }
+                LinkedHashMap<String, Tag> tags = table.getTags();
+                Tag original = tags.get(tag.getName().toUpperCase());
+                if (null == original) {
+                    result = add(tags, tag);
+                } else {
+                    result = alter(table, tag);
+                }
+                return result;
+            }finally {
+                CacheProxy.clear();
             }
-            LinkedHashMap<String, Tag> tags = table.getTags();
-            Tag original = tags.get(tag.getName().toUpperCase());
-            if(null == original){
-                result = add(tags, tag);
-            }else {
-                result = alter(table, tag);
-            }
-            CacheProxy.clear();
-            return result;
         }
 
 
         
         @Override
-        public boolean add(Tag tag) throws Exception{
+        public boolean add(Tag tag) throws Exception {
             CacheProxy.clear();
-            LinkedHashMap<String, Tag> tags = metadata.tags(tag.getCatalog(), tag.getSchema(), tag.getTableName(true));
-            boolean result = add(tags, tag);
-            CacheProxy.clear();
-            return result;
-        }
-
-        
-        @Override
-        public boolean alter(Tag tag) throws Exception{
-            CacheProxy.clear();
-            Table table = metadata.table(tag.getCatalog(), tag.getSchema(), tag.getTableName(true));
-            boolean result = alter(table, tag);
-            CacheProxy.clear();
-            return result;
-        }
-
-        
-        @Override
-        public boolean drop(Tag tag) throws Exception{
-            boolean result = dao.drop(tag);
-            CacheProxy.clear();
-            return result;
-        }
-        private boolean add(LinkedHashMap<String, Tag> tags, Tag tag) throws Exception{
-            CacheProxy.clear();
-            boolean result =  dao.add(tag);
-            if(result) {
-                tags.put(tag.getName(), tag);
+            try {
+                LinkedHashMap<String, Tag> tags = metadata.tags(tag.getCatalog(), tag.getSchema(), tag.getTableName(true));
+                boolean result = add(tags, tag);
+                return result;
+            }finally {
+                CacheProxy.clear();
             }
+        }
+
+        
+        @Override
+        public boolean alter(Tag tag) throws Exception {
             CacheProxy.clear();
-            return result;
+            try {
+                Table table = metadata.table(tag.getCatalog(), tag.getSchema(), tag.getTableName(true));
+                boolean result = alter(table, tag);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
+        }
+
+        
+        @Override
+        public boolean drop(Tag tag) throws Exception {
+            try {
+                boolean result = dao.drop(tag);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
+        }
+        private boolean add(LinkedHashMap<String, Tag> tags, Tag tag) throws Exception {
+            CacheProxy.clear();
+            try {
+                boolean result = dao.add(tag);
+                if (result) {
+                    tags.put(tag.getName(), tag);
+                }
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
         /**
          * 修改标签
@@ -3027,35 +3528,41 @@ public class DefaultService<E> implements AnylineService<E> {
          * @return boolean
          * @throws Exception 异常 sql异常
          */
-        private boolean alter(Table table, Tag tag) throws Exception{
+        private boolean alter(Table table, Tag tag) throws Exception {
             boolean result = false;
             CacheProxy.clear();
-            LinkedHashMap<String, Tag> tags = table.getTags();
-            Tag original = tags.get(tag.getName().toUpperCase());
+            try {
+                LinkedHashMap<String, Tag> tags = table.getTags();
+                Tag origin = tags.get(tag.getName().toUpperCase());
 
-            Tag update = tag.getUpdate();
-            if(null == update){
-                update = tag.clone();
-            }
-            original.setUpdate(update, false, false);
-            result = dao.alter(table, original);
-            if(result) {
-                tags.remove(original.getName());
+                Tag update = tag.getUpdate();
+                if (null == update) {
+                    update = tag.clone();
+                }
+                origin.setUpdate(update, false, false);
+                result = dao.alter(table, origin);
+                if (result) {
+                    tags.remove(origin.getName());
 
-                BeanUtil.copyFieldValueWithoutNull(original, update);
-                original.setUpdate(update, false, false);
-                BeanUtil.copyFieldValue(tag, original);
-                tags.put(original.getName(), original);
+                    BeanUtil.copyFieldValueWithoutNull(origin, update);
+                    origin.setUpdate(update, false, false);
+                    BeanUtil.copyFieldValue(tag, origin);
+                    tags.put(origin.getName(), origin);
+                }
+                return result;
+            }finally {
+                CacheProxy.clear();
             }
-            CacheProxy.clear();
-            return result;
         }
 
         @Override
-        public boolean rename(Tag origin, String name) throws Exception{
-            boolean result = dao.rename(origin, name);
-            CacheProxy.clear();
-            return result;
+        public boolean rename(Tag origin, String name) throws Exception {
+            try {
+                boolean result = dao.rename(origin, name);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
         /* *****************************************************************************************************************
          * 													primary
@@ -3067,9 +3574,13 @@ public class DefaultService<E> implements AnylineService<E> {
 
         
         @Override
-        public boolean add(PrimaryKey primary) throws Exception{
+        public boolean add(PrimaryKey primary) throws Exception {
             CacheProxy.clear();
-            return dao.add(primary);
+            try {
+                return dao.add(primary);
+            }finally {
+                CacheProxy.clear();
+            }
         }
 
         
@@ -3080,52 +3591,69 @@ public class DefaultService<E> implements AnylineService<E> {
         }
 
         @Override
-        public boolean drop(PrimaryKey primary) throws Exception{
-            boolean result = dao.drop(primary);
-            CacheProxy.clear();
-            return result;
+        public boolean drop(PrimaryKey primary) throws Exception {
+            try {
+                boolean result = dao.drop(primary);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
         @Override
-        public boolean rename(PrimaryKey origin, String name) throws Exception{
-            boolean result = dao.rename(origin, name);
-            CacheProxy.clear();
-            return result;
+        public boolean rename(PrimaryKey origin, String name) throws Exception {
+            try {
+                boolean result = dao.rename(origin, name);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
         /* *****************************************************************************************************************
          * 													foreign
          ******************************************************************************************************************/
 
         @Override
-        public boolean add(ForeignKey foreign) throws Exception{
+        public boolean add(ForeignKey foreign) throws Exception {
             CacheProxy.clear();
-            boolean result = dao.add(foreign);
-            CacheProxy.clear();
-            return result;
-        }
-        @Override
-        public boolean alter(ForeignKey foreign) throws Exception{
-            CacheProxy.clear();
-            boolean result = dao.alter(foreign);
-
-            CacheProxy.clear();
-            return result;
-        }
-        @Override
-        public boolean drop(ForeignKey foreign) throws Exception{
-            if(BasicUtil.isEmpty(foreign.getName())){
-                List<String> names = Column.names(foreign.getColumns());
-                foreign = metadata.foreign(foreign.getTable(true), names);
+            try {
+                boolean result = dao.add(foreign);
+                return result;
+            }finally {
+                CacheProxy.clear();
             }
-            boolean result = dao.drop(foreign);
+        }
+        @Override
+        public boolean alter(ForeignKey foreign) throws Exception {
             CacheProxy.clear();
-            return result;
+            try {
+                boolean result = dao.alter(foreign);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
+        }
+        @Override
+        public boolean drop(ForeignKey foreign) throws Exception {
+            try {
+                if (BasicUtil.isEmpty(foreign.getName())) {
+                    List<String> names = Column.names(foreign.getColumns());
+                    foreign = metadata.foreign(foreign.getTable(true), names);
+                }
+                boolean result = dao.drop(foreign);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
 
         @Override
-        public boolean rename(ForeignKey origin, String name) throws Exception{
-            boolean result = dao.rename(origin, name);
-            CacheProxy.clear();
-            return result;
+        public boolean rename(ForeignKey origin, String name) throws Exception {
+            try {
+                boolean result = dao.rename(origin, name);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
         /* *****************************************************************************************************************
          * 													index
@@ -3137,11 +3665,14 @@ public class DefaultService<E> implements AnylineService<E> {
 
         
         @Override
-        public boolean add(Index index) throws Exception{
+        public boolean add(Index index) throws Exception {
             CacheProxy.clear();
-            boolean result = dao.add(index);
-            CacheProxy.clear();
-            return result;
+            try {
+                boolean result = dao.add(index);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
 
         
@@ -3152,16 +3683,22 @@ public class DefaultService<E> implements AnylineService<E> {
         }
 
         @Override
-        public boolean drop(Index index) throws Exception{
-            boolean result = dao.drop(index);
-            CacheProxy.clear();
-            return result;
+        public boolean drop(Index index) throws Exception {
+            try {
+                boolean result = dao.drop(index);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
         @Override
-        public boolean rename(Index origin, String name) throws Exception{
-            boolean result = dao.rename(origin, name);
-            CacheProxy.clear();
-            return result;
+        public boolean rename(Index origin, String name) throws Exception {
+            try {
+                boolean result = dao.rename(origin, name);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
         /* *****************************************************************************************************************
          * 													constraint
@@ -3174,9 +3711,12 @@ public class DefaultService<E> implements AnylineService<E> {
         @Override
         public boolean add(Constraint constraint) throws Exception {
             CacheProxy.clear();
-            boolean result = dao.add(constraint);
-            CacheProxy.clear();
-            return result;
+            try {
+                boolean result = dao.add(constraint);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
 
         
@@ -3189,15 +3729,21 @@ public class DefaultService<E> implements AnylineService<E> {
         
         @Override
         public boolean drop(Constraint constraint) throws Exception {
-            boolean result = dao.drop(constraint);
-            CacheProxy.clear();
-            return result;
+            try {
+                boolean result = dao.drop(constraint);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
         @Override
-        public boolean rename(Constraint origin, String name) throws Exception{
-            boolean result = dao.rename(origin, name);
-            CacheProxy.clear();
-            return result;
+        public boolean rename(Constraint origin, String name) throws Exception {
+            try {
+                boolean result = dao.rename(origin, name);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
 
         /* *****************************************************************************************************************
@@ -3210,28 +3756,37 @@ public class DefaultService<E> implements AnylineService<E> {
          * @throws Exception 异常 Exception
          */
         @Override
-        public boolean create(Trigger trigger) throws Exception{
+        public boolean create(Trigger trigger) throws Exception {
             boolean result = dao.add(trigger);
             return result;
         }
         @Override
-        public boolean alter(Trigger trigger) throws Exception{
+        public boolean alter(Trigger trigger) throws Exception {
             CacheProxy.clear();
-            boolean result = dao.alter(trigger);
-            CacheProxy.clear();
-            return result;
+            try {
+                boolean result = dao.alter(trigger);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
         @Override
-        public boolean drop(Trigger trigger) throws Exception{
-            boolean result = dao.drop(trigger);
-            CacheProxy.clear();
-            return result;
+        public boolean drop(Trigger trigger) throws Exception {
+            try {
+                boolean result = dao.drop(trigger);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
         @Override
-        public boolean rename(Trigger origin, String name) throws Exception{
-            boolean result = dao.rename(origin, name);
-            CacheProxy.clear();
-            return result;
+        public boolean rename(Trigger origin, String name) throws Exception {
+            try {
+                boolean result = dao.rename(origin, name);
+                return result;
+            }finally {
+                CacheProxy.clear();
+            }
         }
         /* *****************************************************************************************************************
          * 													procedure
@@ -3243,21 +3798,21 @@ public class DefaultService<E> implements AnylineService<E> {
          * @throws Exception 异常 Exception
          */
         @Override
-        public boolean create(Procedure procedure) throws Exception{
+        public boolean create(Procedure procedure) throws Exception {
             return dao.create(procedure);
         }
         @Override
-        public boolean alter(Procedure procedure) throws Exception{
+        public boolean alter(Procedure procedure) throws Exception {
             boolean result = dao.alter(procedure);
             return result;
         }
         @Override
-        public boolean drop(Procedure procedure) throws Exception{
+        public boolean drop(Procedure procedure) throws Exception {
             boolean result = dao.drop(procedure);
             return result;
         }
         @Override
-        public boolean rename(Procedure origin, String name) throws Exception{
+        public boolean rename(Procedure origin, String name) throws Exception {
             boolean result = dao.rename(origin, name);
             return result;
         }
@@ -3272,25 +3827,54 @@ public class DefaultService<E> implements AnylineService<E> {
          * @throws Exception 异常 Exception
          */
         @Override
-        public boolean create(Function function) throws Exception{
+        public boolean create(Function function) throws Exception {
             boolean result = dao.create(function);
             return result;
         }
         @Override
-        public boolean alter(Function function) throws Exception{
+        public boolean alter(Function function) throws Exception {
             boolean result = dao.alter(function);
             return result;
         }
         @Override
-        public boolean drop(Function function) throws Exception{
+        public boolean drop(Function function) throws Exception {
             boolean result = dao.drop(function);
             return result;
         }
         @Override
-        public boolean rename(Function origin, String name) throws Exception{
+        public boolean rename(Function origin, String name) throws Exception {
             boolean result = dao.rename(origin, name);
             return result;
         }
 
+        /* *****************************************************************************************************************
+         * 													sequence
+         ******************************************************************************************************************/
+        /**
+         * 函数
+         * @param sequence 序列
+         * @return boolean
+         * @throws Exception 异常 Exception
+         */
+        @Override
+        public boolean create(Sequence sequence) throws Exception {
+            boolean result = dao.create(sequence);
+            return result;
+        }
+        @Override
+        public boolean alter(Sequence sequence) throws Exception {
+            boolean result = dao.alter(sequence);
+            return result;
+        }
+        @Override
+        public boolean drop(Sequence sequence) throws Exception {
+            boolean result = dao.drop(sequence);
+            return result;
+        }
+        @Override
+        public boolean rename(Sequence origin, String name) throws Exception {
+            boolean result = dao.rename(origin, name);
+            return result;
+        }
     };
 }

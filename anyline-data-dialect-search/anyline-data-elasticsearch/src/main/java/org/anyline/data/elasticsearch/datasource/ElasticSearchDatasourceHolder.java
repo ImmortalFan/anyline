@@ -129,7 +129,7 @@ public class ElasticSearchDatasourceHolder extends DatasourceHolder {
 	 * @return DataSource
 	 * @throws Exception 异常 Exception
 	 */
-	public static String reg(String key, String url, String user, String password) throws Exception{
+	public static String reg(String key, String url, String user, String password) throws Exception {
 		Map<String, Object> param = new HashMap<>();
 		param.put("type","ElasticSearchDataSource");
 		param.put("url", url);
@@ -138,18 +138,18 @@ public class ElasticSearchDatasourceHolder extends DatasourceHolder {
 		return reg(key, param);
 	}
 
-	public static String reg(String key, Map<String, Object> param, boolean override) throws Exception{
+	public static String reg(String key, Map<String, Object> param, boolean override) throws Exception {
 		String ds_id = inject(key, param, override);
 		return init(key, ds_id, override);
 	}
 
-	public static String reg(String key, Map<String, Object> param) throws Exception{
+	public static String reg(String key, Map<String, Object> param) throws Exception {
 		return reg(key, param, true);
 	}
-	public static RestClient reg(String key, RestClient client, boolean override) throws Exception{
+	public static RestClient reg(String key, RestClient client, boolean override) throws Exception {
 		return init(key, client, override);
 	}
-	public static RestClient reg(String key, RestClient client) throws Exception{
+	public static RestClient reg(String key, RestClient client) throws Exception {
 		return init(key, client, false);
 	}
 
@@ -184,6 +184,7 @@ public class ElasticSearchDatasourceHolder extends DatasourceHolder {
 		}
 		return null;
 	}
+
 	/**
 	 * 根据params创建数据源, 同时注入到spring上下文
 	 * @param key 调用或注销数据源时需要用到  如ServiceProxy.service(key)
@@ -191,7 +192,7 @@ public class ElasticSearchDatasourceHolder extends DatasourceHolder {
 	 * @return bean.id
 	 * @throws Exception Exception
 	 */
-	private static String inject(String key, Map params, boolean over) throws Exception{
+	private static String inject(String key, Map params, boolean over) throws Exception {
 		return inject(key, null, params, null, over);
 	}
 
@@ -205,7 +206,7 @@ public class ElasticSearchDatasourceHolder extends DatasourceHolder {
 	 * @return bean.di
 	 * @throws Exception Exception
 	 */
-	private static String inject(String key, String prefix, Map<String, Object> params, Environment env, boolean override) throws Exception{
+	private static String inject(String key, String prefix, Map<String, Object> params, Environment env, boolean override) throws Exception {
 		Map<String, Object> cache = DatasourceHolder.params.get(key);
 		if(null == cache){
 			cache = new HashMap<>();
@@ -314,7 +315,7 @@ public class ElasticSearchDatasourceHolder extends DatasourceHolder {
 	 * @return DataSource
 	 * @throws Exception 异常 Exception
 	 */
-	private static String init(String key, String client, boolean override) throws Exception{
+	private static String init(String key, String client, boolean override) throws Exception {
 		if(null != client) {
 			check(key, override);
 			Object bean = factory.getBean(client);
@@ -324,7 +325,7 @@ public class ElasticSearchDatasourceHolder extends DatasourceHolder {
 		}
 		return client;
 	}
-	private static RestClient init(String key, RestClient client, boolean override) throws Exception{
+	private static RestClient init(String key, RestClient client, boolean override) throws Exception {
 		if(null != client) {
 			check(key, override);
 			ElasticSearchRuntimeHolder.reg(key, client, null);
@@ -340,6 +341,7 @@ public class ElasticSearchDatasourceHolder extends DatasourceHolder {
 	private static DataRuntime exeTemporary(Object datasource, String database, DriverAdapter adapter) throws Exception {
 		return ElasticSearchRuntimeHolder.temporary( datasource, database, adapter);
 	}
+
 	/**
 	 * 检测数据源是否连接正常
 	 * @param ds 数据源名称
@@ -375,7 +377,7 @@ public class ElasticSearchDatasourceHolder extends DatasourceHolder {
 	}
 
 	@Override
-	public boolean callHit(DataRuntime runtime) throws Exception{
+	public boolean callHit(DataRuntime runtime) throws Exception {
 		return validate(runtime);
 	}
 
@@ -453,7 +455,6 @@ public class ElasticSearchDatasourceHolder extends DatasourceHolder {
 		}
 		return list;
 	}
-
 
 	/**
 	 * 设置请求头

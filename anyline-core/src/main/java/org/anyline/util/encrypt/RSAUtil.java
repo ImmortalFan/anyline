@@ -70,6 +70,7 @@ public class RSAUtil {
 		base64 = Base64.encodeBase64URLSafeString(key.getEncoded());
 		return base64;
 	}
+
 	/** 
 	 * 创建公钥
 	 *  
@@ -109,7 +110,7 @@ public class RSAUtil {
 	 * @return String
 	 * @throws Exception 异常 Exception
 	 */ 
-	public static String encrypt(String data, PublicKey key) throws Exception{
+	public static String encrypt(String data, PublicKey key) throws Exception {
 		try {
 			RSAPublicKey publicKey = null;
 			if(key instanceof RSAPublicKey){
@@ -125,9 +126,10 @@ public class RSAUtil {
 		} 
 	}
 
-	public static String encrypt(String data, String key) throws Exception{
+	public static String encrypt(String data, String key) throws Exception {
 		return encrypt(data, createPublicKey(key));
 	}
+
 	/** 
 	 * 私钥解密 
 	 *  
@@ -136,7 +138,7 @@ public class RSAUtil {
 	 * @return String
 	 * @throws Exception 异常 Exception
 	 */
-	public static String decrypt(String data, PrivateKey key) throws Exception{
+	public static String decrypt(String data, PrivateKey key) throws Exception {
 		try {
 			RSAPrivateKey privateKey = null;
 			if(key instanceof RSAPrivateKey) {
@@ -151,7 +153,7 @@ public class RSAUtil {
 			throw new Exception("[私钥解密异常][解密数据:" + data + "]", e);
 		} 
 	}
-	public static String decrypt(String data, String key) throws Exception{
+	public static String decrypt(String data, String key) throws Exception {
 		return decrypt(data, createPrivateKey(key));
 	}
  
@@ -164,7 +166,7 @@ public class RSAUtil {
 	 * @throws Exception 异常 Exception
 	 */ 
  
-	public static String encrypt(String data, RSAPrivateKey key) throws Exception{
+	public static String encrypt(String data, RSAPrivateKey key) throws Exception {
 		try {
 			RSAPrivateKey privateKey = null;
 			if(key instanceof RSAPrivateKey) {
@@ -189,7 +191,7 @@ public class RSAUtil {
 	 * @throws Exception 异常 Exception
 	 */ 
  
-	public static String decrypt(String data, RSAPublicKey key) throws Exception{
+	public static String decrypt(String data, RSAPublicKey key) throws Exception {
 		try {
 			RSAPublicKey publicKey = null;
 			if(key instanceof RSAPublicKey){
@@ -247,6 +249,7 @@ public class RSAUtil {
 	public static boolean verify(byte[] data, String key, String sign) throws Exception {
 		return verify(data, createPublicKey(key), sign);
 	}
+
 	/**
 	 * 校验数字签名
 	 *
@@ -259,6 +262,7 @@ public class RSAUtil {
 	public static boolean verify(String data, String key, String sign) throws Exception {
 		return verify(data.getBytes(), key, sign);
 	}
+
 	/**
 	 * 校验数字签名
 	 *
@@ -359,7 +363,7 @@ public class RSAUtil {
 	}
 
 	@SuppressWarnings("deprecation")
-	private static byte[] rsaSplitCodec(Cipher cipher, int opmode, byte[] datas, int keySize) throws Exception{
+	private static byte[] rsaSplitCodec(Cipher cipher, int opmode, byte[] datas, int keySize) throws Exception {
 		int maxBlock = 0;
 		if (opmode == Cipher.DECRYPT_MODE) {
 			maxBlock = keySize / 8;

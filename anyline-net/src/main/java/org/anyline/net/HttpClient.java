@@ -229,7 +229,6 @@ public class HttpClient {
 		if(null != finalUrl && finalUrl.startsWith("//")){
 			finalUrl = "http:"+url;
 		}
-
 		finalUrl = HttpUtil.mergeParam(finalUrl, task.getParams());
 		// DownloadProgress progress = task.getProgress();
 		File dst = task.getLocal();
@@ -396,6 +395,9 @@ public class HttpClient {
 					byte[] bytes = (byte[]) val;
 					builder.addBinaryBody(key, bytes, ContentType.MULTIPART_FORM_DATA, key);
 					fileLog += "[" + key + ":bytes]";
+				}else if(val instanceof InputStream){
+					InputStream is = (InputStream)val;
+					builder.addBinaryBody(key, is, ContentType.MULTIPART_FORM_DATA, key);
 				}
 			}
 		}

@@ -21,17 +21,13 @@ import org.anyline.data.param.Config;
 import org.anyline.data.param.ConfigStore;
 import org.anyline.data.prepare.Condition;
 import org.anyline.data.prepare.RunPrepare;
-import org.anyline.data.prepare.SyntaxHelper;
 import org.anyline.data.prepare.Variable;
 import org.anyline.data.prepare.auto.AutoCondition;
 import org.anyline.data.prepare.auto.init.DefaultAutoCondition;
 import org.anyline.data.prepare.auto.init.DefaultAutoConditionChain;
-import org.anyline.data.prepare.init.DefaultVariable;
 import org.anyline.entity.*;
 import org.anyline.entity.Compare.EMPTY_VALUE_SWITCH;
 import org.anyline.util.BasicUtil;
-import org.anyline.util.regular.Regular;
-import org.anyline.util.regular.RegularUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -65,7 +61,7 @@ public class TextRun extends BasicRun implements Run {
 
 					//如果有对应的SQL体变量 设置当前con不作为查询条件拼接
 					List<Variable> vars = this.getVariables(con.getId());
-					if(vars.size() > 0){
+					if(!vars.isEmpty()){
 						//用来给java/xml定义SQL中变量赋值, 本身并不拼接到最终SQL
 						con.setVariableSlave(true);
 						for(Variable var:vars){
@@ -156,27 +152,29 @@ public class TextRun extends BasicRun implements Run {
 		}
 	} 
 	private void parseText(){
+		//放在adapter中解析 避免 MATCH (v:CRM_USER:HR_USER) RETURN v解析出占位符
+		/*
 		String text = prepare.getText();
 		if(null == text){
 			return;
-		} 
+		}
 		try{
-			int varType = -1; 
+			int varType = -1;
 			Compare compare = Compare.EQUAL;
 
 			List<List<String>> keys = null;
 			int type = 0;
 			// AND CD = {CD} || CD LIKE '%{CD}%' || CD IN ({CD}) || CD = ${CD} || CD = #{CD}
 			//{CD} 用来兼容旧版本，新版本中不要用，避免与josn格式冲突
-			keys = RegularUtil.fetchs(text, RunPrepare.SQL_PARAM_VARIABLE_REGEX_EL, Regular.MATCH_MODE.CONTAIN);
+			keys = RegularUtil.fetchs(text, RunPrepare.SQL_VAR_PLACEHOLDER_REGEX, Regular.MATCH_MODE.CONTAIN);
 			type = Variable.KEY_TYPE_SIGN_V2 ;
 			if(keys.size() == 0){
 				// AND CD = :CD || CD LIKE ':CD' || CD IN (:CD) || CD = ::CD
-				keys = RegularUtil.fetchs(text, RunPrepare.SQL_PARAM_VARIABLE_REGEX, Regular.MATCH_MODE.CONTAIN);
+				keys = RegularUtil.fetchs(text, RunPrepare.SQL_VAR_PLACEHOLDER_REGEX, Regular.MATCH_MODE.CONTAIN);
 				type = Variable.KEY_TYPE_SIGN_V1 ;
 			}
 			if(BasicUtil.isNotEmpty(true, keys)){
-				// AND CD = :CD 
+				// AND CD = :CD
 				for(int i=0; i<keys.size();i++){
 					List<String> keyItem = keys.get(i);
 
@@ -186,22 +184,22 @@ public class TextRun extends BasicRun implements Run {
 					}
 					var.setSwitch(EMPTY_VALUE_SWITCH.NULL);
 					addVariable(var);
-				}// end for 
+				}// end for
 			}else{
-				// AND CD = ? 
+				// AND CD = ?
 				List<String> idxKeys = RegularUtil.fetch(text, "\\?", Regular.MATCH_MODE.CONTAIN, 0);
 				if(BasicUtil.isNotEmpty(true, idxKeys)){
 					for(int i=0; i<idxKeys.size(); i++){
 						Variable var = new DefaultVariable();
 						var.setType(Variable.VAR_TYPE_INDEX);
 						var.setSwitch(EMPTY_VALUE_SWITCH.NULL);
-						addVariable(var); 
-					} 
-				} 
-			} 
+						addVariable(var);
+					}
+				}
+			}
 		}catch(Exception e){
-			e.printStackTrace(); 
-		} 
+			e.printStackTrace();
+		}*/
 	}
 	public boolean checkValid(){
 		if(!valid){
@@ -220,10 +218,11 @@ public class TextRun extends BasicRun implements Run {
 			builder.append(groupStore.getRunText(delimiterFr+delimiterTo));
 		} 
 	}
+
 	/** 
 	 * 拼接查询条件
 	 */
-	public void appendCondition(){
+	public void appendCondition(boolean placeholder){
 		if(null == conditionChain){
 			return; 
 		} 
@@ -232,11 +231,29 @@ public class TextRun extends BasicRun implements Run {
 			return; 
 		} 
 		String txt = builder.toString();
-		boolean where = endWithWhere(txt); 
-		if(!where){
-			builder.append(" WHERE 1=1"); 
+
+		String condition = conditionChain.getRunText(null, runtime, placeholder);
+		if(!condition.isEmpty()){
+			emptyCondition = false;
 		}
-		builder.append(conditionChain.getRunText(null, runtime));
+		boolean where = endWithWhere(txt);
+		if(!emptyCondition) {
+			if (!where) {
+				builder.append("\nWHERE ");
+				condition = condition.trim();
+				String up = condition.toUpperCase();
+				if (up.startsWith("AND ") || up.startsWith("AND(")) {
+					condition = condition.substring(3);
+				} else if (up.startsWith("OR ") || up.startsWith("OR(")) {
+					condition = condition.substring(2);
+				}
+			}
+			builder.append(condition);
+		}
+
+		if(where){
+			emptyCondition = false;
+		}
 		addValues(conditionChain.getRunValues());
 	}
 	 

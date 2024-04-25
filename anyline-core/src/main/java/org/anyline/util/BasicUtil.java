@@ -116,6 +116,7 @@ public class BasicUtil {
 	public static boolean isEmpty(Object obj) {
 		return isEmpty(false, obj);
 	}
+
 	/**
 	 * 是否全部为空
 	 * @param objs objs
@@ -287,6 +288,7 @@ public class BasicUtil {
 	public static String getRandomNumberString(int length) {
 		return getRandomString(length, new StringBuffer("123567890"));
 	}
+
 	/**
 	 * 随机中文字符(GBK)
 	 * @param length length
@@ -389,7 +391,7 @@ public class BasicUtil {
 			return def;
 		}
 	}
-	public static Byte parseByte(Object value) throws Exception{
+	public static Byte parseByte(Object value) throws Exception {
 		return Byte.parseByte(value.toString());
 	}
 	public static Short parseShort(Object value, Short def) {
@@ -405,7 +407,7 @@ public class BasicUtil {
 			return def;
 		}
 	}
-	public static Short parseShort(Object value) throws Exception{
+	public static Short parseShort(Object value) throws Exception {
 		return (short) Double.parseDouble(value.toString());
 	}
 
@@ -422,7 +424,7 @@ public class BasicUtil {
 			return def;
 		}
 	}
-	public static Integer parseInt(Object value) throws Exception{
+	public static Integer parseInt(Object value) throws Exception {
 		return (int) Double.parseDouble(value.toString());
 	}
 
@@ -521,6 +523,7 @@ public class BasicUtil {
 		}
 		return Long.parseLong(value.toString());
 	}
+
 	/** 
 	 * 类型转换 
 	 *  
@@ -539,7 +542,7 @@ public class BasicUtil {
 		}
 	} 
  
-	public static Boolean parseBoolean(Object obj) throws Exception{
+	public static Boolean parseBoolean(Object obj) throws Exception {
 		if(obj instanceof Boolean){
 			return (Boolean)obj;
 		}
@@ -742,7 +745,6 @@ public class BasicUtil {
 		return fillChar(src+"", len);
 	}
 
-
 	/** 
 	 * 提取HashMap的key 
 	 *  
@@ -848,6 +850,7 @@ public class BasicUtil {
 		}
 		return src.substring(0, len);
 	}
+
 	/**
 	 * 从右侧开始取len位
 	 * @param src String
@@ -894,6 +897,7 @@ public class BasicUtil {
 		}
 		return result;
 	}
+
 	/**
 	 * 获取本机IP
 	 * @return List
@@ -1139,11 +1143,11 @@ public class BasicUtil {
 	 * v1与v2是否相等
 	 * @param v1 v1
 	 * @param v2 v2
-	 * @param propertys1 属性列表1
-	 * @param propertys2 属性列表2
+	 * @param properties1 属性列表1
+	 * @param properties2 属性列表2
 	 * @return boolean
 	 */
-	public static boolean equals(Object v1, Object v2, List<String> propertys1, List<String> propertys2){
+	public static boolean equals(Object v1, Object v2, List<String> properties1, List<String> properties2){
 		boolean result = false;
 		if(null == v1 && null == v2){
 			return true;
@@ -1157,8 +1161,8 @@ public class BasicUtil {
 				result = v2.toString().equals(v1.toString());
 			}else{
 				// v2非基础类型
-				if(null != propertys2 && propertys2.size()>0){
-					v2 = BeanUtil.getFieldValue(v2, propertys2.get(0))+"";
+				if(null != properties2 && properties2.size()>0){
+					v2 = BeanUtil.getFieldValue(v2, properties2.get(0))+"";
 				}
 				result = v2.toString().equals(v1.toString());
 			}
@@ -1166,24 +1170,24 @@ public class BasicUtil {
 			// v1非基础类型
 			if(v2 instanceof String || v2 instanceof Number || v2 instanceof Boolean || v2 instanceof Date){
 				// v2基础类型
-				if(null != propertys1 && propertys1.size()>0){
-					v1 = BeanUtil.getFieldValue(v1, propertys1.get(0))+"";
+				if(null != properties1 && properties1.size()>0){
+					v1 = BeanUtil.getFieldValue(v1, properties1.get(0))+"";
 				}
 				result = v2.toString().equals(v1.toString());
 			}else{
 				// v2非基础类型
 				boolean eq = true;
 				int psize = 0;
-				if(null == propertys1 || null == propertys2){
+				if(null == properties1 || null == properties2){
 					eq = false;
 				}else{
 					// 取长度较短的一个长度
-					psize = NumberUtil.min(propertys1.size(), propertys2.size());
+					psize = NumberUtil.min(properties1.size(), properties2.size());
 				}
 				if(psize > 0){
 					for(int i=0; i<psize; i++){
-						String p1 = propertys1.get(i);
-						String p2 = propertys2.get(i);
+						String p1 = properties1.get(i);
+						String p2 = properties2.get(i);
 						String vv1 = BeanUtil.getFieldValue(v1, p1)+"";
 						String vv2 = BeanUtil.getFieldValue(v2, p2)+"";
 						if(!vv1.equals(vv2)){
@@ -1202,19 +1206,20 @@ public class BasicUtil {
 		}
 		return result;
 	}
+
 	/**
 	 * v1与v2是否相等
 	 * @param v1 v1
 	 * @param v2 v2
-	 * @param propertys 属性(ID:CD, NM:NAME)(ID, NM)
+	 * @param properties 属性(ID:CD, NM:NAME)(ID, NM)
 	 * @return boolean
 	 */
-	public static boolean equals(Object v1, Object v2, String propertys){
+	public static boolean equals(Object v1, Object v2, String properties){
 		boolean result = false;
-		List<String> propertys1 = new ArrayList<>();
-		List<String> propertys2 = new ArrayList<>();
-		if(BasicUtil.isNotEmpty(propertys)){
-			String[] ps = propertys.split(",");
+		List<String> properties1 = new ArrayList<>();
+		List<String> properties2 = new ArrayList<>();
+		if(BasicUtil.isNotEmpty(properties)){
+			String[] ps = properties.split(",");
 			for(String p:ps){
 				if(BasicUtil.isNotEmpty(p)){
 					String p1 = p;
@@ -1224,12 +1229,12 @@ public class BasicUtil {
 						p1 = tmps[0];
 						p2 = tmps[1];
 					}
-					propertys1.add(p1);
-					propertys2.add(p2);
+					properties1.add(p1);
+					properties2.add(p2);
 				}
 			}
 		}
-		return equals(v1, v2, propertys1, propertys2);
+		return equals(v1, v2, properties1, properties2);
 	}
 
 	/**
@@ -1254,6 +1259,7 @@ public class BasicUtil {
 		}
 		return index;
 	}
+
 	/**
 	 * 确认边界
 	 * @param begin 开始

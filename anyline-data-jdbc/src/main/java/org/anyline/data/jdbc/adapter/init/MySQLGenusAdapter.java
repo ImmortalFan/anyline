@@ -1,11 +1,14 @@
 package org.anyline.data.jdbc.adapter.init;
 
+import org.anyline.metadata.adapter.MetadataAdapterHolder;
+import org.anyline.data.jdbc.adapter.init.alias.MySQLGenusTypeMetadataAlias;
 import org.anyline.data.param.ConfigStore;
 import org.anyline.data.prepare.RunPrepare;
 import org.anyline.data.run.*;
 import org.anyline.data.runtime.DataRuntime;
 import org.anyline.entity.*;
 import org.anyline.metadata.*;
+import org.anyline.metadata.type.TypeMetadata;
 import org.anyline.util.BasicUtil;
 import org.anyline.util.regular.RegularUtil;
 import org.springframework.beans.factory.InitializingBean;
@@ -20,8 +23,50 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.*;
 
-public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements InitializingBean {
+public abstract class MySQLGenusAdapter extends AbstractJDBCAdapter implements InitializingBean {
+    public MySQLGenusAdapter(){
+        super();
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.CHAR, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 0, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.TEXT, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.BOOLEAN, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1,1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.BYTES, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 0, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.BLOB, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1,1,1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.INT, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", "NUMERIC_PRECISION", null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.FLOAT, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", "NUMERIC_PRECISION", "NUMERIC_SCALE", 1, 2, 2));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.DATE, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.TIME, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.DATETIME, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.TIMESTAMP, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.COLLECTION, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.GEOMETRY, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.OTHER, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1, 1, 1));
 
+        for(MySQLGenusTypeMetadataAlias alias:MySQLGenusTypeMetadataAlias.values()){
+            reg(alias);
+        }
+    }
+    @Override
+    public boolean supportCatalog() {
+        return false;
+    }
+
+    @Override
+    public boolean supportSchema() {
+        return super.supportSchema();
+    }
+
+    private static Map<Type, String> types = new HashMap<>();
+    static {
+        types.put(Table.TYPE.NORMAL, "BASE TABLE");
+        types.put(Table.TYPE.VIEW, "VIEW");
+        types.put(View.TYPE.NORMAL, "VIEW");
+        types.put(BaseMetadata.TYPE.TABLE, "BASE TABLE");
+        types.put(BaseMetadata.TYPE.VIEW, "VIEW");
+    }
+    @Override
+    public String name(Type type){
+        return types.get(type);
+    }
     /* *****************************************************************************************************************
      *
      * 													DML
@@ -37,7 +82,6 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * DELETE			: 删除
      *
      ******************************************************************************************************************/
-
     /* *****************************************************************************************************************
      * 													INSERT
      * -----------------------------------------------------------------------------------------------------------------
@@ -460,9 +504,9 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * List<Run> buildQuerySequence(DataRuntime runtime, boolean next, String ... names)
      * void fillQueryContent(DataRuntime runtime, Run run)
      * String mergeFinalQuery(DataRuntime runtime, Run run)
-     * RunValue createConditionLike(DataRuntime runtime, StringBuilder builder, Compare compare, Object value)
-     * Object createConditionFindInSet(DataRuntime runtime, StringBuilder builder, String column, Compare compare, Object value)
-     * StringBuilder createConditionIn(DataRuntime runtime, StringBuilder builder, Compare compare, Object value)
+     * RunValue createConditionLike(DataRuntime runtime, StringBuilder builder, Compare compare, Object value, boolean placeholder)
+     * Object createConditionFindInSet(DataRuntime runtime, StringBuilder builder, String column, Compare compare, Object value, boolean placeholder)
+     * StringBuilder createConditionIn(DataRuntime runtime, StringBuilder builder, Compare compare, Object value, boolean placeholder)
      * [命令执行]
      * DataSet select(DataRuntime runtime, String random, boolean system, String table, ConfigStore configs, Run run)
      * List<Map<String, Object>> maps(DataRuntime runtime, String random, ConfigStore configs, Run run)
@@ -614,8 +658,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return value 有占位符时返回占位值，没有占位符返回null
      */
     @Override
-    public RunValue createConditionLike(DataRuntime runtime, StringBuilder builder, Compare compare, Object value) {
-        return super.createConditionLike(runtime, builder, compare, value);
+    public RunValue createConditionLike(DataRuntime runtime, StringBuilder builder, Compare compare, Object value, boolean placeholder) {
+        return super.createConditionLike(runtime, builder, compare, value, placeholder);
     }
     /**
      * select[命令合成-子流程] <br/>
@@ -629,7 +673,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return value
      */
     @Override
-    public Object createConditionFindInSet(DataRuntime runtime, StringBuilder builder, String column, Compare compare, Object value) {
+    public Object createConditionFindInSet(DataRuntime runtime, StringBuilder builder, String column, Compare compare, Object value, boolean placeholder) {
         List<Object> values = new ArrayList<>();
         if(null != value){
             if(value instanceof Collection){
@@ -672,8 +716,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return builder
      */
     @Override
-    public StringBuilder createConditionIn(DataRuntime runtime, StringBuilder builder, Compare compare, Object value) {
-        return super.createConditionIn(runtime, builder, compare, value);
+    public StringBuilder createConditionIn(DataRuntime runtime, StringBuilder builder, Compare compare, Object value, boolean placeholder) {
+        return super.createConditionIn(runtime, builder, compare, value, placeholder);
     }
     /**
      * select [命令执行]<br/>
@@ -817,7 +861,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * -----------------------------------------------------------------------------------------------------------------
      * [调用入口]
      * long execute(DataRuntime runtime, String random, RunPrepare prepare, ConfigStore configs, String ... conditions)
-     * long execute(DataRuntime runtime, String random, int batch, ConfigStore configs, String sql, List<Object> values)
+     * long execute(DataRuntime runtime, String random, int batch, ConfigStore configs, RunPrepare prepare, Collection<Object> values)
      * boolean execute(DataRuntime runtime, String random, Procedure procedure)
      * [命令合成]
      * Run buildExecuteRun(DataRuntime runtime, RunPrepare prepare, ConfigStore configs, String ... conditions)
@@ -841,8 +885,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
     }
 
     @Override
-    public long execute(DataRuntime runtime, String random, int batch, ConfigStore configs, String cmd, List<Object> values){
-        return super.execute(runtime, random, batch, configs, cmd, values);
+    public long execute(DataRuntime runtime, String random, int batch, ConfigStore configs, RunPrepare prepare, Collection<Object> values){
+        return super.execute(runtime, random, batch, configs, prepare, values);
     }
     /**
      * procedure [命令执行]<br/>
@@ -912,11 +956,11 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * long delete(DataRuntime runtime, String random, String table, ConfigStore configs, String... conditions)
      * long truncate(DataRuntime runtime, String random, String table)
      * [命令合成]
-     * Run buildDeleteRun(DataRuntime runtime, String table, Object obj, String ... columns)
-     * Run buildDeleteRun(DataRuntime runtime, int batch, String table, String column, Object values)
+     * Run buildDeleteRun(DataRuntime runtime, String table, ConfigStore configs, Object obj, String ... columns)
+     * Run buildDeleteRun(DataRuntime runtime, int batch, String table, ConfigStore configs, String column, Object values)
      * List<Run> buildTruncateRun(DataRuntime runtime, String table)
-     * Run buildDeleteRunFromTable(DataRuntime runtime, int batch, String table, String column, Object values)
-     * Run buildDeleteRunFromEntity(DataRuntime runtime, String table, Object obj, String ... columns)
+     * Run buildDeleteRunFromTable(DataRuntime runtime, int batch, String table, ConfigStore configs,String column, Object values)
+     * Run buildDeleteRunFromEntity(DataRuntime runtime, String table, ConfigStore configs, Object obj, String ... columns)
      * void fillDeleteRunContent(DataRuntime runtime, Run run)
      * [命令执行]
      * long delete(DataRuntime runtime, String random, ConfigStore configs, Run run)
@@ -990,8 +1034,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
      */
     @Override
-    public Run buildDeleteRun(DataRuntime runtime, Table dest, Object obj, String ... columns){
-        return super.buildDeleteRun(runtime, dest, obj, columns);
+    public Run buildDeleteRun(DataRuntime runtime, Table dest, ConfigStore configs, Object obj, String ... columns){
+        return super.buildDeleteRun(runtime, dest, configs, obj, columns);
     }
 
     /**
@@ -1004,8 +1048,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
      */
     @Override
-    public Run buildDeleteRun(DataRuntime runtime, int batch, String table, String key, Object values){
-        return super.buildDeleteRun(runtime, batch, table, key, values);
+    public Run buildDeleteRun(DataRuntime runtime, int batch, String table, ConfigStore configs, String key, Object values){
+        return super.buildDeleteRun(runtime, batch, table, configs, key, values);
     }
 
     @Override
@@ -1024,8 +1068,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
      */
     @Override
-    public Run buildDeleteRunFromTable(DataRuntime runtime, int batch, Table table, String column, Object values) {
-        return super.buildDeleteRunFromTable(runtime, batch, table, column, values);
+    public Run buildDeleteRunFromTable(DataRuntime runtime, int batch, Table table, ConfigStore configs, String column, Object values) {
+        return super.buildDeleteRunFromTable(runtime, batch, table, configs, column, values);
     }
 
     /**
@@ -1038,8 +1082,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
      */
     @Override
-    public Run buildDeleteRunFromEntity(DataRuntime runtime, Table table, Object obj, String... columns) {
-        return super.buildDeleteRunFromEntity(runtime, table, obj, columns);
+    public Run buildDeleteRunFromEntity(DataRuntime runtime, Table table, ConfigStore configs, Object obj, String... columns) {
+        return super.buildDeleteRunFromEntity(runtime, table, configs, obj, columns);
     }
 
     /**
@@ -1169,7 +1213,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildQueryDatabasesRun(DataRuntime runtime, boolean greedy, String name) throws Exception{
+    public List<Run> buildQueryDatabasesRun(DataRuntime runtime, boolean greedy, String name) throws Exception {
 
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
@@ -1192,7 +1236,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception
      */
     @Override
-    public LinkedHashMap<String, Database> databases(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Database> databases, DataSet set) throws Exception{
+    public LinkedHashMap<String, Database> databases(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Database> databases, DataSet set) throws Exception {
         if(null == databases){
             databases = new LinkedHashMap<>();
         }
@@ -1204,7 +1248,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
         return databases;
     }
     @Override
-    public List<Database> databases(DataRuntime runtime, int index, boolean create, List<Database> databases, DataSet set) throws Exception{
+    public List<Database> databases(DataRuntime runtime, int index, boolean create, List<Database> databases, DataSet set) throws Exception {
         return super.databases(runtime, index, create, databases, set);
     }
 
@@ -1220,7 +1264,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异
      */
     @Override
-    public Database database(DataRuntime runtime, int index, boolean create, Database database, DataSet set) throws Exception{
+    public Database database(DataRuntime runtime, int index, boolean create, Database database, DataSet set) throws Exception {
         if(null == database) {
             for (DataRow row : set) {
                 database = new Database();
@@ -1241,7 +1285,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public Database database(DataRuntime runtime, boolean create, Database database) throws Exception{
+    public Database database(DataRuntime runtime, boolean create, Database database) throws Exception {
         return super.database(runtime, create, database);
     }
 
@@ -1347,7 +1391,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildQueryCatalogsRun(DataRuntime runtime, boolean greedy, String name) throws Exception{
+    public List<Run> buildQueryCatalogsRun(DataRuntime runtime, boolean greedy, String name) throws Exception {
         return super.buildQueryCatalogsRun(runtime, greedy, name);
     }
     /**
@@ -1362,7 +1406,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public LinkedHashMap<String, Catalog> catalogs(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Catalog> catalogs, DataSet set) throws Exception{
+    public LinkedHashMap<String, Catalog> catalogs(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Catalog> catalogs, DataSet set) throws Exception {
         return super.catalogs(runtime, index, create, catalogs, set);
     }
     /**
@@ -1377,9 +1421,10 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Catalog> catalogs(DataRuntime runtime, int index, boolean create, List<Catalog> catalogs, DataSet set) throws Exception{
+    public List<Catalog> catalogs(DataRuntime runtime, int index, boolean create, List<Catalog> catalogs, DataSet set) throws Exception {
         return super.catalogs(runtime, index, create, catalogs, set);
-    }/**
+    }
+	/**
      * catalog[结果集封装]<br/>
      * 根据驱动内置接口补充 catalog
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
@@ -1418,9 +1463,10 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
 	 * @throws Exception 异常
 	 */
 	@Override
-	public Catalog catalog(DataRuntime runtime, int index, boolean create, Catalog catalog, DataSet set) throws Exception{
+	public Catalog catalog(DataRuntime runtime, int index, boolean create, Catalog catalog, DataSet set) throws Exception {
 		return super.catalog(runtime, index, create, catalog, set);
 	}
+
 	/**
 	 * catalog[结果集封装]<br/>
 	 * 当前catalog 根据驱动内置接口补充
@@ -1431,7 +1477,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
 	 * @throws Exception 异常
 	 */
 	@Override
-	public Catalog catalog(DataRuntime runtime, boolean create, Catalog catalog) throws Exception{
+	public Catalog catalog(DataRuntime runtime, boolean create, Catalog catalog) throws Exception {
 		return super.catalog(runtime, create, catalog);
 	}
 
@@ -1501,7 +1547,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildQuerySchemasRun(DataRuntime runtime, boolean greedy, Catalog catalog, String name) throws Exception{
+    public List<Run> buildQuerySchemasRun(DataRuntime runtime, boolean greedy, Catalog catalog, String name) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -1524,7 +1570,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public LinkedHashMap<String, Schema> schemas(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Schema> schemas, DataSet set) throws Exception{
+    public LinkedHashMap<String, Schema> schemas(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Schema> schemas, DataSet set) throws Exception {
         if(null == schemas){
             schemas = new LinkedHashMap<>();
         }
@@ -1536,7 +1582,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
         return schemas;
     }
     @Override
-    public List<Schema> schemas(DataRuntime runtime, int index, boolean create, List<Schema> schemas, DataSet set) throws Exception{
+    public List<Schema> schemas(DataRuntime runtime, int index, boolean create, List<Schema> schemas, DataSet set) throws Exception {
         return super.schemas(runtime, index, create, schemas, set);
     }
 
@@ -1552,7 +1598,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
 	 * @throws Exception 异常
 	 */
 	@Override
-	public Schema schema(DataRuntime runtime, int index, boolean create, Schema schema, DataSet set) throws Exception{
+	public Schema schema(DataRuntime runtime, int index, boolean create, Schema schema, DataSet set) throws Exception {
 		return super.schema(runtime, index, create, schema, set);
 	}
 
@@ -1566,7 +1612,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
 	 * @throws Exception 异常
 	 */
 	@Override
-	public Schema schema(DataRuntime runtime, boolean create, Schema schema) throws Exception{
+	public Schema schema(DataRuntime runtime, boolean create, Schema schema) throws Exception {
 		return super.schema(runtime, create, schema);
 	}
 
@@ -1574,16 +1620,16 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * 													table
      * -----------------------------------------------------------------------------------------------------------------
      * [调用入口]
-     * <T extends Table> List<T> tables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types, boolean strut)
-     * <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern, String types, boolean strut)
+     * <T extends Table> List<T> tables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types, boolean struct)
+     * <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern, String types, boolean struct)
      * [命令合成]
-     * List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types)
-     * List<Run> buildQueryTablesCommentRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types)
+     * List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, int types)
+     * List<Run> buildQueryTablesCommentRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types)
      * [结果集封装]<br/>
      * <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
      * <T extends Table> List<T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, List<T> tables, DataSet set)
-     * <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, String ... types)
-     * <T extends Table> List<T> tables(DataRuntime runtime, boolean create, List<T> tables, Catalog catalog, Schema schema, String pattern, String ... types)
+     * <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, int types)
+     * <T extends Table> List<T> tables(DataRuntime runtime, boolean create, List<T> tables, Catalog catalog, Schema schema, String pattern, int types)
      * <T extends Table> LinkedHashMap<String, T> comments(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
      * [调用入口]
      * List<String> ddl(DataRuntime runtime, String random, Table table, boolean init)
@@ -1602,14 +1648,14 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types  "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
-     * @param strut 是否查询表结构
+     * @param types  BaseMetadata.TYPE.
+     * @param struct 是否查询表结构
      * @return List
      * @param <T> Table
      */
     @Override
-    public <T extends Table> List<T> tables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types, boolean strut){
-        return super.tables(runtime, random, greedy, catalog, schema, pattern, types, strut);
+    public <T extends Table> List<T> tables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types, int struct){
+        return super.tables(runtime, random, greedy, catalog, schema, pattern, types, struct);
     }
 
     /**
@@ -1626,8 +1672,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
     }
 
     @Override
-    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern, String types, boolean strut){
-        return super.tables(runtime, random, catalog, schema, pattern, types, strut);
+    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern, int types, int struct){
+        return super.tables(runtime, random, catalog, schema, pattern, types, struct);
     }
 
     /**
@@ -1638,11 +1684,11 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types  "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types  BaseMetadata.TYPE.
      * @return String
      */
     @Override
-    public List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
+    public List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -1651,7 +1697,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
         builder.append("SELECT * FROM information_schema.TABLES WHERE 1=1 ");
         // 8.0版本中 这个表中 TABLE_CATALOG = def  TABLE_SCHEMA = 数据库名
 		/*if(BasicUtil.isNotEmpty(catalog)){
-			builder.append(" AND TABLE_SCHEMA = '").append(catalog).append("'");
+			builder.append(" AND TABLE_SCHEMA = '").append(catalog.getName()).append("'");
 		}*/
         if(BasicUtil.isNotEmpty(schema)){
             builder.append(" AND TABLE_SCHEMA = '").append(schema.getName()).append("'");
@@ -1659,19 +1705,16 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
         if(BasicUtil.isNotEmpty(pattern)){
             builder.append(" AND TABLE_NAME LIKE '").append(objectName(runtime, pattern)).append("'");
         }
-        if(BasicUtil.isNotEmpty(types)){
-            String[] tmps = types.split(",");
+        List<String> tps = names(Table.types(types));
+        if(null != tps && !tps.isEmpty()){;
             builder.append(" AND TABLE_TYPE IN(");
-            int idx = 0;
-            for(String tmp:tmps){
-                if(idx > 0){
+            boolean first = true;
+            for(String tmp:tps){
+                if(!first){
                     builder.append(",");
                 }
-                if(tmp.equalsIgnoreCase("table")){
-                    tmp = "BASE TABLE";
-                }
                 builder.append("'").append(tmp).append("'");
-                idx ++;
+                first = false;
             }
             builder.append(")");
         }else {
@@ -1688,16 +1731,16 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types types BaseMetadata.TYPE.
      * @return String
      */
     @Override
-    public List<Run> buildQueryTablesCommentRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
+    public List<Run> buildQueryTablesCommentRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.buildQueryTablesCommentRun(runtime, catalog, schema, pattern, types);
     }
 
     /**
-     * table[结果集封装]<br/> <br/>
+     * table[结果集封装]<br/>
      *  根据查询结果集构造Table
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param index 第几条SQL 对照buildQueryTablesRun返回顺序
@@ -1710,17 +1753,14 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception{
+    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception {
+        set.removeColumn("TABLE_CATALOG");
         tables = super.tables(runtime, index, create, catalog, schema, tables, set);
-        //MySQL不支持TABLE_CATALOG
-        for(Table table:tables.values()){
-            table.setCatalog((Catalog) null);
-        }
         return tables;
     }
 
     /**
-     * table[结果集封装]<br/> <br/>
+     * table[结果集封装]<br/>
      *  根据查询结果集构造Table
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param index 第几条SQL 对照buildQueryTablesRun返回顺序
@@ -1733,16 +1773,13 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends Table> List<T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, List<T> tables, DataSet set) throws Exception{
+    public <T extends Table> List<T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, List<T> tables, DataSet set) throws Exception {
+        set.removeColumn("TABLE_CATALOG");
         tables = super.tables(runtime, index, create, catalog, schema, tables, set);
-        //MySQL不支持TABLE_CATALOG
-        for(Table table:tables){
-            table.setCatalog((Catalog) null);
-        }
         return tables;
     }
     /**
-     * table[结果集封装]<br/> <br/>
+     * table[结果集封装]<br/>
      * 根据驱动内置方法补充
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param create 上一步没有查到的,这一步是否需要新创建
@@ -1750,13 +1787,13 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types types BaseMetadata.TYPE.
      * @return tables
      * @throws Exception 异常
      */
 
     @Override
-    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, String ... types) throws Exception{
+    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.tables(runtime, create, tables, catalog, schema, pattern, types);
     }
 
@@ -1769,12 +1806,12 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types types BaseMetadata.TYPE.
      * @return tables
      * @throws Exception 异常
      */
     @Override
-    public <T extends Table> List<T> tables(DataRuntime runtime, boolean create, List<T> tables, Catalog catalog, Schema schema, String pattern, String ... types) throws Exception{
+    public <T extends Table> List<T> tables(DataRuntime runtime, boolean create, List<T> tables, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.tables(runtime, create, tables, catalog, schema, pattern, types);
     }
 
@@ -1792,7 +1829,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends Table> LinkedHashMap<String, T> comments(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception{
+    public <T extends Table> LinkedHashMap<String, T> comments(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception {
         return super.comments(runtime, index, create, catalog, schema, tables, set);
     }
 
@@ -1810,7 +1847,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends Table> List<T> comments(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, List<T> tables, DataSet set) throws Exception{
+    public <T extends Table> List<T> comments(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, List<T> tables, DataSet set) throws Exception {
         return super.comments(runtime, index, create, catalog, schema, tables, set);
     }
 
@@ -1836,7 +1873,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Table table) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Table table) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -1880,12 +1917,12 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * 													view
      * -----------------------------------------------------------------------------------------------------------------
      * [调用入口]
-     * <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types)
+     * <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types)
      * [命令合成]
-     * List<Run> buildQueryViewsRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types)
+     * List<Run> buildQueryViewsRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, int types)
      * [结果集封装]<br/>
      * <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> views, DataSet set)
-     * <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, boolean create, LinkedHashMap<String, T> views, Catalog catalog, Schema schema, String pattern, String ... types)
+     * <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, boolean create, LinkedHashMap<String, T> views, Catalog catalog, Schema schema, String pattern, int types)
      * [调用入口]
      * List<String> ddl(DataRuntime runtime, String random, View view)
      * [命令合成]
@@ -1904,12 +1941,12 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types  "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types  BaseMetadata.TYPE.
      * @return List
      * @param <T> View
      */
     @Override
-    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types){
+    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types){
         return super.views(runtime, random, greedy, catalog, schema, pattern, types);
     }
     /**
@@ -1920,11 +1957,11 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types types BaseMetadata.TYPE.
      * @return List
      */
     @Override
-    public List<Run> buildQueryViewsRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
+    public List<Run> buildQueryViewsRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -1959,7 +1996,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> views, DataSet set) throws Exception{
+    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> views, DataSet set) throws Exception {
         if(null == views){
             views = new LinkedHashMap<>();
         }
@@ -1987,12 +2024,12 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types types BaseMetadata.TYPE.
      * @return views
      * @throws Exception 异常
      */
     @Override
-    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, boolean create, LinkedHashMap<String, T> views, Catalog catalog, Schema schema, String pattern, String ... types) throws Exception{
+    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, boolean create, LinkedHashMap<String, T> views, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.views(runtime, create, views, catalog, schema, pattern, types);
     }
 
@@ -2016,7 +2053,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, View view) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, View view) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -2051,13 +2088,13 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * 													master table
      * -----------------------------------------------------------------------------------------------------------------
      * [调用入口]
-     * <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types)
+     * <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types)
      * [命令合成]
-     * List<Run> buildQueryMasterTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types)
+     * List<Run> buildQueryMasterTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types)
      * [结果集封装]<br/>
-     * <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
+     * <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
      * [结果集封装]<br/>
-     * <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, String ... types)
+     * <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, int types)
      * [调用入口]
      * List<String> ddl(DataRuntime runtime, String random, MasterTable table)
      * [命令合成]
@@ -2075,13 +2112,13 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types  "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types  BaseMetadata.TYPE.
      * @return List
      * @param <T> MasterTable
      */
     @Override
-    public <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types){
-        return super.mtables(runtime, random, greedy, catalog, schema, pattern, types);
+    public <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types){
+        return super.masterTables(runtime, random, greedy, catalog, schema, pattern, types);
     }
     /**
      * master table[命令合成]<br/>
@@ -2094,7 +2131,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildQueryMasterTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
+    public List<Run> buildQueryMasterTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.buildQueryMasterTablesRun(runtime, catalog, schema, pattern, types);
     }
 
@@ -2112,8 +2149,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception{
-        return super.mtables(runtime, index, create, catalog, schema, tables, set);
+    public <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception {
+        return super.masterTables(runtime, index, create, catalog, schema, tables, set);
     }
     /**
      * master table[结果集封装]<br/>
@@ -2127,8 +2164,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, String ... types) throws Exception{
-        return super.mtables(runtime, create, tables, catalog, schema, pattern, types);
+    public <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
+        return super.masterTables(runtime, create, tables, catalog, schema, pattern, types);
     }
 
     /**
@@ -2150,7 +2187,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, MasterTable table) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, MasterTable table) throws Exception {
         return super.buildQueryDdlsRun(runtime, table);
     }
     /**
@@ -2171,14 +2208,14 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * 													partition table
      * -----------------------------------------------------------------------------------------------------------------
      * [调用入口]
-     * <T extends PartitionTable> LinkedHashMap<String,T> ptables(DataRuntime runtime, String random, boolean greedy, MasterTable master, Map<String, Object> tags, String pattern)
+     * <T extends PartitionTable> LinkedHashMap<String,T> partitionTables(DataRuntime runtime, String random, boolean greedy, MasterTable master, Map<String, Object> tags, String pattern)
      * [命令合成]
-     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types)
-     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, MasterTable master, Map<String,Object> tags, String pattern)
-     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, MasterTable master, Map<String,Object> tags)
+     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types)
+     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Table master, Map<String,Object> tags, String pattern)
+     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Table master, Map<String,Object> tags)
      * [结果集封装]<br/>
-     * <T extends PartitionTable> LinkedHashMap<String, T> ptables(DataRuntime runtime, int total, int index, boolean create, MasterTable master, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
-     * <T extends PartitionTable> LinkedHashMap<String,T> ptables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, MasterTable master)
+     * <T extends PartitionTable> LinkedHashMap<String, T> partitionTables(DataRuntime runtime, int total, int index, boolean create, MasterTable master, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
+     * <T extends PartitionTable> LinkedHashMap<String,T> partitionTables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, MasterTable master)
      * [调用入口]
      * List<String> ddl(DataRuntime runtime, String random, PartitionTable table)
      * [命令合成]
@@ -2198,8 +2235,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @param <T> MasterTable
      */
     @Override
-    public <T extends PartitionTable> LinkedHashMap<String,T> ptables(DataRuntime runtime, String random, boolean greedy, MasterTable master, Map<String, Object> tags, String pattern){
-        return super.ptables(runtime, random, greedy, master, tags, pattern);
+    public <T extends PartitionTable> LinkedHashMap<String,T> partitionTables(DataRuntime runtime, String random, boolean greedy, MasterTable master, Map<String, Object> tags, String pattern){
+        return super.partitionTables(runtime, random, greedy, master, tags, pattern);
     }
 
     /**
@@ -2213,7 +2250,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
+    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.buildQueryPartitionTablesRun(runtime, catalog, schema, pattern, types);
     }
     /**
@@ -2227,7 +2264,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, MasterTable master, Map<String,Object> tags, String name) throws Exception{
+    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Table master, Map<String,Object> tags, String name) throws Exception {
         return super.buildQueryPartitionTablesRun(runtime, master, tags, name);
     }
     /**
@@ -2240,7 +2277,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, MasterTable master, Map<String,Object> tags) throws Exception{
+    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Table master, Map<String,Object> tags) throws Exception {
         return super.buildQueryPartitionTablesRun(runtime, master, tags);
     }
     /**
@@ -2259,8 +2296,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends PartitionTable> LinkedHashMap<String, T> ptables(DataRuntime runtime, int total, int index, boolean create, MasterTable master, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception{
-        return super.ptables(runtime, total, index, create, master, catalog, schema, tables, set);
+    public <T extends PartitionTable> LinkedHashMap<String, T> partitionTables(DataRuntime runtime, int total, int index, boolean create, MasterTable master, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception {
+        return super.partitionTables(runtime, total, index, create, master, catalog, schema, tables, set);
     }
     /**
      * partition table[结果集封装]<br/>
@@ -2275,8 +2312,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends PartitionTable> LinkedHashMap<String,T> ptables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, MasterTable master) throws Exception{
-        return super.ptables(runtime, create, tables, catalog, schema, master);
+    public <T extends PartitionTable> LinkedHashMap<String,T> partitionTables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, MasterTable master) throws Exception {
+        return super.partitionTables(runtime, create, tables, catalog, schema, master);
     }
     /**
      * partition table[调用入口]<br/>
@@ -2298,7 +2335,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, PartitionTable table) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, PartitionTable table) throws Exception {
         return super.buildQueryDdlsRun(runtime, table);
     }
 
@@ -2347,7 +2384,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
 
     /**
      * column[调用入口]<br/>
-     * 查询全部表的列
+     * 查询列
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param random 用来标记同一组命令
      * @param greedy 贪婪模式 true:如果不填写catalog或schema则查询全部 false:只在当前catalog和schema中查询
@@ -2370,7 +2407,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return sqls
      */
     @Override
-    public List<Run> buildQueryColumnsRun(DataRuntime runtime, Table table, boolean metadata) throws Exception{
+    public List<Run> buildQueryColumnsRun(DataRuntime runtime, Table table, boolean metadata) throws Exception {
         List<Run> runs = new ArrayList<>();
         Schema schema = null;
         String name = null;
@@ -2397,7 +2434,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
             if(BasicUtil.isNotEmpty(name)) {
                 builder.append(" AND TABLE_NAME = '").append(objectName(runtime, name)).append("'");
             }
-            builder.append(" ORDER BY TABLE_NAME, ORDINAL_POSITION");
+            builder.append("\nORDER BY TABLE_NAME, ORDINAL_POSITION");
         }
         return runs;
     }
@@ -2415,12 +2452,12 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> columns, DataSet set) throws Exception{
+    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> columns, DataSet set) throws Exception {
         set.removeColumn("TABLE_CATALOG");
         return super.columns(runtime, index, create, table, columns, set);
     }
     @Override
-    public <T extends Column> List<T> columns(DataRuntime runtime, int index, boolean create, Table table, List<T> columns, DataSet set) throws Exception{
+    public <T extends Column> List<T> columns(DataRuntime runtime, int index, boolean create, Table table, List<T> columns, DataSet set) throws Exception {
         set.removeColumn("TABLE_CATALOG");
         return super.columns(runtime, index, create, table, columns, set);
     }
@@ -2431,12 +2468,12 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param create 上一步没有查到的,这一步是否需要新创建
      * @param table 表
-     * @return columns 上一步查询结果
-     * @return pattern attern
+     * @param columns 上一步查询结果
+     * @param pattern 名称
      * @throws Exception 异常
      */
     @Override
-    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, Table table, String pattern) throws Exception{
+    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, Table table, String pattern) throws Exception {
         return super.columns(runtime, create, columns, table, pattern);
     }
 
@@ -2478,7 +2515,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return sqls
      */
     @Override
-    public List<Run> buildQueryTagsRun(DataRuntime runtime, Table table, boolean metadata) throws Exception{
+    public List<Run> buildQueryTagsRun(DataRuntime runtime, Table table, boolean metadata) throws Exception {
         return new ArrayList<>();
     }
 
@@ -2495,7 +2532,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends Tag> LinkedHashMap<String, T> tags(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> tags, DataSet set) throws Exception{
+    public <T extends Tag> LinkedHashMap<String, T> tags(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> tags, DataSet set) throws Exception {
         return super.tags(runtime, index, create, table, tags, set);
     }
     /**
@@ -2511,7 +2548,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends Tag> LinkedHashMap<String, T> tags(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tags, Table table, String pattern) throws Exception{
+    public <T extends Tag> LinkedHashMap<String, T> tags(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tags, Table table, String pattern) throws Exception {
         return super.tags(runtime, create, tags, table, pattern);
     }
 
@@ -2523,7 +2560,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * [命令合成]
      * List<Run> buildQueryPrimaryRun(DataRuntime runtime, Table table) throws Exception
      * [结构集封装]
-     * PrimaryKey primary(DataRuntime runtime, int index, Table table, DataSet set)
+     * <T extends PrimaryKey> T init(DataRuntime runtime, int index, T primary, Table table, DataSet set)
      ******************************************************************************************************************/
     /**
      * primary[调用入口]<br/>
@@ -2547,7 +2584,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return sqls
      */
     @Override
-    public List<Run> buildQueryPrimaryRun(DataRuntime runtime, Table table) throws Exception{
+    public List<Run> buildQueryPrimaryRun(DataRuntime runtime, Table table) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -2562,17 +2599,16 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * primary[结构集封装]<br/>
      *  根据查询结果集构造PrimaryKey
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param index 第几条查询SQL 对照 buildQueryIndexsRun 返回顺序
+     * @param index 第几条查询SQL 对照 buildQueryIndexesRun 返回顺序
      * @param table 表
      * @param set sql查询结果
      * @throws Exception 异常
      */
     @Override
-    public PrimaryKey primary(DataRuntime runtime, int index, Table table, DataSet set) throws Exception{
-        PrimaryKey primary = null;
+    public <T extends PrimaryKey> T init(DataRuntime runtime, int index, T primary, Table table, DataSet set) throws Exception {
         set = set.getRows("Key_name","PRIMARY");
-        if(set.size() > 0){
-            primary = new PrimaryKey();
+        if(!set.isEmpty()){
+            primary = (T)new PrimaryKey();
             for(DataRow row:set){
                 primary.setName(row.getString("Key_name"));
                 Column column = new Column(row.getString("Column_name"));
@@ -2615,7 +2651,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return sqls
      */
     @Override
-    public List<Run> buildQueryForeignsRun(DataRuntime runtime, Table table) throws Exception{
+    public List<Run> buildQueryForeignsRun(DataRuntime runtime, Table table) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -2642,7 +2678,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends ForeignKey> LinkedHashMap<String, T> foreigns(DataRuntime runtime, int index, Table table, LinkedHashMap<String, T> foreigns, DataSet set) throws Exception{
+    public <T extends ForeignKey> LinkedHashMap<String, T> foreigns(DataRuntime runtime, int index, Table table, LinkedHashMap<String, T> foreigns, DataSet set) throws Exception {
         if(null == foreigns){
             foreigns = new LinkedHashMap<>();
         }
@@ -2674,7 +2710,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * <T extends Index> List<T> indexs(DataRuntime runtime, String random, boolean greedy, Table table, String pattern)
      * <T extends Index> LinkedHashMap<T, Index> indexs(DataRuntime runtime, String random, Table table, String pattern)
      * [命令合成]
-     * List<Run> buildQueryIndexsRun(DataRuntime runtime, Table table, String name)
+     * List<Run> buildQueryIndexesRun(DataRuntime runtime, Table table, String name)
      * [结果集封装]<br/>
      * <T extends Index> List<T> indexs(DataRuntime runtime, int index, boolean create, Table table, List<T> indexs, DataSet set)
      * <T extends Index> LinkedHashMap<String, T> indexs(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> indexs, DataSet set)
@@ -2719,7 +2755,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return sqls
      */
     @Override
-    public List<Run> buildQueryIndexsRun(DataRuntime runtime, Table table, String name){
+    public List<Run> buildQueryIndexesRun(DataRuntime runtime, Table table, String name){
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -2729,7 +2765,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
         if(null != table) {
             checkName(runtime, null, table);
             if (null != table.getSchema()) {
-                builder.append("AND TABLE_SCHEMA='").append(table.getSchema()).append("'\n");
+                builder.append("AND TABLE_SCHEMA='").append(table.getSchemaName()).append("'\n");
             }
             if (null != table.getName()) {
                 builder.append("AND TABLE_NAME='").append(objectName(runtime, table.getName())).append("'\n");
@@ -2746,7 +2782,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * index[结果集封装]<br/>
      *  根据查询结果集构造Index
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param index 第几条查询SQL 对照 buildQueryIndexsRun 返回顺序
+     * @param index 第几条查询SQL 对照 buildQueryIndexesRun 返回顺序
      * @param create 上一步没有查到的,这一步是否需要新创建
      * @param table 表
      * @param indexs 上一步查询结果
@@ -2755,7 +2791,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends Index> LinkedHashMap<String, T> indexs(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> indexs, DataSet set) throws Exception{
+    public <T extends Index> LinkedHashMap<String, T> indexs(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> indexs, DataSet set) throws Exception {
         if(null == indexs){
             indexs = new LinkedHashMap<>();
         }
@@ -2794,7 +2830,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * index[结果集封装]<br/>
      *  根据查询结果集构造Index
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param index 第几条查询SQL 对照 buildQueryIndexsRun 返回顺序
+     * @param index 第几条查询SQL 对照 buildQueryIndexesRun 返回顺序
      * @param create 上一步没有查到的,这一步是否需要新创建
      * @param table 表
      * @param indexs 上一步查询结果
@@ -2803,7 +2839,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends Index> List<T> indexs(DataRuntime runtime, int index, boolean create, Table table, List<T> indexs, DataSet set) throws Exception{
+    public <T extends Index> List<T> indexs(DataRuntime runtime, int index, boolean create, Table table, List<T> indexs, DataSet set) throws Exception {
         if(null == indexs){
             indexs = new ArrayList<>();
         }
@@ -2852,7 +2888,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends Index> List<T> indexs(DataRuntime runtime, boolean create, List<T> indexs, Table table, boolean unique, boolean approximate) throws Exception{
+    public <T extends Index> List<T> indexs(DataRuntime runtime, boolean create, List<T> indexs, Table table, boolean unique, boolean approximate) throws Exception {
         return super.indexs(runtime, create, indexs, table, unique, approximate);
     }
     /**
@@ -2867,7 +2903,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends Index> LinkedHashMap<String, T> indexs(DataRuntime runtime, boolean create, LinkedHashMap<String, T> indexs, Table table, boolean unique, boolean approximate) throws Exception{
+    public <T extends Index> LinkedHashMap<String, T> indexs(DataRuntime runtime, boolean create, LinkedHashMap<String, T> indexs, Table table, boolean unique, boolean approximate) throws Exception {
         return super.indexs(runtime, create, indexs, table, unique, approximate);
     }
 
@@ -2941,7 +2977,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends Constraint> List<T> constraints(DataRuntime runtime, int index, boolean create, Table table, List<T> constraints, DataSet set) throws Exception{
+    public <T extends Constraint> List<T> constraints(DataRuntime runtime, int index, boolean create, Table table, List<T> constraints, DataSet set) throws Exception {
+        set.removeColumn("CONSTRAINT_CATALOG");
         return super.constraints(runtime, index, create, table, constraints, set);
     }
     /**
@@ -2958,7 +2995,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends Constraint> LinkedHashMap<String, T> constraints(DataRuntime runtime, int index, boolean create, Table table, Column column, LinkedHashMap<String, T> constraints, DataSet set) throws Exception{
+    public <T extends Constraint> LinkedHashMap<String, T> constraints(DataRuntime runtime, int index, boolean create, Table table, Column column, LinkedHashMap<String, T> constraints, DataSet set) throws Exception {
+        set.removeColumn("CONSTRAINT_CATALOG");
         return super.constraints(runtime, index, create, table, column, constraints, set);
     }
 
@@ -3039,7 +3077,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return LinkedHashMap
      * @throws Exception 异常
      */
-    public <T extends Trigger> LinkedHashMap<String, T> triggers(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> triggers, DataSet set) throws Exception{
+    public <T extends Trigger> LinkedHashMap<String, T> triggers(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> triggers, DataSet set) throws Exception {
         if(null == triggers){
             triggers = new LinkedHashMap<>();
         }
@@ -3165,7 +3203,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends Procedure> LinkedHashMap<String, T> procedures(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> procedures, DataSet set) throws Exception{
+    public <T extends Procedure> LinkedHashMap<String, T> procedures(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> procedures, DataSet set) throws Exception {
         if(null == procedures){
             procedures = new LinkedHashMap<>();
         }
@@ -3226,7 +3264,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Procedure procedure) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Procedure procedure) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -3347,7 +3385,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends Function> List<T> functions(DataRuntime runtime, int index, boolean create, List<T> functions, DataSet set) throws Exception{
+    public <T extends Function> List<T> functions(DataRuntime runtime, int index, boolean create, List<T> functions, DataSet set) throws Exception {
         return super.functions(runtime, index, create, functions, set);
     }
     /**
@@ -3362,7 +3400,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public <T extends Function> LinkedHashMap<String, T> functions(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> functions, DataSet set) throws Exception{
+    public <T extends Function> LinkedHashMap<String, T> functions(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> functions, DataSet set) throws Exception {
         if(null == functions){
             functions = new LinkedHashMap<>();
         }
@@ -3411,7 +3449,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Function meta) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Function meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -3442,6 +3480,159 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
         return ddls;
     }
 
+    /* *****************************************************************************************************************
+     * 													sequence
+     * -----------------------------------------------------------------------------------------------------------------
+     * [调用入口]
+     * <T extends Sequence> List<T> sequences(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern);
+     * <T extends Sequence> LinkedHashMap<String, T> sequences(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern);
+     * [命令合成]
+     * List<Run> buildQuerySequencesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern) ;
+     * [结果集封装]<br/>
+     * <T extends Sequence> List<T> sequences(DataRuntime runtime, int index, boolean create, List<T> sequences, DataSet set) throws Exception;
+     * <T extends Sequence> LinkedHashMap<String, T> sequences(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> sequences, DataSet set) throws Exception;
+     * <T extends Sequence> List<T> sequences(DataRuntime runtime, boolean create, List<T> sequences, DataSet set) throws Exception;
+     * <T extends Sequence> LinkedHashMap<String, T> sequences(DataRuntime runtime, boolean create, LinkedHashMap<String, T> sequences, DataSet set) throws Exception;
+     * [调用入口]
+     * List<String> ddl(DataRuntime runtime, String random, Sequence sequence);
+     * [命令合成]
+     * List<Run> buildQueryDdlsRun(DataRuntime runtime, Sequence sequence) throws Exception;
+     * [结果集封装]<br/>
+     * List<String> ddl(DataRuntime runtime, int index, Sequence sequence, List<String> ddls, DataSet set)
+     ******************************************************************************************************************/
+    /**
+     *
+     * sequence[调用入口]<br/>
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param random 用来标记同一组命令
+     * @param greedy 贪婪模式 true:如果不填写catalog或schema则查询全部 false:只在当前catalog和schema中查询
+     * @param catalog catalog
+     * @param schema schema
+     * @param pattern 名称统配符或正则
+     * @return  LinkedHashMap
+     * @param <T> Index
+     */
+    @Override
+    public <T extends Sequence> List<T> sequences(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern) {
+        return super.sequences(runtime, random, greedy, catalog, schema, pattern);
+    }
+    /**
+     *
+     * sequence[调用入口]<br/>
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param random 用来标记同一组命令
+     * @param catalog catalog
+     * @param schema schema
+     * @param pattern 名称统配符或正则
+     * @return  LinkedHashMap
+     * @param <T> Index
+     */
+    @Override
+    public <T extends Sequence> LinkedHashMap<String, T> sequences(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern) {
+        return super.sequences(runtime, random, catalog, schema, pattern);
+    }
+    /**
+     * sequence[命令合成]<br/>
+     * 查询表上的 Trigger
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param catalog catalog
+     * @param schema schema
+     * @param name 名称统配符或正则
+     * @return sqls
+     */
+    @Override
+    public List<Run> buildQuerySequencesRun(DataRuntime runtime, Catalog catalog, Schema schema, String name) {
+        return super.buildQuerySequencesRun(runtime, catalog, schema, name);
+    }
+
+    /**
+     * sequence[结果集封装]<br/>
+     * 根据查询结果集构造 Trigger
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param index 第几条查询SQL 对照 buildQueryConstraintsRun 返回顺序
+     * @param create 上一步没有查到的,这一步是否需要新创建
+     * @param sequences 上一步查询结果
+     * @param set 查询结果集
+     * @return LinkedHashMap
+     * @throws Exception 异常
+     */
+    @Override
+    public <T extends Sequence> List<T> sequences(DataRuntime runtime, int index, boolean create, List<T> sequences, DataSet set) throws Exception {
+        return super.sequences(runtime, index, create, sequences, set);
+    }
+    /**
+     * sequence[结果集封装]<br/>
+     * 根据查询结果集构造 Trigger
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param index 第几条查询SQL 对照 buildQueryConstraintsRun 返回顺序
+     * @param create 上一步没有查到的,这一步是否需要新创建
+     * @param sequences 上一步查询结果
+     * @param set 查询结果集
+     * @return LinkedHashMap
+     * @throws Exception 异常
+     */
+    @Override
+    public <T extends Sequence> LinkedHashMap<String, T> sequences(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> sequences, DataSet set) throws Exception {
+        return super.sequences(runtime, index, create, sequences, set);
+    }
+
+    /**
+     * sequence[结果集封装]<br/>
+     * 根据驱动内置接口补充 Sequence
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param create 上一步没有查到的,这一步是否需要新创建
+     * @param sequences 上一步查询结果
+     * @return LinkedHashMap
+     * @throws Exception 异常
+     */
+    @Override
+    public <T extends Sequence> List<T> sequences(DataRuntime runtime, boolean create, List<T> sequences) throws Exception {
+        return super.sequences(runtime, create, sequences);
+    }
+
+    /**
+     *
+     * sequence[调用入口]<br/>
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param random 用来标记同一组命令
+     * @param meta Sequence
+     * @return ddl
+     */
+    @Override
+    public List<String> ddl(DataRuntime runtime, String random, Sequence meta){
+        return super.ddl(runtime, random, meta);
+    }
+
+    /**
+     * sequence[命令合成]<br/>
+     * 查询序列DDL
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return List
+     */
+    @Override
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.buildQueryDdlsRun(runtime, meta);
+    }
+    /**
+     * sequence[结果集封装]<br/>
+     * 查询 Sequence DDL
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param index 第几条SQL 对照 buildQueryDdlsRun 返回顺序
+     * @param sequence Sequence
+     * @param ddls 上一步查询结果
+     * @param set 查询结果集
+     * @return List
+     */
+    @Override
+    public List<String> ddl(DataRuntime runtime, int index, Sequence sequence, List<String> ddls, DataSet set){
+        return super.ddl(runtime, index, sequence, ddls, set);
+    }
+
+    /* *****************************************************************************************************************
+     * 													common
+     * ----------------------------------------------------------------------------------------------------------------
+     */
     /**
      *
      * 根据 catalog, schema, name检测tables集合中是否存在
@@ -3516,6 +3707,13 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      ******************************************************************************************************************/
 
     /**
+     * 是否支持DDL合并
+     * @return boolean
+     */
+    public boolean slice(){
+        return true;
+    }
+    /**
      * ddl [执行命令]
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param random 用来标记同一组命令
@@ -3537,11 +3735,11 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * boolean drop(DataRuntime runtime, Table meta)
      * boolean rename(DataRuntime runtime, Table origin, String name)
      * [命令合成]
-     * List<Run> buildCreateRun(DataRuntime runtime, Table table)
-     * List<Run> buildAlterRun(DataRuntime runtime, Table table)
-     * List<Run> buildAlterRun(DataRuntime runtime, Table table, Collection<Column> columns)
-     * List<Run> buildRenameRun(DataRuntime runtime, Table table)
-     * List<Run> buildDropRun(DataRuntime runtime, Table table)
+     * List<Run> buildCreateRun(DataRuntime runtime, Table meta)
+     * List<Run> buildAlterRun(DataRuntime runtime, Table meta)
+     * List<Run> buildAlterRun(DataRuntime runtime, Table meta, Collection<Column> columns)
+     * List<Run> buildRenameRun(DataRuntime runtime, Table meta)
+     * List<Run> buildDropRun(DataRuntime runtime, Table meta)
      * [命令合成-子流程]
      * List<Run> buildAppendCommentRun(DataRuntime runtime, Table table)
      * List<Run> buildChangeCommentRun(DataRuntime runtime, Table table)
@@ -3561,7 +3759,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception DDL异常
      */
     @Override
-    public boolean create(DataRuntime runtime, Table meta) throws Exception{
+    public boolean create(DataRuntime runtime, Table meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -3575,7 +3773,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      */
 
     @Override
-    public boolean alter(DataRuntime runtime, Table meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Table meta) throws Exception {
         if(meta.isSort()){
             sort(meta.getColumns());
         }
@@ -3610,7 +3808,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      */
 
     @Override
-    public boolean drop(DataRuntime runtime, Table meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Table meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -3625,7 +3823,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      */
 
     @Override
-    public boolean rename(DataRuntime runtime, Table origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Table origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -3637,7 +3835,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public  String keyword(Table meta){
+    public  String keyword(BaseMetadata meta)
+{
         return meta.getKeyword();
     }
 
@@ -3656,7 +3855,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, Table meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, Table meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
     }
     /**
@@ -3668,7 +3867,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Table meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Table meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -3677,19 +3876,18 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * 修改列
      * 有可能生成多条SQL,根据数据库类型优先合并成一条执行
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param table 表
+     * @param meta 表
      * @param columns 列
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Table table, Collection<Column> columns) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Table meta, Collection<Column> columns) throws Exception {
         List<Run> runs = new ArrayList<>();
-        Run run = new SimpleRun(runtime);
-        runs.add(run);
-        if (columns.size() > 0) {
+        if (!columns.isEmpty()) {
+            Run run = new SimpleRun(runtime);
             StringBuilder builder = run.getBuilder();
-            builder.append("ALTER ").append(keyword(table)).append(" ");
-            name(runtime, builder, table);
+            builder.append("ALTER ").append(keyword(meta)).append(" ");
+            name(runtime, builder, meta);
             List<Run> slices = new ArrayList<>();
             for(Column column:columns){
                 ACTION.DDL action = column.getAction();
@@ -3704,13 +3902,20 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
             boolean first = true;
             for(Run slice:slices){
                 if(BasicUtil.isNotEmpty(slice)){
+                    String line = slice.getFinalUpdate().trim();
+                    if(BasicUtil.isEmpty(line)){
+                        continue;
+                    }
                     builder.append("\n");
                     if(!first){
                         builder.append(",");
                     }
                     first = false;
-                    builder.append(slice.getFinalUpdate().trim());
+                    builder.append(line);
                 }
+            }
+            if(!first) {//非空
+                runs.add(run);
             }
         }
         return runs;
@@ -3726,7 +3931,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Table meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Table meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -3746,7 +3951,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Table meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Table meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -3759,7 +3964,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAppendCommentRun(DataRuntime runtime, Table meta) throws Exception{
+    public List<Run> buildAppendCommentRun(DataRuntime runtime, Table meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         /*String comment = meta.getComment();
         if(BasicUtil.isEmpty(comment)){
@@ -3776,6 +3981,18 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
 
     /**
      * table[命令合成-子流程]<br/>
+     * 创建表完成后追加列备注,创建过程能添加备注的不需要实现与comment(DataRuntime runtime, StringBuilder builder, Column meta)二选一实现
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 表
+     * @return sql
+     * @throws Exception 异常
+     */
+    @Override
+    public List<Run> buildAppendColumnCommentRun(DataRuntime runtime, Table meta) throws Exception {
+        return super.buildAppendColumnCommentRun(runtime, meta);
+    }
+    /**
+     * table[命令合成-子流程]<br/>
      * 修改备注
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param meta 表
@@ -3783,7 +4000,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, Table meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, Table meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         String comment = meta.getComment();
         if(BasicUtil.isEmpty(comment)){
@@ -3815,7 +4032,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
 
     /**
      * table[命令合成-子流程]<br/>
-     * 检测表主键(在没有显式设置主键时根据其他条件判断如自增)
+     * 检测表主键(在没有显式设置主键时根据其他条件判断如自增),同时根据主键对象给相关列设置主键标识
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param table 表
      */
@@ -3841,9 +4058,10 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
         }else{
             pks = meta.primarys();
         }
-        if(!pks.isEmpty()){
+        if(!pks.isEmpty() && pks.size() >1){//单列主键时在列名上设置
             builder.append(",PRIMARY KEY (");
             boolean first = true;
+            Column.sort(primary.getPositions(), pks);
             for(Column pk:pks.values()){
                 if(!first){
                     builder.append(",");
@@ -3894,7 +4112,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
         if(null != meta){
             String comment = meta.getComment();
             if(BasicUtil.isNotEmpty(comment)){
-                builder.append(" COMMENT '").append(comment).append("'");
+                builder.append("\nCOMMENT '").append(comment).append("'");
             }
         }
         return builder;
@@ -3910,14 +4128,14 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public StringBuilder partitionBy(DataRuntime runtime, StringBuilder builder, Table meta) throws Exception{
+    public StringBuilder partitionBy(DataRuntime runtime, StringBuilder builder, Table meta) throws Exception {
         return super.partitionBy(runtime, builder, meta);
     }
 
     /**
      * table[命令合成-子流程]<br/>
      * 子表执行分区依据(相关主表及分区值)
-     * 如CREATE TABLE hr_user_hr PARTITION OF hr_user FOR VALUES IN ('HR')
+     * 如CREATE TABLE hr_user_fi PARTITION OF hr_user FOR VALUES IN ('FI')
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param builder builder
      * @param meta 表
@@ -3925,7 +4143,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public StringBuilder partitionOf(DataRuntime runtime, StringBuilder builder, Table meta) throws Exception{
+    public StringBuilder partitionOf(DataRuntime runtime, StringBuilder builder, Table meta) throws Exception {
         return super.partitionOf(runtime, builder, meta);
     }
 
@@ -3958,7 +4176,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception DDL异常
      */
     @Override
-    public boolean create(DataRuntime runtime, View meta) throws Exception{
+    public boolean create(DataRuntime runtime, View meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -3971,7 +4189,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception DDL异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, View meta) throws Exception{
+    public boolean alter(DataRuntime runtime, View meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -3985,7 +4203,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception DDL异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, View meta) throws Exception{
+    public boolean drop(DataRuntime runtime, View meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -4000,7 +4218,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception DDL异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, View origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, View origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -4014,7 +4232,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, View meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -4035,7 +4253,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      */
 
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, View meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
     /**
@@ -4048,7 +4266,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, View meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
     /**
@@ -4060,7 +4278,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, View meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -4073,7 +4291,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAppendCommentRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildAppendCommentRun(DataRuntime runtime, View meta) throws Exception {
         return super.buildAppendCommentRun(runtime, meta);
     }
 
@@ -4086,7 +4304,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, View meta) throws Exception {
         return super.buildChangeCommentRun(runtime, meta);
     }
 
@@ -4145,7 +4363,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception DDL异常
      */
     @Override
-    public boolean create(DataRuntime runtime, MasterTable meta) throws Exception{
+    public boolean create(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -4158,7 +4376,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception DDL异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, MasterTable meta) throws Exception{
+    public boolean alter(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -4171,7 +4389,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception DDL异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, MasterTable meta) throws Exception{
+    public boolean drop(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -4185,7 +4403,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception DDL异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, MasterTable origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, MasterTable origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -4198,7 +4416,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
     }
 
@@ -4211,7 +4429,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
     /**
@@ -4223,7 +4441,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
     /**
@@ -4235,7 +4453,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -4248,7 +4466,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAppendCommentRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildAppendCommentRun(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.buildAppendCommentRun(runtime, meta);
     }
 
@@ -4261,7 +4479,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.buildChangeCommentRun(runtime, meta);
     }
 
@@ -4293,7 +4511,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception DDL异常
      */
     @Override
-    public boolean create(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public boolean create(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -4306,7 +4524,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception DDL异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public boolean alter(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -4320,7 +4538,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      */
 
     @Override
-    public boolean drop(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public boolean drop(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.drop(runtime, meta);
     }
     /**
@@ -4333,7 +4551,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception DDL异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, PartitionTable origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, PartitionTable origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
     /**
@@ -4345,7 +4563,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
     }
 
@@ -4358,7 +4576,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAppendCommentRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildAppendCommentRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.buildAppendCommentRun(runtime, meta);
     }
 
@@ -4371,7 +4589,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -4384,7 +4602,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
     /**
@@ -4396,7 +4614,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -4409,7 +4627,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.buildChangeCommentRun(runtime, meta);
     }
 
@@ -4442,11 +4660,11 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * List<Run> buildDropAutoIncrement(DataRuntime runtime, Column column)
      * StringBuilder define(DataRuntime runtime, StringBuilder builder, Column column)
      * StringBuilder type(DataRuntime runtime, StringBuilder builder, Column column)
-     * StringBuilder type(DataRuntime runtime, StringBuilder builder, Column column, String type, boolean isIgnorePrecision, boolean isIgnoreScale)
-     * boolean isIgnorePrecision(DataRuntime runtime, Column column)
-     * boolean isIgnoreScale(DataRuntime runtime, Column column)
+     * StringBuilder type(DataRuntime runtime, StringBuilder builder, Column column, String type, int ignorePrecision, boolean ignoreScale)
+     * int ignorePrecision(DataRuntime runtime, Column column)
+     * int ignoreScale(DataRuntime runtime, Column column)
      * Boolean checkIgnorePrecision(DataRuntime runtime, String datatype)
-     * Boolean checkIgnoreScale(DataRuntime runtime, String datatype)
+     * int checkIgnoreScale(DataRuntime runtime, String datatype)
      * StringBuilder nullable(DataRuntime runtime, StringBuilder builder, Column column)
      * StringBuilder charset(DataRuntime runtime, StringBuilder builder, Column column)
      * StringBuilder defaultValue(DataRuntime runtime, StringBuilder builder, Column column)
@@ -4468,7 +4686,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception DDL异常
      */
     @Override
-    public boolean add(DataRuntime runtime, Column meta) throws Exception{
+    public boolean add(DataRuntime runtime, Column meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -4482,7 +4700,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception DDL异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, Column meta, boolean trigger) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, Column meta, boolean trigger) throws Exception {
         return super.alter(runtime, table, meta, trigger);
     }
 
@@ -4495,7 +4713,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception DDL异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Column meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Column meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -4508,7 +4726,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception DDL异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Column meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Column meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -4522,7 +4740,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception DDL异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Column origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Column origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -4536,12 +4754,12 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, Column meta, boolean slice) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, Column meta, boolean slice) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
         StringBuilder builder = run.getBuilder();
-        if(!slice) {
+        if(!slice(slice)) {
             Table table = meta.getTable(true);
             builder.append("ALTER TABLE ");
             name(runtime, builder, table);
@@ -4552,7 +4770,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
             addColumnGuide(runtime, builder, meta);
             delimiter(builder, meta.getName()).append(" ");
             // 数据类型
-            this.typeMetadata(runtime, builder, meta);
+            type(runtime, builder, meta);
             // 编码
             charset(runtime, builder, meta);
             // 默认值
@@ -4571,7 +4789,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
         return runs;
     }
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, Column meta) throws Exception {
         return super.buildAddRun(runtime, meta);
     }
 
@@ -4586,12 +4804,12 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Column meta, boolean slice) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Column meta, boolean slice) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
         StringBuilder builder = run.getBuilder();
-        if(!slice) {
+        if(!slice(slice)) {
             Table table = meta.getTable(true);
             builder.append("ALTER TABLE ");
             name(runtime, builder, table);
@@ -4600,14 +4818,21 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
         if(null == update){
             update = meta;
         }
-        builder.append(" CHANGE ");
+        boolean rename = meta.isRename();
+        if(rename){
+            builder.append(" CHANGE ");
+        }else{
+            builder.append(" MODIFY ");
+        }
         delimiter(builder, meta.getName()).append(" ");
-        delimiter(builder, update.getName()).append(" ");
+        if(rename) {
+            delimiter(builder, update.getName()).append(" ");
+        }
         define(runtime, builder, update);
         return runs;
     }
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Column meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -4621,12 +4846,12 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Column meta, boolean slice) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Column meta, boolean slice) throws Exception {
         return super.buildDropRun(runtime, meta, slice);
     }
 
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Column meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -4639,7 +4864,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Column meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -4653,7 +4878,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildChangeTypeRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildChangeTypeRun(DataRuntime runtime, Column meta) throws Exception {
         return super.buildChangeTypeRun(runtime, meta);
     }
 
@@ -4704,7 +4929,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildChangeDefaultRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildChangeDefaultRun(DataRuntime runtime, Column meta) throws Exception {
         return super.buildChangeDefaultRun(runtime, meta);
     }
 
@@ -4718,7 +4943,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildChangeNullableRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildChangeNullableRun(DataRuntime runtime, Column meta) throws Exception {
         return super.buildChangeNullableRun(runtime, meta);
     }
 
@@ -4731,7 +4956,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, Column meta) throws Exception {
         return super.buildChangeCommentRun(runtime, meta);
     }
 
@@ -4750,7 +4975,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAppendCommentRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildAppendCommentRun(DataRuntime runtime, Column meta) throws Exception {
         return super.buildAppendCommentRun(runtime, meta);
     }
 
@@ -4764,7 +4989,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildDropAutoIncrement(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildDropAutoIncrement(DataRuntime runtime, Column meta) throws Exception {
         meta.update().autoIncrement(false);
         return buildAlterRun(runtime, meta);
     }
@@ -4804,8 +5029,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return StringBuilder
      */
     @Override
-    public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta){
-        return super.typeMetadata(runtime, builder, meta);
+    public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta){
+        return super.type(runtime, builder, meta);
     }
     /**
      * column[命令合成-子流程]<br/>
@@ -4814,128 +5039,16 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @param builder builder
      * @param meta 列
      * @param type 数据类型(已经过转换)
-     * @param isIgnorePrecision 是否忽略长度
-     * @param isIgnoreScale 是否忽略小数
+     * @param ignorePrecision 是否忽略长度
+     * @param ignoreScale 是否忽略小数
      * @return StringBuilder
      */
     @Override
-    public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta, String type, boolean isIgnorePrecision, boolean isIgnoreScale){
-        return super.typeMetadata(runtime, builder, meta, type, isIgnorePrecision, isIgnoreScale);
+    public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta, String type, int ignoreLength, int ignorePrecision, int ignoreScale){
+        return super.type(runtime, builder, meta, type, ignoreLength, ignorePrecision, ignoreScale);
     }
 
 
-    /**
-     * column[命令合成-子流程]<br/>
-     * 列定义:是否忽略长度
-     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param meta 列
-     * @return boolean
-     */
-    @Override
-    public boolean isIgnorePrecision(DataRuntime runtime, Column meta) {
-        return super.isIgnorePrecision(runtime, meta);
-    }
-    /**
-     * column[命令合成-子流程]<br/>
-     * 列定义:是否忽略精度
-     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param meta 列
-     * @return boolean
-     */
-    @Override
-    public boolean isIgnoreScale(DataRuntime runtime, Column meta) {
-        return super.isIgnoreScale(runtime, meta);
-    }
-    /**
-     * column[命令合成-子流程]<br/>
-     * 列定义:是否忽略长度
-     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param type 列数据类型
-     * @return Boolean 检测不到时返回null
-     */
-    @Override
-    public Boolean checkIgnorePrecision(DataRuntime runtime, String type) {
-        type = type.toUpperCase();
-        if (type.contains("INT")) {
-            return false;
-        }
-        if (type.contains("DATE")) {
-            return true;
-        }
-        if (type.contains("TIME")) {
-            return true;
-        }
-        if (type.contains("YEAR")) {
-            return true;
-        }
-        if (type.contains("TEXT")) {
-            return true;
-        }
-        if (type.contains("BLOB")) {
-            return true;
-        }
-        if (type.contains("JSON")) {
-            return true;
-        }
-        if (type.contains("POINT")) {
-            return true;
-        }
-        if (type.contains("LINE")) {
-            return true;
-        }
-        if (type.contains("POLYGON")) {
-            return true;
-        }
-        if (type.contains("GEOMETRY")) {
-            return true;
-        }
-        return null;
-    }
-    /**
-     * column[命令合成-子流程]<br/>
-     * 列定义:是否忽略精度
-     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param type 列数据类型
-     * @return Boolean 检测不到时返回null
-     */
-    @Override
-    public Boolean checkIgnoreScale(DataRuntime runtime, String type) {
-        type = type.toUpperCase();
-        if (type.contains("INT")) {
-            return true;
-        }
-        if (type.contains("DATE")) {
-            return true;
-        }
-        if (type.contains("TIME")) {
-            return true;
-        }
-        if (type.contains("YEAR")) {
-            return true;
-        }
-        if (type.contains("TEXT")) {
-            return true;
-        }
-        if (type.contains("BLOB")) {
-            return true;
-        }
-        if (type.contains("JSON")) {
-            return true;
-        }
-        if (type.contains("POINT")) {
-            return true;
-        }
-        if (type.contains("LINE")) {
-            return true;
-        }
-        if (type.contains("POLYGON")) {
-            return true;
-        }
-        if (type.contains("GEOMETRY")) {
-            return true;
-        }
-        return null;
-    }
     /**
      * column[命令合成-子流程]<br/>
      * 列定义:非空
@@ -4995,12 +5108,25 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      */
     @Override
     public StringBuilder primary(DataRuntime runtime, StringBuilder builder, Column meta){
-        return super.primary(runtime, builder, meta);
+        if(null != meta && meta.isPrimaryKey() == 1){
+            Table table = meta.getTable();
+            int size = table.getPrimaryKeySize();
+            //如果是修改状态 并且 列名没变 并且 主键没变 则忽略
+            if(meta.getAction() == ACTION.DDL.COLUMN_ALTER){
+                if(!meta.isRename()){
+                    return builder;
+                }
+            }
+            if(size ==1){//单键时 在列名上设置
+                builder.append(" PRIMARY KEY");
+            }
+        }
+        return builder;
     }
 
     /**
      * column[命令合成-子流程]<br/>
-     * 列定义:递增列
+     * 列定义:递增列,需要通过serial实现递增的在type(DataRuntime runtime, StringBuilder builder, Column meta)中实现
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param builder builder
      * @param meta 列
@@ -5048,9 +5174,11 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
            }
         }else{
             if(BasicUtil.isNotEmpty(after)){
-                builder.append(" AFTER ").append(after);
+                builder.append(" AFTER ");
+                delimiter(builder, after);
             }else if(BasicUtil.isNotEmpty(before)){
-                builder.append(" BEFORE ").append(before);
+                builder.append(" BEFORE ");
+                delimiter(builder, before);
             }
         }
         return builder;
@@ -5104,7 +5232,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, Tag meta) throws Exception{
+    public boolean add(DataRuntime runtime, Tag meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -5118,7 +5246,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, Tag meta, boolean trigger) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, Tag meta, boolean trigger) throws Exception {
         return super.alter(runtime, table, meta, trigger);
     }
 
@@ -5132,7 +5260,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Tag meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Tag meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5145,7 +5273,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Tag meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Tag meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5159,7 +5287,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Tag origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Tag origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -5172,7 +5300,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, Tag meta) throws Exception {
         return new ArrayList<>();
     }
     /**
@@ -5184,7 +5312,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Tag meta) throws Exception {
         return new ArrayList<>();
     }
 
@@ -5196,7 +5324,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Tag meta) throws Exception {
         return new ArrayList<>();
     }
 
@@ -5209,7 +5337,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Tag meta) throws Exception {
         return new ArrayList<>();
     }
     /**
@@ -5221,7 +5349,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildChangeDefaultRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildChangeDefaultRun(DataRuntime runtime, Tag meta) throws Exception {
         return new ArrayList<>();
     }
 
@@ -5234,7 +5362,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildChangeNullableRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildChangeNullableRun(DataRuntime runtime, Tag meta) throws Exception {
         return new ArrayList<>();
     }
 
@@ -5247,7 +5375,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, Tag meta) throws Exception {
         return new ArrayList<>();
     }
 
@@ -5260,7 +5388,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildChangeTypeRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildChangeTypeRun(DataRuntime runtime, Tag meta) throws Exception {
         return new ArrayList<>();
     }
 
@@ -5305,7 +5433,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, PrimaryKey meta) throws Exception{
+    public boolean add(DataRuntime runtime, PrimaryKey meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -5318,7 +5446,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, PrimaryKey meta) throws Exception{
+    public boolean alter(DataRuntime runtime, PrimaryKey meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5331,7 +5459,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, PrimaryKey meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, PrimaryKey meta) throws Exception {
         return super.alter(runtime, table, meta);
     }
 
@@ -5344,7 +5472,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, PrimaryKey meta) throws Exception{
+    public boolean drop(DataRuntime runtime, PrimaryKey meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5358,7 +5486,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, PrimaryKey origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, PrimaryKey origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
     /**
@@ -5370,26 +5498,20 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
         StringBuilder builder = run.getBuilder();
-        Map<String,Column> columns = meta.getColumns();
-        if(columns.size()>0) {
-            if(!slice) {
+        LinkedHashMap<String,Column> columns = meta.getColumns();
+        if(null != columns && !columns.isEmpty()) {
+            if(!slice(slice)) {
                 builder.append("ALTER TABLE ");
                 name(runtime, builder, meta.getTable(true));
             }
             builder.append(" ADD PRIMARY KEY (");
-            boolean first = true;
-            for(Column column:columns.values()){
-                if(!first){
-                    builder.append(",");
-                }
-                first = false;
-                delimiter(builder, column.getName());
-            }
+            Column.sort(meta.getPositions(), columns);
+            delimiter(builder, Column.names(columns));
             builder.append(")");
         }
         return runs;
@@ -5404,7 +5526,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey origin, PrimaryKey meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey origin, PrimaryKey meta) throws Exception {
         return super.buildAlterRun(runtime, origin, meta);
     }
     /**
@@ -5416,12 +5538,12 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
         StringBuilder builder = run.getBuilder();
-        if(!slice) {
+        if(!slice(slice)) {
             builder.append("ALTER TABLE ");
             name(runtime, builder, meta.getTable(true));
         }
@@ -5437,7 +5559,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, PrimaryKey meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, PrimaryKey meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -5466,7 +5588,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public boolean add(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -5479,7 +5601,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public boolean alter(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5492,7 +5614,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, ForeignKey meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, ForeignKey meta) throws Exception {
         return super.alter(runtime, table, meta);
     }
 
@@ -5505,7 +5627,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public boolean drop(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5519,7 +5641,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, ForeignKey origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, ForeignKey origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -5532,7 +5654,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.buildAddRun(runtime, meta);
     }
     /**
@@ -5548,7 +5670,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -5560,7 +5682,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -5573,7 +5695,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
     /* *****************************************************************************************************************
@@ -5586,7 +5708,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * boolean drop(DataRuntime runtime, Index meta)
      * boolean rename(DataRuntime runtime, Index origin, String name)
      * [命令合成]
-     * List<Run> buildAddRun(DataRuntime runtime, Index meta)
+     * List<Run> buildAppendIndexRun(DataRuntime runtime, Table meta)
      * List<Run> buildAlterRun(DataRuntime runtime, Index meta)
      * List<Run> buildDropRun(DataRuntime runtime, Index meta)
      * List<Run> buildRenameRun(DataRuntime runtime, Index meta)
@@ -5604,7 +5726,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, Index meta) throws Exception{
+    public boolean add(DataRuntime runtime, Index meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -5617,7 +5739,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Index meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Index meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5630,7 +5752,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, Index meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, Index meta) throws Exception {
         return super.alter(runtime, table, meta);
     }
 
@@ -5643,7 +5765,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Index meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Index meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5657,7 +5779,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Index origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Index origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -5669,8 +5791,8 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, Index meta) throws Exception{
-        return super.buildAddRun(runtime, meta);
+    public List<Run> buildAppendIndexRun(DataRuntime runtime, Table meta) throws Exception {
+        return super.buildAppendIndexRun(runtime, meta);
     }
     /**
      * index[命令合成]<br/>
@@ -5681,7 +5803,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Index meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Index meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
     /**
@@ -5692,7 +5814,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Index meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Index meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -5715,7 +5837,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Index meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Index meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -5728,7 +5850,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return StringBuilder
      */
     @Override
-    public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Index meta){
+    public StringBuilder type(DataRuntime runtime, StringBuilder builder, Index meta){
         String type = meta.getType();
         if(BasicUtil.isNotEmpty(type)){
             builder.append("USING ").append(type).append(" ");
@@ -5776,7 +5898,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, Constraint meta) throws Exception{
+    public boolean add(DataRuntime runtime, Constraint meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -5789,7 +5911,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Constraint meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Constraint meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5802,7 +5924,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, Constraint meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, Constraint meta) throws Exception {
         return super.alter(runtime, table, meta);
     }
 
@@ -5815,7 +5937,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Constraint meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Constraint meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5829,7 +5951,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Constraint origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Constraint origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -5842,7 +5964,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, Constraint meta) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, Constraint meta) throws Exception {
         return super.buildAddRun(runtime, meta);
     }
 
@@ -5855,7 +5977,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Constraint meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Constraint meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
     /**
@@ -5866,7 +5988,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Constraint meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Constraint meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -5879,7 +6001,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Constraint meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Constraint meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -5901,7 +6023,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, Trigger meta) throws Exception{
+    public boolean add(DataRuntime runtime, Trigger meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -5914,7 +6036,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Trigger meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Trigger meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5927,7 +6049,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Trigger meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Trigger meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5941,7 +6063,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Trigger origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Trigger origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -5953,7 +6075,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, Trigger meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, Trigger meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
     }
     /**
@@ -5965,7 +6087,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Trigger meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Trigger meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -5977,7 +6099,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Trigger meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Trigger meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -5990,7 +6112,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Trigger meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Trigger meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
     /**
@@ -6032,7 +6154,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean create(DataRuntime runtime, Procedure meta) throws Exception{
+    public boolean create(DataRuntime runtime, Procedure meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -6045,7 +6167,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Procedure meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Procedure meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -6058,7 +6180,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Procedure meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Procedure meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -6072,7 +6194,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Procedure origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Procedure origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -6084,7 +6206,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, Procedure meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, Procedure meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
     }
     /**
@@ -6096,7 +6218,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Procedure meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Procedure meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -6108,7 +6230,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Procedure meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Procedure meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -6121,7 +6243,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Procedure meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Procedure meta) throws Exception {
         log.warn("MySQL不支持 rename procedure("+meta.getName()+")");
         return new ArrayList<>();
     }
@@ -6164,7 +6286,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean create(DataRuntime runtime, Function meta) throws Exception{
+    public boolean create(DataRuntime runtime, Function meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -6177,7 +6299,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Function meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Function meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -6190,7 +6312,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Function meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Function meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -6204,7 +6326,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Function origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Function origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -6217,7 +6339,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, Function meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, Function meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
     }
 
@@ -6230,7 +6352,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Function meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Function meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -6241,7 +6363,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Function meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Function meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -6254,11 +6376,130 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Function meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Function meta) throws Exception {
         log.warn("MySQL不支持 rename Function("+meta.getName()+")");
         return new ArrayList<>();
     }
 
+
+    /* *****************************************************************************************************************
+     * 													sequence
+     * -----------------------------------------------------------------------------------------------------------------
+     * [调用入口]
+     * boolean create(DataRuntime runtime, Sequence meta)
+     * boolean alter(DataRuntime runtime, Sequence meta)
+     * boolean drop(DataRuntime runtime, Sequence meta)
+     * boolean rename(DataRuntime runtime, Sequence origin, String name)
+     * [命令合成]
+     * List<Run> buildCreateRun(DataRuntime runtime, Sequence sequence)
+     * List<Run> buildAlterRun(DataRuntime runtime, Sequence sequence)
+     * List<Run> buildDropRun(DataRuntime runtime, Sequence sequence)
+     * List<Run> buildRenameRun(DataRuntime runtime, Sequence sequence)
+     ******************************************************************************************************************/
+
+    /**
+     * sequence[调用入口]<br/>
+     * 添加序列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return 是否执行成功
+     * @throws Exception 异常
+     */
+    @Override
+    public boolean create(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.create(runtime, meta);
+    }
+
+    /**
+     * sequence[调用入口]<br/>
+     * 修改序列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return 是否执行成功
+     * @throws Exception 异常
+     */
+    @Override
+    public boolean alter(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.alter(runtime, meta);
+    }
+
+    /**
+     * sequence[调用入口]<br/>
+     * 删除序列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return 是否执行成功
+     * @throws Exception 异常
+     */
+    @Override
+    public boolean drop(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.drop(runtime, meta);
+    }
+
+    /**
+     * sequence[调用入口]<br/>
+     * 重命名序列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param origin 序列
+     * @param name 新名称
+     * @return 是否执行成功
+     * @throws Exception 异常
+     */
+    @Override
+    public boolean rename(DataRuntime runtime, Sequence origin, String name) throws Exception {
+        return super.rename(runtime, origin, name);
+    }
+
+
+    /**
+     * sequence[命令合成]<br/>
+     * 添加序列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return String
+     */
+    @Override
+    public List<Run> buildCreateRun(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.buildCreateRun(runtime, meta);
+    }
+
+    /**
+     * sequence[命令合成]<br/>
+     * 修改序列
+     * 有可能生成多条SQL
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return List
+     */
+    @Override
+    public List<Run> buildAlterRun(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.buildAlterRun(runtime, meta);
+    }
+
+    /**
+     * sequence[命令合成]<br/>
+     * 删除序列
+     * @param meta 序列
+     * @return String
+     */
+    @Override
+    public List<Run> buildDropRun(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.buildDropRun(runtime, meta);
+    }
+
+    /**
+     * sequence[命令合成]<br/>
+     * 修改序列名
+     * 一般不直接调用,如果需要由buildAlterRun内部统一调用
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return String
+     */
+    @Override
+    public List<Run> buildRenameRun(DataRuntime runtime, Sequence meta) throws Exception {
+        log.warn("MySQL不支持 rename Sequence("+meta.getName()+")");
+        return new ArrayList<>();
+    }
     /* *****************************************************************************************************************
      *
      * 														JDBC
@@ -6291,18 +6532,13 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
 	 * @param meta BaseMetadata
 	 * @param catalog catalog
 	 * @param schema schema
-	 * @param override 如果meta中有值，是否覆盖
+     * @param overrideMeta 如果meta中有值，是否覆盖
+     * @param overrideRuntime 如果runtime中有值，是否覆盖，注意结果集中可能跨多个schema，所以一般不要覆盖runtime,从con获取的可以覆盖ResultSet中获取的不要覆盖
 	 * @param <T> BaseMetadata
 	 */
 	@Override
-    public <T extends BaseMetadata> void correctSchemaFromJDBC(T meta, String catalog, String schema, boolean override){
-        if(override || BasicUtil.isEmpty(meta.getSchema())) {
-            meta.setSchema(catalog);
-        }
-    }
-    @Override
-    public <T extends BaseMetadata> void correctSchemaFromJDBC(T meta, String catalog, String schema){
-        if(BasicUtil.isEmpty(meta.getSchema())) {
+    public <T extends BaseMetadata> void correctSchemaFromJDBC(DataRuntime runtime, T meta, String catalog, String schema, boolean overrideRuntime, boolean overrideMeta){
+        if(overrideMeta || empty(meta.getSchema())) {
             meta.setSchema(catalog);
         }
     }
@@ -6348,6 +6584,42 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
         return super.identity(runtime, random, data, configs, keyholder);
     }
 
+
+    /**
+     * column[结果集封装]<br/>(方法1)<br/>
+     * 元数据长度列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta TypeMetadata
+     * @return String
+     */
+    @Override
+    public String columnMetadataLengthRefer(DataRuntime runtime, TypeMetadata meta){
+        return super.columnMetadataLengthRefer(runtime, meta);
+    }
+
+    /**
+     * column[结果集封装]<br/>(方法1)<br/>
+     * 元数据数字有效位数列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta TypeMetadata
+     * @return String
+     */
+    @Override
+    public String columnMetadataPrecisionRefer(DataRuntime runtime, TypeMetadata meta){
+        return super.columnMetadataPrecisionRefer(runtime, meta);
+    }
+
+    /**
+     * column[结果集封装]<br/>(方法1)<br/>
+     * 元数据数字小数位数列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta TypeMetadata
+     * @return String
+     */
+    @Override
+    public String columnMetadataScaleRefer(DataRuntime runtime, TypeMetadata meta){
+        return super.columnMetadataScaleRefer(runtime, meta);
+    }
     /**
      *
      * column[结果集封装-子流程](方法2)<br/>
@@ -6381,7 +6653,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      */
 
     @Override
-    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, DatabaseMetaData dbmd, Table table, String pattern) throws Exception{
+    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, DatabaseMetaData dbmd, Table table, String pattern) throws Exception {
         return super.columns(runtime, create, columns, dbmd, table, pattern);
     }
 
@@ -6413,7 +6685,7 @@ public abstract class MySQLGenusAdapter extends DefaultJDBCAdapter implements In
      * @throws Exception
      */
     @Override
-    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, Table table, SqlRowSet set) throws Exception{
+    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, Table table, SqlRowSet set) throws Exception {
         return super.columns(runtime, create, columns, table, set);
     }
 

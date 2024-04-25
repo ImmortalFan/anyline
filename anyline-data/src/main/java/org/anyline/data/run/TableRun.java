@@ -17,6 +17,7 @@
 
 package org.anyline.data.run;
 
+import org.anyline.data.adapter.DriverAdapter;
 import org.anyline.data.param.ConfigStore;
 import org.anyline.data.prepare.ConditionChain;
 import org.anyline.data.prepare.auto.init.DefaultAutoConditionChain;
@@ -93,7 +94,11 @@ public class TableRun extends BasicRun implements Run {
 			builder.append(groupStore.getRunText(delimiterFr+delimiterTo));
 		}
 		if(BasicUtil.isNotEmpty(having)){
-			builder.append(" HAVING ").append(having);
+			if(having.trim().toUpperCase().startsWith("HAVING")){
+				builder.append(having);
+			}else {
+				builder.append(" HAVING ").append(having);
+			}
 		} 
 	}
 
@@ -109,10 +114,13 @@ public class TableRun extends BasicRun implements Run {
 		}
 		return valid;
 	}
-	/** 
+
+	/**
 	 * 拼接查询条件
-	 */ 
-	public void appendCondition(){
+	 * @param first 是否首位条件 如果是需要加where
+	 * @param placeholder 是否需要占位符
+	 */
+	public void appendCondition(DriverAdapter adapter, boolean first, boolean placeholder){
 		if(null == conditionChain){
 			return; 
 		}
@@ -120,7 +128,21 @@ public class TableRun extends BasicRun implements Run {
 		if(null != prepare){
 			alias = prepare.getAlias();
 		}
-		builder.append(conditionChain.getRunText(alias, runtime));
+		String condition = conditionChain.getRunText(alias, runtime, placeholder);
+		if(!condition.isEmpty()){
+			emptyCondition = false;
+			if(first){
+				builder.append("\n").append(adapter.conditionHead()).append(" ");
+				condition = condition.trim();
+				String up = condition.toUpperCase();
+				if(up.startsWith("AND ") || up.startsWith("AND(")){
+					condition = condition.substring(3);
+				}else if(up.startsWith("OR ") || up.startsWith("OR(")){
+					condition = condition.substring(2);
+				}
+			}
+			builder.append(condition);
+		}
 		List<RunValue> values = conditionChain.getRunValues();
 		addValues(values);
 	} 

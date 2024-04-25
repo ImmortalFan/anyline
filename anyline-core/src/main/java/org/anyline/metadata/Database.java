@@ -22,10 +22,12 @@ import org.dom4j.datatype.DatatypeAttribute;
 import java.io.Serializable;
 
 public class Database extends BaseMetadata<Database> implements Serializable {
+    protected String keyword = "DATABASE"           ;
     protected String charset                      ; // 编码
     protected String collate                      ; // 排序编码
     protected String filePath                     ; // 文件位置
     protected String logPath                      ; // 日志位置
+    protected String user                         ; // 所属用户
     public Database(){}
     public Database(String name){
         setName(name);
@@ -64,5 +66,16 @@ public class Database extends BaseMetadata<Database> implements Serializable {
 
     public void setLogPath(String logPath) {
         this.logPath = logPath;
+    }
+    public String getKeyword() {
+        return this.keyword;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
     }
 }

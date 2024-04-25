@@ -17,18 +17,22 @@
 
 package org.anyline.metadata;
 
+import org.anyline.entity.Order;
 import org.anyline.util.BeanUtil;
 
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 
 public class Index<M extends Index> extends BaseMetadata<M>  implements Serializable {
+    protected String keyword = "INDEX"           ;
     protected String type;
     protected LinkedHashMap<String, Column> columns = new LinkedHashMap<>();
     protected boolean primary     ; // 是否是主键
     protected boolean cluster     ; // 是否聚簇索引
     protected boolean fulltext    ;
     protected boolean spatial     ;
+    protected LinkedHashMap<String, Integer> positions = new LinkedHashMap<>();
+    protected LinkedHashMap<String, Order.TYPE> orders = new LinkedHashMap<>();
 
     protected boolean unique;
     public Index(){}
@@ -44,6 +48,10 @@ public class Index<M extends Index> extends BaseMetadata<M>  implements Serializ
         setTable(table);
         setName(name);
     }
+    public M drop(){
+        this.action = ACTION.DDL.INDEX_DROP;
+        return super.drop();
+    }
     public boolean isCluster() {
         if(getmap && null != update){
             return update.cluster;
@@ -51,6 +59,43 @@ public class Index<M extends Index> extends BaseMetadata<M>  implements Serializ
         return cluster;
     }
 
+    public LinkedHashMap<String, Integer> getPositions() {
+        return positions;
+    }
+
+    public M setPositions(LinkedHashMap<String, Integer> positions) {
+        this.positions = positions;
+        return (M)this;
+    }
+
+    public M setPosition(String column, Integer position) {
+        this.positions.put(column.toUpperCase(), position);
+        return (M)this;
+    }
+    public M setPosition(Column column, Integer position) {
+        this.positions.put(column.getName().toUpperCase(), position);
+        return (M)this;
+    }
+    public Integer getPosition(String column){
+        return positions.get(column.toUpperCase());
+    }
+
+    public M setOrders(LinkedHashMap<String, Order.TYPE> orders) {
+        this.orders = orders;
+        return (M)this;
+    }
+
+    public M setOrder(String column, Order.TYPE order) {
+        this.orders.put(column.toUpperCase(), order);
+        return (M)this;
+    }
+    public M setOrder(Column column, Order.TYPE order) {
+        this.orders.put(column.getName().toUpperCase(), order);
+        return (M)this;
+    }
+    public Order.TYPE getOrder(String column){
+        return orders.get(column.toUpperCase());
+    }
     public M addColumn(Column column){
         if(null == columns){
             columns = new LinkedHashMap<>();
@@ -63,10 +108,20 @@ public class Index<M extends Index> extends BaseMetadata<M>  implements Serializ
     }
 
     public M addColumn(String column, String order){
-        return addColumn(new Column(column).setOrder(order));
+        return addColumn(column, order, 0);
     }
     public M addColumn(String column, String order, int position){
-        return addColumn(new Column(column).setOrder(order).setPosition(position));
+        positions.put(column.toUpperCase(), position);
+        Order.TYPE type = Order.TYPE.ASC;
+        if(null != order && order.toUpperCase().contains("DESC")){
+            type = Order.TYPE.DESC;
+        }
+        setOrder(column, type);
+        return addColumn(new Column(column));
+    }
+    public M addColumn(String column, int position){
+        positions.put(column.toUpperCase(), position);
+        return addColumn(new Column(column));
     }
 
     public String getName() {
@@ -172,12 +227,15 @@ public class Index<M extends Index> extends BaseMetadata<M>  implements Serializ
         }
         return (M)this;
     }
+    public String getKeyword() {
+        return this.keyword;
+    }
     public boolean equals(Index index){
         if(null == index){
             return false;
         }
-        String this_define = BeanUtil.concat(getColumns().values(), "name",",", false, true);;
-        String index_define = BeanUtil.concat(index.getColumns().values(),"name",",", false, true);
+        String this_define = BeanUtil.concat(getColumns().values(), "name",",", false, true) + ":" + action;
+        String index_define = BeanUtil.concat(index.getColumns().values(),"name",",", false, true) + ":" + index.action;
         return this_define.equalsIgnoreCase(index_define);
     }
 }

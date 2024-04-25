@@ -299,10 +299,10 @@ public class HttpUtil {
 	/**
 	 * 文件上传
 	 * @param url url
-	 * @param files File或byte[]
-	 * @param charset
-	 * @param headers
-	 * @param params
+	 * @param files File或byte[]或InputStream如果是url可以调用URL.openStream()获取输入流
+	 * @param charset 编码
+	 * @param headers header
+	 * @param params 参数
 	 * @return HttpResponse
 	 */
 	public static HttpResponse upload(String url, Map<String, Object> files, String charset, Map<String, String> headers, Map<String, Object> params){
@@ -349,6 +349,7 @@ public class HttpUtil {
 		}
 		return result;
 	}
+
 	/**
 	 * 创建完整HTTP路径
 	 * @param host  host
@@ -411,6 +412,7 @@ public class HttpUtil {
 		}
 		return url;
 	}
+
 	/**
 	 * 从URL中提取文件目录(删除查询参数)
 	 *
@@ -445,6 +447,7 @@ public class HttpUtil {
 		}
 		return dir;
 	}
+
 	/**
 	 * 提取一个URL指向的文件名
 	 *
@@ -486,29 +489,6 @@ public class HttpUtil {
 		}
 		return false;
 	}
-	public static boolean isUrl(String src){
-		if(null == src){
-			return false;
-		}
-		if(src.startsWith("http://") || src.startsWith("https://")){
-			return true;
-		}
-		if(src.startsWith("//")){
-			src = src.substring(2);
-			int index1 = src.indexOf("."); 	// 域名中的.
-			if(index1 == -1){
-				return false;
-			}
-			int index2 = src.indexOf("/");	// url中的path分隔
-			if(index1 < index2){			// 没有在/之前出现的 有可能是文件名中的.
-				return true;
-			}
-			if(index2 == -1){				// 没有域名
-				return true;
-			}
-		}
-		return false;
-	}
 
 	public static String read(InputStream is, String charset) {
 		if (is == null) {
@@ -533,7 +513,6 @@ public class HttpUtil {
 		}
 		return null;
 	}
-
 
 	/**
 	 * 合并参数
@@ -575,6 +554,7 @@ public class HttpUtil {
 		}
 		return builder;
 	}
+
 	/**
 	 * 合并参数
 	 * @param url  url
@@ -627,7 +607,7 @@ public class HttpUtil {
 						}
 						pairs.add(new BasicNameValuePair(key, val));
 						if(ConfigTable.IS_DEBUG && log.isWarnEnabled()){
-							log.info("[request param][{}={}]", key, BasicUtil.cut(val, 0, 20));
+							log.info("[request param][{}={}]", key, BasicUtil.cut(val, 0, 100));
 						}
 					}
 				}else if(value instanceof Collection){
@@ -638,13 +618,13 @@ public class HttpUtil {
 						}
 						pairs.add(new BasicNameValuePair(key, val.toString()));
 						if(ConfigTable.IS_DEBUG && log.isInfoEnabled()){
-							log.info("[request param][{}={}]", key, BasicUtil.cut(val.toString(), 0, 20));
+							log.info("[request param][{}={}]", key, BasicUtil.cut(val.toString(), 0, 100));
 						}
 					}
 				}else if(null != value){
 					pairs.add(new BasicNameValuePair(key, value.toString()));
 					if(ConfigTable.IS_DEBUG && log.isInfoEnabled()){
-						log.info("[request param][{}={}]", key, BasicUtil.cut(value.toString(), 0, 20));
+						log.info("[request param][{}={}]", key, BasicUtil.cut(value.toString(), 0, 100));
 					}
 				}
 			}
@@ -744,20 +724,21 @@ public class HttpUtil {
 	/**
 	 * url参数编码
 	 * @param src 原文
+	 * @param enable 转换成是否可访问格式
 	 * @param cn 是否编译中文
 	 * @return String
 	 */
-	public static String encode(String src, boolean cn){
+	public static String encode(String src, boolean enable, boolean cn){
+		String result = src;
 		if(cn){
 			try {
-				return URLEncoder.encode(src, "UTF-8");
+				result = URLEncoder.encode(src, "UTF-8");
 			}catch (Exception e){
 				return src;
 			}
 		}else{
-			String result = src;
 			result = result
-					.replace(" ","")
+					.replace(" ","+")
 					.replace("\n","")
 					.replace("\r","")
 					.replace("\t","")
@@ -788,7 +769,13 @@ public class HttpUtil {
 					.replace("'","%27")
 					.replace(":","%3A")
 					.replace("\"","%22");
-			return result;
 		}
+		if(enable) {
+			result = result
+				.replace("%3A", ":")
+				.replace("%2F", "/");
+		}
+		result = result.replace("+", "%20"); //原来的 空格 被转成了 + 再把 + 转成 %20
+		return result;
 	}
 }

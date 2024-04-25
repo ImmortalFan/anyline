@@ -81,12 +81,12 @@ public class DefaultConfigChain extends DefaultConfig implements ConfigChain {
 					i ++;
 				}
 			}
-			
 			DefaultConfig conf = new DefaultConfig(item);
 			conf.setJoin(Condition.CONDITION_JOIN_TYPE_OR);
-			if(!conf.isEmpty()){
+			//只是设置了key还没有设置value
+			//if(!conf.isEmpty()){
 				this.configs.add(conf);
-			}
+			//}
 		} 
 	}
 	public Config getConfig(String id, String var){
@@ -231,5 +231,16 @@ public class DefaultConfigChain extends DefaultConfig implements ConfigChain {
 		for(Config config:configs){
 			config.setValue(values);
 		}
-	} 
+	}
+
+	public boolean isEmpty() {
+		if(null != configs){
+			for(Config config:configs){
+				if(null != config && !config.isEmpty()){
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 }

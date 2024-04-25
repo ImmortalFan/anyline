@@ -1,11 +1,15 @@
 package org.anyline.data.jdbc.adapter.init;
 
+import org.anyline.data.jdbc.adapter.init.alias.PostgresGenusTypeMetadataAlias;
+import org.anyline.metadata.adapter.MetadataAdapterHolder;
 import org.anyline.data.param.ConfigStore;
 import org.anyline.data.prepare.RunPrepare;
 import org.anyline.data.run.*;
 import org.anyline.data.runtime.DataRuntime;
 import org.anyline.entity.*;
 import org.anyline.metadata.*;
+import org.anyline.metadata.adapter.PrimaryMetadataAdapter;
+import org.anyline.metadata.type.TypeMetadata;
 import org.anyline.util.BasicUtil;
 import org.anyline.util.BeanUtil;
 import org.anyline.util.ConfigTable;
@@ -24,8 +28,50 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.*;
 
-public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements InitializingBean {
+public abstract class PostgresGenusAdapter extends AbstractJDBCAdapter implements InitializingBean {
+    public PostgresGenusAdapter(){
+        super();
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.CHAR, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 0, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.TEXT, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.BOOLEAN, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1,1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.BYTES, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 0, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.BLOB, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1,1,1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.INT, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", "NUMERIC_PRECISION", null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.FLOAT, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", "NUMERIC_PRECISION", "NUMERIC_SCALE", 1, 0, 0));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.DATE, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.TIME, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.DATETIME, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.TIMESTAMP, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.COLLECTION, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.GEOMETRY, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.OTHER, new TypeMetadata.Config("CHARACTER_MAXIMUM_LENGTH", null, null, 1, 1, 1));
 
+        for(PostgresGenusTypeMetadataAlias alias: PostgresGenusTypeMetadataAlias.values()){
+            reg(alias);
+        }
+    }
+    @Override
+    public boolean supportCatalog() {
+        return super.supportSchema();
+    }
+
+    @Override
+    public boolean supportSchema() {
+        return super.supportSchema();
+    }
+
+    private static Map<Type, String> types = new HashMap<>();
+    static {
+        types.put(Table.TYPE.NORMAL, "BASE TABLE");
+        types.put(Table.TYPE.VIEW, "VIEW");
+        types.put(View.TYPE.NORMAL, "VIEW");
+        types.put(BaseMetadata.TYPE.TABLE, "BASE TABLE");
+        types.put(BaseMetadata.TYPE.VIEW, "VIEW");
+    }
+    @Override
+    public String name(Type type){
+        return types.get(type);
+    }
     /* *****************************************************************************************************************
      *
      * 													DML
@@ -464,9 +510,9 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * List<Run> buildQuerySequence(DataRuntime runtime, boolean next, String ... names)
      * void fillQueryContent(DataRuntime runtime, Run run)
      * String mergeFinalQuery(DataRuntime runtime, Run run)
-     * RunValue createConditionLike(DataRuntime runtime, StringBuilder builder, Compare compare, Object value)
-     * Object createConditionFindInSet(DataRuntime runtime, StringBuilder builder, String column, Compare compare, Object value)
-     * StringBuilder createConditionIn(DataRuntime runtime, StringBuilder builder, Compare compare, Object value)
+     * RunValue createConditionLike(DataRuntime runtime, StringBuilder builder, Compare compare, Object value, boolean placeholder)
+     * Object createConditionFindInSet(DataRuntime runtime, StringBuilder builder, String column, Compare compare, Object value, boolean placeholder)
+     * StringBuilder createConditionIn(DataRuntime runtime, StringBuilder builder, Compare compare, Object value, boolean placeholder)
      * [命令执行]
      * DataSet select(DataRuntime runtime, String random, boolean system, String table, ConfigStore configs, Run run)
      * List<Map<String, Object>> maps(DataRuntime runtime, String random, ConfigStore configs, Run run)
@@ -573,14 +619,14 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
     @Override
     public List<Run> buildQuerySequence(DataRuntime runtime, boolean next, String ... names){
         List<Run> runs = new ArrayList<>();
-        Run run = new SimpleRun(runtime);
-        runs.add(run);
-        StringBuilder builder = run.getBuilder();
         String key = "CURRVAL";
         if(next){
             key = "NEXTVAL";
         }
         if(null != names && names.length>0) {
+            Run run = new SimpleRun(runtime);
+            runs.add(run);
+            StringBuilder builder = run.getBuilder();
             builder.append("SELECT ");
             boolean first = true;
             for (String name : names) {
@@ -637,8 +683,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return value 有占位符时返回占位值，没有占位符返回null
      */
     @Override
-    public RunValue createConditionLike(DataRuntime runtime, StringBuilder builder, Compare compare, Object value) {
-        return super.createConditionLike(runtime, builder, compare, value);
+    public RunValue createConditionLike(DataRuntime runtime, StringBuilder builder, Compare compare, Object value, boolean placeholder) {
+        return super.createConditionLike(runtime, builder, compare, value, placeholder);
     }
     /**
      * select[命令合成-子流程] <br/>
@@ -652,8 +698,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return value
      */
     @Override
-    public Object createConditionFindInSet(DataRuntime runtime, StringBuilder builder, String column, Compare compare, Object value) {
-        return super.createConditionFindInSet(runtime, builder, column, compare, value);
+    public Object createConditionFindInSet(DataRuntime runtime, StringBuilder builder, String column, Compare compare, Object value, boolean placeholder) {
+        return super.createConditionFindInSet(runtime, builder, column, compare, value, placeholder);
     }
     /**
      * select[命令合成-子流程] <br/>
@@ -665,8 +711,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return builder
      */
     @Override
-    public StringBuilder createConditionIn(DataRuntime runtime, StringBuilder builder, Compare compare, Object value) {
-        return super.createConditionIn(runtime, builder, compare, value);
+    public StringBuilder createConditionIn(DataRuntime runtime, StringBuilder builder, Compare compare, Object value, boolean placeholder) {
+        return super.createConditionIn(runtime, builder, compare, value, placeholder);
     }
     /**
      * select [命令执行]<br/>
@@ -810,7 +856,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * -----------------------------------------------------------------------------------------------------------------
      * [调用入口]
      * long execute(DataRuntime runtime, String random, RunPrepare prepare, ConfigStore configs, String ... conditions)
-     * long execute(DataRuntime runtime, String random, int batch, ConfigStore configs, String sql, List<Object> values)
+     * long execute(DataRuntime runtime, String random, int batch, ConfigStore configs, RunPrepare prepare, Collection<Object> values)
      * boolean execute(DataRuntime runtime, String random, Procedure procedure)
      * [命令合成]
      * Run buildExecuteRun(DataRuntime runtime, RunPrepare prepare, ConfigStore configs, String ... conditions)
@@ -834,8 +880,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
     }
 
     @Override
-    public long execute(DataRuntime runtime, String random, int batch, ConfigStore configs, String cmd, List<Object> values){
-        return super.execute(runtime, random, batch, configs, cmd, values);
+    public long execute(DataRuntime runtime, String random, int batch, ConfigStore configs, RunPrepare prepare, Collection<Object> values){
+        return super.execute(runtime, random, batch, configs, prepare, values);
     }
     /**
      * procedure [命令执行]<br/>
@@ -905,11 +951,11 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * long delete(DataRuntime runtime, String random, String table, ConfigStore configs, String... conditions)
      * long truncate(DataRuntime runtime, String random, String table)
      * [命令合成]
-     * Run buildDeleteRun(DataRuntime runtime, String table, Object obj, String ... columns)
-     * Run buildDeleteRun(DataRuntime runtime, int batch, String table, String column, Object values)
+     * Run buildDeleteRun(DataRuntime runtime, String table, ConfigStore configs, Object obj, String ... columns)
+     * Run buildDeleteRun(DataRuntime runtime, int batch, String table, ConfigStore configs, String column, Object values)
      * List<Run> buildTruncateRun(DataRuntime runtime, String table)
-     * Run buildDeleteRunFromTable(DataRuntime runtime, int batch, String table, String column, Object values)
-     * Run buildDeleteRunFromEntity(DataRuntime runtime, String table, Object obj, String ... columns)
+     * Run buildDeleteRunFromTable(DataRuntime runtime, int batch, String table, ConfigStore configs,String column, Object values)
+     * Run buildDeleteRunFromEntity(DataRuntime runtime, String table, ConfigStore configs, Object obj, String ... columns)
      * void fillDeleteRunContent(DataRuntime runtime, Run run)
      * [命令执行]
      * long delete(DataRuntime runtime, String random, ConfigStore configs, Run run)
@@ -983,8 +1029,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
      */
     @Override
-    public Run buildDeleteRun(DataRuntime runtime, Table dest, Object obj, String ... columns){
-        return super.buildDeleteRun(runtime, dest, obj, columns);
+    public Run buildDeleteRun(DataRuntime runtime, Table dest, ConfigStore configs, Object obj, String ... columns){
+        return super.buildDeleteRun(runtime, dest, configs, obj, columns);
     }
 
     /**
@@ -997,8 +1043,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
      */
     @Override
-    public Run buildDeleteRun(DataRuntime runtime, int batch, String table, String key, Object values){
-        return super.buildDeleteRun(runtime, batch, table, key, values);
+    public Run buildDeleteRun(DataRuntime runtime, int batch, String table, ConfigStore configs, String key, Object values){
+        return super.buildDeleteRun(runtime, batch, table, configs, key, values);
     }
 
     @Override
@@ -1017,8 +1063,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
      */
     @Override
-    public Run buildDeleteRunFromTable(DataRuntime runtime, int batch, Table table, String column, Object values) {
-        return super.buildDeleteRunFromTable(runtime, batch, table, column, values);
+    public Run buildDeleteRunFromTable(DataRuntime runtime, int batch, Table table, ConfigStore configs, String column, Object values) {
+        return super.buildDeleteRunFromTable(runtime, batch, table, configs, column, values);
     }
 
     /**
@@ -1031,8 +1077,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
      */
     @Override
-    public Run buildDeleteRunFromEntity(DataRuntime runtime, Table table, Object obj, String... columns) {
-        return super.buildDeleteRunFromEntity(runtime, table, obj, columns);
+    public Run buildDeleteRunFromEntity(DataRuntime runtime, Table table, ConfigStore configs, Object obj, String... columns) {
+        return super.buildDeleteRunFromEntity(runtime, table, configs, obj, columns);
     }
 
     /**
@@ -1177,7 +1223,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildQueryDatabasesRun(DataRuntime runtime, boolean greedy, String name) throws Exception{
+    public List<Run> buildQueryDatabasesRun(DataRuntime runtime, boolean greedy, String name) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -1199,7 +1245,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception
      */
     @Override
-    public LinkedHashMap<String, Database> databases(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Database> databases, DataSet set) throws Exception{
+    public LinkedHashMap<String, Database> databases(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Database> databases, DataSet set) throws Exception {
         if(null == databases){
             databases = new LinkedHashMap<>();
         }
@@ -1211,7 +1257,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
         return databases;
     }
     @Override
-    public List<Database> databases(DataRuntime runtime, int index, boolean create, List<Database> databases, DataSet set) throws Exception{
+    public List<Database> databases(DataRuntime runtime, int index, boolean create, List<Database> databases, DataSet set) throws Exception {
         return super.databases(runtime, index, create, databases, set);
     }
 	/**
@@ -1226,9 +1272,10 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
 	 * @throws Exception 异常
 	 */
 	@Override
-	public Database database(DataRuntime runtime, int index, boolean create, Database database, DataSet set) throws Exception{
+	public Database database(DataRuntime runtime, int index, boolean create, Database database, DataSet set) throws Exception {
 		return super.database(runtime, index, create, database, set);
 	}
+
 	/**
 	 * database[结果集封装]<br/>
 	 * 当前database 根据驱动内置接口补充
@@ -1239,7 +1286,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
 	 * @throws Exception 异常
 	 */
 	@Override
-	public Database database(DataRuntime runtime, boolean create, Database database) throws Exception{
+	public Database database(DataRuntime runtime, boolean create, Database database) throws Exception {
 		return super.database(runtime, create, database);
 	}
 
@@ -1257,6 +1304,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
 	public String product(DataRuntime runtime, int index, boolean create, String product, DataSet set){
 		return super.product(runtime, index, create, product, set);
 	}
+
 	/**
 	 * database[结果集封装]<br/>
 	 * 根据JDBC内置接口 product
@@ -1270,6 +1318,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
 	public String product(DataRuntime runtime, boolean create, String product){
 		return super.product(runtime, create, product);
 	}
+
 	/**
 	 * database[结果集封装]<br/>
 	 * 根据查询结果集构造 version
@@ -1284,6 +1333,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
 	public String version(DataRuntime runtime, int index, boolean create, String version, DataSet set){
 		return super.version(runtime, index, create, version, set);
 	}
+
 	/**
 	 * database[结果集封装]<br/>
 	 * 根据JDBC内置接口 version
@@ -1345,7 +1395,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildQueryCatalogsRun(DataRuntime runtime, boolean greedy, String name) throws Exception{
+    public List<Run> buildQueryCatalogsRun(DataRuntime runtime, boolean greedy, String name) throws Exception {
         return super.buildQueryCatalogsRun(runtime, greedy, name);
     }
     /**
@@ -1360,7 +1410,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public LinkedHashMap<String, Catalog> catalogs(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Catalog> catalogs, DataSet set) throws Exception{
+    public LinkedHashMap<String, Catalog> catalogs(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Catalog> catalogs, DataSet set) throws Exception {
         return super.catalogs(runtime, index, create, catalogs, set);
     }
     /**
@@ -1375,9 +1425,10 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Catalog> catalogs(DataRuntime runtime, int index, boolean create, List<Catalog> catalogs, DataSet set) throws Exception{
+    public List<Catalog> catalogs(DataRuntime runtime, int index, boolean create, List<Catalog> catalogs, DataSet set) throws Exception {
         return super.catalogs(runtime, index, create, catalogs, set);
-    }/**
+    }
+	/**
      * catalog[结果集封装]<br/>
      * 根据驱动内置接口补充 catalog
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
@@ -1416,9 +1467,10 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
 	 * @throws Exception 异常
 	 */
 	@Override
-	public Catalog catalog(DataRuntime runtime, int index, boolean create, Catalog catalog, DataSet set) throws Exception{
+	public Catalog catalog(DataRuntime runtime, int index, boolean create, Catalog catalog, DataSet set) throws Exception {
 		return super.catalog(runtime, index, create, catalog, set);
 	}
+
 	/**
 	 * catalog[结果集封装]<br/>
 	 * 当前catalog 根据驱动内置接口补充
@@ -1429,7 +1481,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
 	 * @throws Exception 异常
 	 */
 	@Override
-	public Catalog catalog(DataRuntime runtime, boolean create, Catalog catalog) throws Exception{
+	public Catalog catalog(DataRuntime runtime, boolean create, Catalog catalog) throws Exception {
 		return super.catalog(runtime, create, catalog);
 	}
 
@@ -1499,7 +1551,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildQuerySchemasRun(DataRuntime runtime, boolean greedy, Catalog catalog, String name) throws Exception{
+    public List<Run> buildQuerySchemasRun(DataRuntime runtime, boolean greedy, Catalog catalog, String name) throws Exception {
         return super.buildQuerySchemasRun(runtime, greedy, catalog, name);
     }
     /**
@@ -1514,11 +1566,11 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public LinkedHashMap<String, Schema> schemas(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Schema> schemas, DataSet set) throws Exception{
+    public LinkedHashMap<String, Schema> schemas(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Schema> schemas, DataSet set) throws Exception {
         return super.schemas(runtime, index, create, schemas, set);
     }
     @Override
-    public List<Schema> schemas(DataRuntime runtime, int index, boolean create, List<Schema> schemas, DataSet set) throws Exception{
+    public List<Schema> schemas(DataRuntime runtime, int index, boolean create, List<Schema> schemas, DataSet set) throws Exception {
         return super.schemas(runtime, index, create, schemas, set);
     }
 
@@ -1534,7 +1586,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
 	 * @throws Exception 异常
 	 */
 	@Override
-	public Schema schema(DataRuntime runtime, int index, boolean create, Schema schema, DataSet set) throws Exception{
+	public Schema schema(DataRuntime runtime, int index, boolean create, Schema schema, DataSet set) throws Exception {
 		return super.schema(runtime, index, create, schema, set);
 	}
 
@@ -1548,7 +1600,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
 	 * @throws Exception 异常
 	 */
 	@Override
-	public Schema schema(DataRuntime runtime, boolean create, Schema schema) throws Exception{
+	public Schema schema(DataRuntime runtime, boolean create, Schema schema) throws Exception {
 		return super.schema(runtime, create, schema);
 	}
 
@@ -1556,16 +1608,16 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * 													table
      * -----------------------------------------------------------------------------------------------------------------
      * [调用入口]
-     * <T extends Table> List<T> tables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types, boolean strut)
-     * <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern, String types, boolean strut)
+     * <T extends Table> List<T> tables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types, boolean struct)
+     * <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern, String types, boolean struct)
      * [命令合成]
-     * List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types)
-     * List<Run> buildQueryTablesCommentRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types)
+     * List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, int types)
+     * List<Run> buildQueryTablesCommentRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types)
      * [结果集封装]<br/>
      * <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
      * <T extends Table> List<T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, List<T> tables, DataSet set)
-     * <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, String ... types)
-     * <T extends Table> List<T> tables(DataRuntime runtime, boolean create, List<T> tables, Catalog catalog, Schema schema, String pattern, String ... types)
+     * <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, int types)
+     * <T extends Table> List<T> tables(DataRuntime runtime, boolean create, List<T> tables, Catalog catalog, Schema schema, String pattern, int types)
      * <T extends Table> LinkedHashMap<String, T> comments(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
      * [调用入口]
      * List<String> ddl(DataRuntime runtime, String random, Table table, boolean init)
@@ -1584,14 +1636,14 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types  "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
-     * @param strut 是否查询表结构
+     * @param types  BaseMetadata.TYPE.
+     * @param struct 是否查询表结构
      * @return List
      * @param <T> Table
      */
     @Override
-    public <T extends Table> List<T> tables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types, boolean strut){
-        return super.tables(runtime, random, greedy, catalog, schema, pattern, types, strut);
+    public <T extends Table> List<T> tables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types, int struct){
+        return super.tables(runtime, random, greedy, catalog, schema, pattern, types, struct);
     }
 
     /**
@@ -1608,8 +1660,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
     }
 
     @Override
-    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern, String types, boolean strut){
-        return super.tables(runtime, random, catalog, schema, pattern, types, strut);
+    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern, int types, int struct){
+        return super.tables(runtime, random, catalog, schema, pattern, types, struct);
     }
 
     /**
@@ -1620,18 +1672,21 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types  "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types  BaseMetadata.TYPE.
      * @return String
      */
     @Override
-    public List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
+    public List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
         StringBuilder builder = run.getBuilder();
-        builder.append("SELECT M.*, obj_description(f.relfilenode,'pg_class')  AS TABLE_COMMENT  FROM  INFORMATION_SCHEMA.TABLES AS M \n");
-        builder.append("LEFT JOIN pg_class AS F ON M.TABLE_NAME = F.relname\n");
-        builder.append("WHERE 1=1 ");
+        builder.append("SELECT M.*, obj_description(F.relfilenode,'pg_class')  AS TABLE_COMMENT\n");
+        builder.append("FROM  INFORMATION_SCHEMA.TABLES AS M\n");
+        builder.append("LEFT JOIN pg_namespace AS N ON N.NSPNAME = M.table_schema\n");
+        builder.append("LEFT JOIN pg_class AS F ON M.TABLE_NAME = F.relname AND N.oid = F.relnamespace\n");
+        builder.append("LEFT JOIN pg_inherits AS I ON I.inhrelid = F.oid\n");//继承关系
+        builder.append("WHERE (I.inhrelid IS NULL  OR f.relpartbound IS NULL)\n"); //过滤分区表(没有继承自其他表或 继承自其他表但是子表不是分区表)
         if(BasicUtil.isNotEmpty(schema)){
             builder.append(" AND M.table_schema = '").append(schema.getName()).append("'");
         }
@@ -1649,16 +1704,16 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types types BaseMetadata.TYPE.
      * @return String
      */
     @Override
-    public List<Run> buildQueryTablesCommentRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
+    public List<Run> buildQueryTablesCommentRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.buildQueryTablesCommentRun(runtime, catalog, schema, pattern, types);
     }
 
     /**
-     * table[结果集封装]<br/> <br/>
+     * table[结果集封装]<br/>
      *  根据查询结果集构造Table
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param index 第几条SQL 对照buildQueryTablesRun返回顺序
@@ -1671,12 +1726,12 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception{
+    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception {
         return super.tables(runtime, index, create, catalog, schema, tables, set);
     }
 
     /**
-     * table[结果集封装]<br/> <br/>
+     * table[结果集封装]<br/>
      *  根据查询结果集构造Table
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param index 第几条SQL 对照buildQueryTablesRun返回顺序
@@ -1689,11 +1744,11 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends Table> List<T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, List<T> tables, DataSet set) throws Exception{
+    public <T extends Table> List<T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, List<T> tables, DataSet set) throws Exception {
         return super.tables(runtime, index, create, catalog, schema, tables, set);
     }
     /**
-     * table[结果集封装]<br/> <br/>
+     * table[结果集封装]<br/>
      * 根据驱动内置方法补充
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param create 上一步没有查到的,这一步是否需要新创建
@@ -1701,13 +1756,13 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types types BaseMetadata.TYPE.
      * @return tables
      * @throws Exception 异常
      */
 
     @Override
-    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, String ... types) throws Exception{
+    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.tables(runtime, create, tables, catalog, schema, pattern, types);
     }
 
@@ -1720,12 +1775,12 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types types BaseMetadata.TYPE.
      * @return tables
      * @throws Exception 异常
      */
     @Override
-    public <T extends Table> List<T> tables(DataRuntime runtime, boolean create, List<T> tables, Catalog catalog, Schema schema, String pattern, String ... types) throws Exception{
+    public <T extends Table> List<T> tables(DataRuntime runtime, boolean create, List<T> tables, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.tables(runtime, create, tables, catalog, schema, pattern, types);
     }
 
@@ -1743,7 +1798,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends Table> LinkedHashMap<String, T> comments(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception{
+    public <T extends Table> LinkedHashMap<String, T> comments(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception {
         return super.comments(runtime, index, create, catalog, schema, tables, set);
     }
 
@@ -1761,7 +1816,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends Table> List<T> comments(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, List<T> tables, DataSet set) throws Exception{
+    public <T extends Table> List<T> comments(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, List<T> tables, DataSet set) throws Exception {
         return super.comments(runtime, index, create, catalog, schema, tables, set);
     }
 
@@ -1787,7 +1842,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Table table) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Table table) throws Exception {
         return super.buildQueryDdlsRun(runtime, table);
     }
 
@@ -1810,12 +1865,12 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * 													view
      * -----------------------------------------------------------------------------------------------------------------
      * [调用入口]
-     * <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types)
+     * <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types)
      * [命令合成]
-     * List<Run> buildQueryViewsRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types)
+     * List<Run> buildQueryViewsRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, int types)
      * [结果集封装]<br/>
      * <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> views, DataSet set)
-     * <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, boolean create, LinkedHashMap<String, T> views, Catalog catalog, Schema schema, String pattern, String ... types)
+     * <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, boolean create, LinkedHashMap<String, T> views, Catalog catalog, Schema schema, String pattern, int types)
      * [调用入口]
      * List<String> ddl(DataRuntime runtime, String random, View view)
      * [命令合成]
@@ -1834,12 +1889,12 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types  "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types  BaseMetadata.TYPE.
      * @return List
      * @param <T> View
      */
     @Override
-    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types){
+    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types){
         return super.views(runtime, random, greedy, catalog, schema, pattern, types);
     }
     /**
@@ -1850,11 +1905,11 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types types BaseMetadata.TYPE.
      * @return List
      */
     @Override
-    public List<Run> buildQueryViewsRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
+    public List<Run> buildQueryViewsRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.buildQueryViewsRun(runtime, greedy, catalog, schema, pattern, types);
     }
 
@@ -1873,7 +1928,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> views, DataSet set) throws Exception{
+    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> views, DataSet set) throws Exception {
         return super.views(runtime, index, create, catalog, schema, views, set);
     }
     /**
@@ -1885,12 +1940,12 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types types BaseMetadata.TYPE.
      * @return views
      * @throws Exception 异常
      */
     @Override
-    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, boolean create, LinkedHashMap<String, T> views, Catalog catalog, Schema schema, String pattern, String ... types) throws Exception{
+    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, boolean create, LinkedHashMap<String, T> views, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.views(runtime, create, views, catalog, schema, pattern, types);
     }
 
@@ -1914,7 +1969,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, View view) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, View view) throws Exception {
         return super.buildQueryDdlsRun(runtime, view);
     }
 
@@ -1936,13 +1991,13 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * 													master table
      * -----------------------------------------------------------------------------------------------------------------
      * [调用入口]
-     * <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types)
+     * <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types)
      * [命令合成]
-     * List<Run> buildQueryMasterTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types)
+     * List<Run> buildQueryMasterTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types)
      * [结果集封装]<br/>
-     * <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
+     * <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
      * [结果集封装]<br/>
-     * <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, String ... types)
+     * <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, int types)
      * [调用入口]
      * List<String> ddl(DataRuntime runtime, String random, MasterTable table)
      * [命令合成]
@@ -1960,13 +2015,13 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types  "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types  BaseMetadata.TYPE.
      * @return List
      * @param <T> MasterTable
      */
     @Override
-    public <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types){
-        return super.mtables(runtime, random, greedy, catalog, schema, pattern, types);
+    public <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types){
+        return super.masterTables(runtime, random, greedy, catalog, schema, pattern, types);
     }
     /**
      * master table[命令合成]<br/>
@@ -1979,7 +2034,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildQueryMasterTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
+    public List<Run> buildQueryMasterTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.buildQueryMasterTablesRun(runtime, catalog, schema, pattern, types);
     }
 
@@ -1997,8 +2052,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception{
-        return super.mtables(runtime, index, create, catalog, schema, tables, set);
+    public <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception {
+        return super.masterTables(runtime, index, create, catalog, schema, tables, set);
     }
     /**
      * master table[结果集封装]<br/>
@@ -2012,8 +2067,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, String ... types) throws Exception{
-        return super.mtables(runtime, create, tables, catalog, schema, pattern, types);
+    public <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
+        return super.masterTables(runtime, create, tables, catalog, schema, pattern, types);
     }
 
     /**
@@ -2035,7 +2090,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, MasterTable table) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, MasterTable table) throws Exception {
         return super.buildQueryDdlsRun(runtime, table);
     }
     /**
@@ -2056,14 +2111,14 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * 													partition table
      * -----------------------------------------------------------------------------------------------------------------
      * [调用入口]
-     * <T extends PartitionTable> LinkedHashMap<String,T> ptables(DataRuntime runtime, String random, boolean greedy, MasterTable master, Map<String, Object> tags, String pattern)
+     * <T extends PartitionTable> LinkedHashMap<String,T> partitionTables(DataRuntime runtime, String random, boolean greedy, MasterTable master, Map<String, Object> tags, String pattern)
      * [命令合成]
-     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types)
-     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, MasterTable master, Map<String,Object> tags, String pattern)
-     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, MasterTable master, Map<String,Object> tags)
+     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types)
+     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Table master, Map<String,Object> tags, String pattern)
+     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Table master, Map<String,Object> tags)
      * [结果集封装]<br/>
-     * <T extends PartitionTable> LinkedHashMap<String, T> ptables(DataRuntime runtime, int total, int index, boolean create, MasterTable master, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
-     * <T extends PartitionTable> LinkedHashMap<String,T> ptables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, MasterTable master)
+     * <T extends PartitionTable> LinkedHashMap<String, T> partitionTables(DataRuntime runtime, int total, int index, boolean create, MasterTable master, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
+     * <T extends PartitionTable> LinkedHashMap<String,T> partitionTables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, MasterTable master)
      * [调用入口]
      * List<String> ddl(DataRuntime runtime, String random, PartitionTable table)
      * [命令合成]
@@ -2083,8 +2138,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @param <T> MasterTable
      */
     @Override
-    public <T extends PartitionTable> LinkedHashMap<String,T> ptables(DataRuntime runtime, String random, boolean greedy, MasterTable master, Map<String, Object> tags, String pattern){
-        return super.ptables(runtime, random, greedy, master, tags, pattern);
+    public <T extends PartitionTable> LinkedHashMap<String,T> partitionTables(DataRuntime runtime, String random, boolean greedy, MasterTable master, Map<String, Object> tags, String pattern){
+        return super.partitionTables(runtime, random, greedy, master, tags, pattern);
     }
 
     /**
@@ -2098,7 +2153,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
+    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.buildQueryPartitionTablesRun(runtime, catalog, schema, pattern, types);
     }
     /**
@@ -2112,8 +2167,27 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, MasterTable master, Map<String,Object> tags, String name) throws Exception{
-        return super.buildQueryPartitionTablesRun(runtime, master, tags, name);
+    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Table master, Map<String,Object> tags, String name) throws Exception {
+        List<Run> runs = new ArrayList<>();
+        Run run = new SimpleRun(runtime);
+        runs.add(run);
+        StringBuilder builder = run.getBuilder();
+        builder.append("SELECT M.*, obj_description(F.relfilenode,'pg_class')  AS TABLE_COMMENT\n");
+        builder.append("FROM  INFORMATION_SCHEMA.TABLES AS M\n");
+        builder.append("LEFT JOIN pg_namespace AS N ON N.NSPNAME = M.table_schema\n");
+        builder.append("LEFT JOIN pg_class AS F ON M.TABLE_NAME = F.relname AND N.oid = F.relnamespace\n");
+        builder.append("LEFT JOIN pg_inherits AS I ON I.inhrelid = F.oid\n");//继承关系
+        builder.append("LEFT JOIN pg_class AS FM ON FM.oid = I.inhparent AND N.oid = FM.relnamespace\n");//主表
+        builder.append("WHERE FM.relname ='").append(master.getName()).append("'\n");
+        String schema = master.getSchemaName();
+        if(BasicUtil.isNotEmpty(schema)){
+            builder.append(" AND M.table_schema = '").append(schema).append("'");
+        }
+        if(BasicUtil.isNotEmpty(name)){
+            builder.append(" AND M.table_name LIKE '").append(name).append("'");
+        }
+
+        return runs;
     }
     /**
      * partition table[命令合成]<br/>
@@ -2125,8 +2199,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, MasterTable master, Map<String,Object> tags) throws Exception{
-        return super.buildQueryPartitionTablesRun(runtime, master, tags);
+    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Table master, Map<String,Object> tags) throws Exception {
+        return buildQueryPartitionTablesRun(runtime, master, tags, null);
     }
     /**
      * partition table[结果集封装]<br/>
@@ -2144,8 +2218,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends PartitionTable> LinkedHashMap<String, T> ptables(DataRuntime runtime, int total, int index, boolean create, MasterTable master, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception{
-        return super.ptables(runtime, total, index, create, master, catalog, schema, tables, set);
+    public <T extends PartitionTable> LinkedHashMap<String, T> partitionTables(DataRuntime runtime, int total, int index, boolean create, MasterTable master, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception {
+        return super.partitionTables(runtime, total, index, create, master, catalog, schema, tables, set);
     }
     /**
      * partition table[结果集封装]<br/>
@@ -2160,8 +2234,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends PartitionTable> LinkedHashMap<String,T> ptables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, MasterTable master) throws Exception{
-        return super.ptables(runtime, create, tables, catalog, schema, master);
+    public <T extends PartitionTable> LinkedHashMap<String,T> partitionTables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, MasterTable master) throws Exception {
+        return super.partitionTables(runtime, create, tables, catalog, schema, master);
     }
     /**
      * partition table[调用入口]<br/>
@@ -2183,7 +2257,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, PartitionTable table) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, PartitionTable table) throws Exception {
         return super.buildQueryDdlsRun(runtime, table);
     }
 
@@ -2232,7 +2306,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
 
     /**
      * column[调用入口]<br/>
-     * 查询全部表的列
+     * 查询列
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param random 用来标记同一组命令
      * @param greedy 贪婪模式 true:如果不填写catalog或schema则查询全部 false:只在当前catalog和schema中查询
@@ -2255,16 +2329,16 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return sqls
      */
     @Override
-    public List<Run> buildQueryColumnsRun(DataRuntime runtime, Table table, boolean metadata) throws Exception{
+    public List<Run> buildQueryColumnsRun(DataRuntime runtime, Table table, boolean metadata) throws Exception {
         List<Run> runs = new ArrayList<>();
-        Catalog catalog = null;
-        Schema schema = null;
+        String catalog = null;
+        String schema = null;
         String name = null;
         checkName(runtime, null, table);
         if(null != table){
             name = table.getName();
-            catalog = table.getCatalog();
-            schema = table.getSchema();
+            catalog = table.getCatalogName();
+            schema = table.getSchemaName();
         }
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -2284,12 +2358,12 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
                 builder.append(" AND M.TABLE_CATALOG = '").append(catalog).append("'");
             }
             if(BasicUtil.isNotEmpty(schema)){
-                builder.append(" AND M.TABLE_SCHEMA = '").append(schema.getName()).append("'");
+                builder.append(" AND M.TABLE_SCHEMA = '").append(schema).append("'");
             }
             if(BasicUtil.isNotEmpty(name)) {
                 builder.append(" AND M.TABLE_NAME = '").append(name).append("'");
             }
-            builder.append(" ORDER BY M.TABLE_NAME");
+            builder.append("\nORDER BY M.TABLE_NAME");
         }
         return runs;
     }
@@ -2307,12 +2381,12 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> columns, DataSet set) throws Exception{
+    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> columns, DataSet set) throws Exception {
         set.changeKey("UDT_NAME","DATA_TYPE");
         return super.columns(runtime, index, create, table, columns, set);
     }
     @Override
-    public <T extends Column> List<T> columns(DataRuntime runtime, int index, boolean create, Table table, List<T> columns, DataSet set) throws Exception{
+    public <T extends Column> List<T> columns(DataRuntime runtime, int index, boolean create, Table table, List<T> columns, DataSet set) throws Exception {
         return super.columns(runtime, index, create, table, columns, set);
     }
 
@@ -2322,12 +2396,12 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param create 上一步没有查到的,这一步是否需要新创建
      * @param table 表
-     * @return columns 上一步查询结果
-     * @return pattern attern
+     * @param columns 上一步查询结果
+     * @param pattern 名称
      * @throws Exception 异常
      */
     @Override
-    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, Table table, String pattern) throws Exception{
+    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, Table table, String pattern) throws Exception {
         return super.columns(runtime, create, columns, table, pattern);
     }
 
@@ -2369,7 +2443,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return sqls
      */
     @Override
-    public List<Run> buildQueryTagsRun(DataRuntime runtime, Table table, boolean metadata) throws Exception{
+    public List<Run> buildQueryTagsRun(DataRuntime runtime, Table table, boolean metadata) throws Exception {
         return super.buildQueryTagsRun(runtime, table, metadata);
     }
 
@@ -2386,7 +2460,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends Tag> LinkedHashMap<String, T> tags(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> tags, DataSet set) throws Exception{
+    public <T extends Tag> LinkedHashMap<String, T> tags(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> tags, DataSet set) throws Exception {
         return super.tags(runtime, index, create, table, tags, set);
     }
     /**
@@ -2402,7 +2476,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends Tag> LinkedHashMap<String, T> tags(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tags, Table table, String pattern) throws Exception{
+    public <T extends Tag> LinkedHashMap<String, T> tags(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tags, Table table, String pattern) throws Exception {
         return super.tags(runtime, create, tags, table, pattern);
     }
 
@@ -2414,7 +2488,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * [命令合成]
      * List<Run> buildQueryPrimaryRun(DataRuntime runtime, Table table) throws Exception
      * [结构集封装]
-     * PrimaryKey primary(DataRuntime runtime, int index, Table table, DataSet set)
+     * <T extends PrimaryKey> T init(DataRuntime runtime, int index, T primary, Table table, DataSet set)
      ******************************************************************************************************************/
     /**
      * primary[调用入口]<br/>
@@ -2438,7 +2512,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return sqls
      */
     @Override
-    public List<Run> buildQueryPrimaryRun(DataRuntime runtime, Table table) throws Exception{
+    public List<Run> buildQueryPrimaryRun(DataRuntime runtime, Table table) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -2461,17 +2535,16 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * primary[结构集封装]<br/>
      *  根据查询结果集构造PrimaryKey
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param index 第几条查询SQL 对照 buildQueryIndexsRun 返回顺序
+     * @param index 第几条查询SQL 对照 buildQueryIndexesRun 返回顺序
      * @param table 表
      * @param set sql查询结果
      * @throws Exception 异常
      */
     @Override
-    public PrimaryKey primary(DataRuntime runtime, int index, Table table, DataSet set) throws Exception{
-        PrimaryKey primary = null;
+    public <T extends PrimaryKey> T init(DataRuntime runtime, int index, T primary, Table table, DataSet set) throws Exception {
         if(set.size()>0){
             DataRow row = set.getRow(0);
-            primary = new PrimaryKey();
+            primary = (T)new PrimaryKey();
             //conname 	    |contype	|conkey |  define
             //test_pk_pkey	| p			| {2,1}	| 	PRIMARY KEY (id, name)
             primary.setName(row.getString("CONNAME"));
@@ -2486,6 +2559,29 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
         return primary;
     }
 
+    /**
+     * primary[结构集封装]<br/>
+     * 根据查询结果集构造PrimaryKey更多属性
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param index 第几条查询SQL 对照 buildQueryIndexesRun 返回顺序
+     * @param table 表
+     * @param set sql查询结果
+     * @throws Exception 异常
+     */
+    @Override
+    public <T extends PrimaryKey> T detail(DataRuntime runtime, int index, T primary, Table table, DataSet set) throws Exception {
+        return super.detail(runtime, index, primary, table, set);
+    }
+    /**
+     * primary[结构集封装-依据]<br/>
+     * 读取primary key元数据结果集的依据
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @return PrimaryMetadataAdapter
+     */
+    @Override
+    public PrimaryMetadataAdapter primaryMetadataAdapter(DataRuntime runtime){
+        return super.primaryMetadataAdapter(runtime);
+    }
 
     /* *****************************************************************************************************************
      * 													foreign
@@ -2519,7 +2615,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return sqls
      */
     @Override
-    public List<Run> buildQueryForeignsRun(DataRuntime runtime, Table table) throws Exception{
+    public List<Run> buildQueryForeignsRun(DataRuntime runtime, Table table) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -2550,7 +2646,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends ForeignKey> LinkedHashMap<String, T> foreigns(DataRuntime runtime, int index, Table table, LinkedHashMap<String, T> foreigns, DataSet set) throws Exception{
+    public <T extends ForeignKey> LinkedHashMap<String, T> foreigns(DataRuntime runtime, int index, Table table, LinkedHashMap<String, T> foreigns, DataSet set) throws Exception {
         if(null == foreigns){
             foreigns = new LinkedHashMap<>();
         }
@@ -2582,7 +2678,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * <T extends Index> List<T> indexs(DataRuntime runtime, String random, boolean greedy, Table table, String pattern)
      * <T extends Index> LinkedHashMap<T, Index> indexs(DataRuntime runtime, String random, Table table, String pattern)
      * [命令合成]
-     * List<Run> buildQueryIndexsRun(DataRuntime runtime, Table table, String name)
+     * List<Run> buildQueryIndexesRun(DataRuntime runtime, Table table, String name)
      * [结果集封装]<br/>
      * <T extends Index> List<T> indexs(DataRuntime runtime, int index, boolean create, Table table, List<T> indexs, DataSet set)
      * <T extends Index> LinkedHashMap<String, T> indexs(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> indexs, DataSet set)
@@ -2627,15 +2723,15 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return sqls
      */
     @Override
-    public List<Run> buildQueryIndexsRun(DataRuntime runtime, Table table, String name){
-        return super.buildQueryIndexsRun(runtime, table, name);
+    public List<Run> buildQueryIndexesRun(DataRuntime runtime, Table table, String name){
+        return super.buildQueryIndexesRun(runtime, table, name);
     }
 
     /**
      * index[结果集封装]<br/>
      *  根据查询结果集构造Index
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param index 第几条查询SQL 对照 buildQueryIndexsRun 返回顺序
+     * @param index 第几条查询SQL 对照 buildQueryIndexesRun 返回顺序
      * @param create 上一步没有查到的,这一步是否需要新创建
      * @param table 表
      * @param indexs 上一步查询结果
@@ -2644,14 +2740,14 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends Index> LinkedHashMap<String, T> indexs(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> indexs, DataSet set) throws Exception{
+    public <T extends Index> LinkedHashMap<String, T> indexs(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> indexs, DataSet set) throws Exception {
         return super.indexs(runtime, index, create, table, indexs, set);
     }
     /**
      * index[结果集封装]<br/>
      *  根据查询结果集构造Index
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param index 第几条查询SQL 对照 buildQueryIndexsRun 返回顺序
+     * @param index 第几条查询SQL 对照 buildQueryIndexesRun 返回顺序
      * @param create 上一步没有查到的,这一步是否需要新创建
      * @param table 表
      * @param indexs 上一步查询结果
@@ -2660,7 +2756,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends Index> List<T> indexs(DataRuntime runtime, int index, boolean create, Table table, List<T> indexs, DataSet set) throws Exception{
+    public <T extends Index> List<T> indexs(DataRuntime runtime, int index, boolean create, Table table, List<T> indexs, DataSet set) throws Exception {
         return super.indexs(runtime, index, create, table, indexs, set);
     }
 
@@ -2676,7 +2772,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends Index> List<T> indexs(DataRuntime runtime, boolean create, List<T> indexs, Table table, boolean unique, boolean approximate) throws Exception{
+    public <T extends Index> List<T> indexs(DataRuntime runtime, boolean create, List<T> indexs, Table table, boolean unique, boolean approximate) throws Exception {
         return super.indexs(runtime, create, indexs, table, unique, approximate);
     }
     /**
@@ -2691,7 +2787,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends Index> LinkedHashMap<String, T> indexs(DataRuntime runtime, boolean create, LinkedHashMap<String, T> indexs, Table table, boolean unique, boolean approximate) throws Exception{
+    public <T extends Index> LinkedHashMap<String, T> indexs(DataRuntime runtime, boolean create, LinkedHashMap<String, T> indexs, Table table, boolean unique, boolean approximate) throws Exception {
         DataSource ds = null;
         Connection con = null;
         if(null == indexs){
@@ -2729,7 +2825,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
                     //PG JDBC驱动中没有返回catalog 所以这里不用比较直接取输入参数中的catalog
                     String catalog = table.getCatalogName();
                     String schema = BasicUtil.evl(string(keys, "TABLE_SCHEMA", set), string(keys, "TABLE_SCHEM", set));
-                    correctSchemaFromJDBC(index, catalog, schema);
+                    correctSchemaFromJDBC(runtime, index, catalog, schema);
                     //PG JDBC驱动中没有返回catalog 所以这里不用比较直接取输入参数中的catalog
                     if(!BasicUtil.equals(table.getSchemaName(), index.getSchemaName())){
                         continue;
@@ -2752,7 +2848,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
                 Column col = table.getColumn(columnName.toUpperCase());
                 Column column = null;
                 if(null != col){
-                    column = (Column) col.clone();
+                    column = col.clone();
                 }else{
                     column = new Column();
                     column.setName(columnName);
@@ -2846,7 +2942,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends Constraint> List<T> constraints(DataRuntime runtime, int index, boolean create, Table table, List<T> constraints, DataSet set) throws Exception{
+    public <T extends Constraint> List<T> constraints(DataRuntime runtime, int index, boolean create, Table table, List<T> constraints, DataSet set) throws Exception {
         return super.constraints(runtime, index, create, table, constraints, set);
     }
     /**
@@ -2863,7 +2959,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends Constraint> LinkedHashMap<String, T> constraints(DataRuntime runtime, int index, boolean create, Table table, Column column, LinkedHashMap<String, T> constraints, DataSet set) throws Exception{
+    public <T extends Constraint> LinkedHashMap<String, T> constraints(DataRuntime runtime, int index, boolean create, Table table, Column column, LinkedHashMap<String, T> constraints, DataSet set) throws Exception {
         return super.constraints(runtime, index, create, table, column, constraints, set);
     }
 
@@ -2944,7 +3040,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return LinkedHashMap
      * @throws Exception 异常
      */
-    public <T extends Trigger> LinkedHashMap<String, T> triggers(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> triggers, DataSet set) throws Exception{
+    public <T extends Trigger> LinkedHashMap<String, T> triggers(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> triggers, DataSet set) throws Exception {
         if(null == triggers){
             triggers = new LinkedHashMap<>();
         }
@@ -3060,7 +3156,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends Procedure> LinkedHashMap<String, T> procedures(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> procedures, DataSet set) throws Exception{
+    public <T extends Procedure> LinkedHashMap<String, T> procedures(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> procedures, DataSet set) throws Exception {
         return super.procedures(runtime, index, create, procedures, set);
     }
 
@@ -3111,7 +3207,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Procedure procedure) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Procedure procedure) throws Exception {
         return super.buildQueryDdlsRun(runtime, procedure);
     }
 
@@ -3208,7 +3304,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends Function> List<T> functions(DataRuntime runtime, int index, boolean create, List<T> functions, DataSet set) throws Exception{
+    public <T extends Function> List<T> functions(DataRuntime runtime, int index, boolean create, List<T> functions, DataSet set) throws Exception {
         return super.functions(runtime, index, create, functions, set);
     }
     /**
@@ -3223,7 +3319,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public <T extends Function> LinkedHashMap<String, T> functions(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> functions, DataSet set) throws Exception{
+    public <T extends Function> LinkedHashMap<String, T> functions(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> functions, DataSet set) throws Exception {
         return super.functions(runtime, index, create, functions, set);
     }
 
@@ -3262,7 +3358,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Function meta) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Function meta) throws Exception {
         return super.buildQueryDdlsRun(runtime, meta);
     }
     /**
@@ -3280,6 +3376,213 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
         return super.ddl(runtime, index, function, ddls, set);
     }
 
+    /* *****************************************************************************************************************
+     * 													sequence
+     * -----------------------------------------------------------------------------------------------------------------
+     * [调用入口]
+     * <T extends Sequence> List<T> sequences(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern);
+     * <T extends Sequence> LinkedHashMap<String, T> sequences(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern);
+     * [命令合成]
+     * List<Run> buildQuerySequencesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern) ;
+     * [结果集封装]<br/>
+     * <T extends Sequence> List<T> sequences(DataRuntime runtime, int index, boolean create, List<T> sequences, DataSet set) throws Exception;
+     * <T extends Sequence> LinkedHashMap<String, T> sequences(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> sequences, DataSet set) throws Exception;
+     * <T extends Sequence> List<T> sequences(DataRuntime runtime, boolean create, List<T> sequences, DataSet set) throws Exception;
+     * <T extends Sequence> LinkedHashMap<String, T> sequences(DataRuntime runtime, boolean create, LinkedHashMap<String, T> sequences, DataSet set) throws Exception;
+     * [调用入口]
+     * List<String> ddl(DataRuntime runtime, String random, Sequence sequence);
+     * [命令合成]
+     * List<Run> buildQueryDdlsRun(DataRuntime runtime, Sequence sequence) throws Exception;
+     * [结果集封装]<br/>
+     * List<String> ddl(DataRuntime runtime, int index, Sequence sequence, List<String> ddls, DataSet set)
+     ******************************************************************************************************************/
+    /**
+     *
+     * sequence[调用入口]<br/>
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param random 用来标记同一组命令
+     * @param greedy 贪婪模式 true:如果不填写catalog或schema则查询全部 false:只在当前catalog和schema中查询
+     * @param catalog catalog
+     * @param schema schema
+     * @param pattern 名称统配符或正则
+     * @return  LinkedHashMap
+     * @param <T> Index
+     */
+    @Override
+    public <T extends Sequence> List<T> sequences(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern) {
+        return super.sequences(runtime, random, greedy, catalog, schema, pattern);
+    }
+    /**
+     *
+     * sequence[调用入口]<br/>
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param random 用来标记同一组命令
+     * @param catalog catalog
+     * @param schema schema
+     * @param pattern 名称统配符或正则
+     * @return  LinkedHashMap
+     * @param <T> Index
+     */
+    @Override
+    public <T extends Sequence> LinkedHashMap<String, T> sequences(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern) {
+        return super.sequences(runtime, random, catalog, schema, pattern);
+    }
+    /**
+     * sequence[命令合成]<br/>
+     * 查询表上的 Trigger
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param catalog catalog
+     * @param schema schema
+     * @param name 名称统配符或正则
+     * @return sqls
+     */
+    @Override
+    public List<Run> buildQuerySequencesRun(DataRuntime runtime, Catalog catalog, Schema schema, String name) {
+        List<Run> runs = new ArrayList<>();
+        Run run = new SimpleRun(runtime);
+        runs.add(run);
+        StringBuilder builder = run.getBuilder();
+        String catalogName = null;
+        String schemaName = null;
+        if(null != catalog){
+            catalogName = catalog.getName();
+        }
+        if(null != schema){
+            schemaName = schema.getName();
+        }
+        builder.append("SELECT * FROM pg_sequences WHERE 1=1\n");
+        if(BasicUtil.isNotEmpty(catalogName)){
+            builder.append(" AND SEQUENCEOWNER = '").append(catalogName).append("'");
+        }
+        if(BasicUtil.isNotEmpty(schemaName)){
+            builder.append(" AND SCHEMANAME = '").append(schemaName).append("'");
+        }
+        if(BasicUtil.isNotEmpty(name)){
+            builder.append(" AND SEQUENCENAME = '").append(name).append("'");
+        }
+        return runs;
+    }
+
+    /**
+     * sequence[结果集封装]<br/>
+     * 根据查询结果集构造 Trigger
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param index 第几条查询SQL 对照 buildQueryConstraintsRun 返回顺序
+     * @param create 上一步没有查到的,这一步是否需要新创建
+     * @param sequences 上一步查询结果
+     * @param set 查询结果集
+     * @return LinkedHashMap
+     * @throws Exception 异常
+     */
+    @Override
+    public <T extends Sequence> List<T> sequences(DataRuntime runtime, int index, boolean create, List<T> sequences, DataSet set) throws Exception {
+        if(null == sequences){
+            sequences = new ArrayList<>();
+        }
+        for(DataRow row:set){
+            String name = row.getString("SEQUENCENAME");
+            Sequence sequence = new Sequence(name);
+            sequences.add((T)init(sequence, row));
+        }
+        return sequences;
+    }
+    /**
+     * sequence[结果集封装]<br/>
+     * 根据查询结果集构造 Trigger
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param index 第几条查询SQL 对照 buildQueryConstraintsRun 返回顺序
+     * @param create 上一步没有查到的,这一步是否需要新创建
+     * @param sequences 上一步查询结果
+     * @param set 查询结果集
+     * @return LinkedHashMap
+     * @throws Exception 异常
+     */
+    @Override
+    public <T extends Sequence> LinkedHashMap<String, T> sequences(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> sequences, DataSet set) throws Exception {
+        if(null == sequences){
+            sequences = new LinkedHashMap<>();
+        }
+        for(DataRow row:set){
+            String name = row.getString("SEQUENCENAME");
+            Sequence sequence = sequences.get(name.toUpperCase());
+            sequences.put(name.toUpperCase(), (T)init(sequence, row));
+        }
+        return sequences;
+    }
+    protected Sequence init(Sequence sequence, DataRow row){
+        if(null == sequence){
+            sequence = new Sequence();
+        }
+        sequence.setName(row.getString("SEQUENCENAME"));
+        sequence.setCatalog(row.getString("SEQUENCEOWNER"));
+        sequence.setSchema(row.getString("SCHEMANAME"));
+        sequence.setLast(row.getLong("LAST_NUMBER", (Long)null));
+        sequence.setMin(row.getLong("MIN_VALUE", (Long)null));
+        sequence.setStart(row.getLong("START_VALUE", (Long)null));
+        sequence.setMax(row.getLong("MAX_VALUE", (Long)null));
+        sequence.setIncrement(row.getInt("INCREMENT_BY", 1));
+        sequence.setCache(row.getInt("CACHE_SIZE", null));
+        sequence.setCycle(row.getBoolean("CYCLE", null));
+        return sequence;
+    }
+
+    /**
+     * sequence[结果集封装]<br/>
+     * 根据驱动内置接口补充 Sequence
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param create 上一步没有查到的,这一步是否需要新创建
+     * @param sequences 上一步查询结果
+     * @return LinkedHashMap
+     * @throws Exception 异常
+     */
+    @Override
+    public <T extends Sequence> List<T> sequences(DataRuntime runtime, boolean create, List<T> sequences) throws Exception {
+        return super.sequences(runtime, create, sequences);
+    }
+
+    /**
+     *
+     * sequence[调用入口]<br/>
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param random 用来标记同一组命令
+     * @param meta Sequence
+     * @return ddl
+     */
+    @Override
+    public List<String> ddl(DataRuntime runtime, String random, Sequence meta){
+        return super.ddl(runtime, random, meta);
+    }
+
+    /**
+     * sequence[命令合成]<br/>
+     * 查询序列DDL
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return List
+     */
+    @Override
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.buildQueryDdlsRun(runtime, meta);
+    }
+    /**
+     * sequence[结果集封装]<br/>
+     * 查询 Sequence DDL
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param index 第几条SQL 对照 buildQueryDdlsRun 返回顺序
+     * @param sequence Sequence
+     * @param ddls 上一步查询结果
+     * @param set 查询结果集
+     * @return List
+     */
+    @Override
+    public List<String> ddl(DataRuntime runtime, int index, Sequence sequence, List<String> ddls, DataSet set){
+        return super.ddl(runtime, index, sequence, ddls, set);
+    }
+
+    /* *****************************************************************************************************************
+     * 													common
+     * ----------------------------------------------------------------------------------------------------------------
+     */
     /**
      *
      * 根据 catalog, schema, name检测tables集合中是否存在
@@ -3352,7 +3655,13 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * procedure        : 存储过程
      * function         : 函数
      ******************************************************************************************************************/
-
+    /**
+     * 是否支持DDL合并
+     * @return boolean
+     */
+    public boolean slice(){
+        return true;
+    }
     /**
      * ddl [执行命令]
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
@@ -3375,11 +3684,11 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * boolean drop(DataRuntime runtime, Table meta)
      * boolean rename(DataRuntime runtime, Table origin, String name)
      * [命令合成]
-     * List<Run> buildCreateRun(DataRuntime runtime, Table table)
-     * List<Run> buildAlterRun(DataRuntime runtime, Table table)
-     * List<Run> buildAlterRun(DataRuntime runtime, Table table, Collection<Column> columns)
-     * List<Run> buildRenameRun(DataRuntime runtime, Table table)
-     * List<Run> buildDropRun(DataRuntime runtime, Table table)
+     * List<Run> buildCreateRun(DataRuntime runtime, Table meta)
+     * List<Run> buildAlterRun(DataRuntime runtime, Table meta)
+     * List<Run> buildAlterRun(DataRuntime runtime, Table meta, Collection<Column> columns)
+     * List<Run> buildRenameRun(DataRuntime runtime, Table meta)
+     * List<Run> buildDropRun(DataRuntime runtime, Table meta)
      * [命令合成-子流程]
      * List<Run> buildAppendCommentRun(DataRuntime runtime, Table table)
      * List<Run> buildChangeCommentRun(DataRuntime runtime, Table table)
@@ -3399,7 +3708,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception DDL异常
      */
     @Override
-    public boolean create(DataRuntime runtime, Table meta) throws Exception{
+    public boolean create(DataRuntime runtime, Table meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -3413,7 +3722,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      */
 
     @Override
-    public boolean alter(DataRuntime runtime, Table meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Table meta) throws Exception {
         return super.alter(runtime, meta);
     }
     /**
@@ -3426,7 +3735,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      */
 
     @Override
-    public boolean drop(DataRuntime runtime, Table meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Table meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -3441,7 +3750,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      */
 
     @Override
-    public boolean rename(DataRuntime runtime, Table origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Table origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -3453,8 +3762,9 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public  String keyword(Table meta){
-        return meta.getKeyword();
+    public  String keyword(BaseMetadata meta)
+{
+        return "TABLE";
     }
 
     /**
@@ -3472,7 +3782,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, Table meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, Table meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
     }
     /**
@@ -3484,7 +3794,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Table meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Table meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -3493,13 +3803,13 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * 修改列
      * 有可能生成多条SQL,根据数据库类型优先合并成一条执行
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param table 表
+     * @param meta 表
      * @param columns 列
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Table table, Collection<Column> columns) throws Exception{
-        return super.buildAlterRun(runtime, table, columns);
+    public List<Run> buildAlterRun(DataRuntime runtime, Table meta, Collection<Column> columns) throws Exception {
+        return super.buildAlterRun(runtime, meta, columns);
     }
 
     /**
@@ -3512,7 +3822,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Table meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Table meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -3534,10 +3844,31 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Table meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Table meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
+    /**
+     * table[命令合成-子流程]<br/>
+     * 创建表完成后追加列备注,创建过程能添加备注的不需要实现与comment(DataRuntime runtime, StringBuilder builder, Column meta)二选一实现
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 表
+     * @return sql
+     * @throws Exception 异常
+     */
+    @Override
+    public List<Run> buildAppendColumnCommentRun(DataRuntime runtime, Table meta) throws Exception {
+        List<Run> runs = new ArrayList<>();
+        if(null != meta){
+            LinkedHashMap<String, Column> columns = meta.getColumns();
+            if(null != columns){
+                for(Column column:columns.values()){
+                    runs.addAll(buildChangeCommentRun(runtime, column));
+                }
+            }
+        }
+        return runs;
+    }
     /**
      * table[命令合成-子流程]<br/>
      * 创建表完成后追加表备注,创建过程能添加备注的不需要实现与comment(DataRuntime runtime, StringBuilder builder, Table meta)二选一实现
@@ -3547,7 +3878,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAppendCommentRun(DataRuntime runtime, Table meta) throws Exception{
+    public List<Run> buildAppendCommentRun(DataRuntime runtime, Table meta) throws Exception {
         return buildChangeCommentRun(runtime, meta);
     }
 
@@ -3560,13 +3891,13 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, Table meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, Table meta) throws Exception {
         List<Run> runs = new ArrayList<>();
-        Run run = new SimpleRun(runtime);
-        runs.add(run);
-        StringBuilder builder = run.getBuilder();
         String comment = meta.getComment();
         if(BasicUtil.isNotEmpty(comment)) {
+            Run run = new SimpleRun(runtime);
+            runs.add(run);
+            StringBuilder builder = run.getBuilder();
             builder.append("COMMENT ON TABLE ");
             name(runtime, builder, meta);
             builder.append(" IS '").append(comment).append("'");
@@ -3592,7 +3923,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
 
     /**
      * table[命令合成-子流程]<br/>
-     * 检测表主键(在没有显式设置主键时根据其他条件判断如自增)
+     * 检测表主键(在没有显式设置主键时根据其他条件判断如自增),同时根据主键对象给相关列设置主键标识
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param table 表
      */
@@ -3613,26 +3944,22 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
     public StringBuilder primary(DataRuntime runtime, StringBuilder builder, Table meta){
         PrimaryKey primary = meta.getPrimaryKey();
         LinkedHashMap<String, Column> pks = null;
+        String name = null;
         if(null != primary){
             pks = primary.getColumns();
+            name = primary.getName();
         }else{
             pks = meta.primarys();
+            name = "pk_" + meta.getName();
         }
         if(!pks.isEmpty()){
             checkName(runtime, null, meta);
-            builder.append(",CONSTRAINT ").append("PK_").append(meta.getName()).append(" PRIMARY KEY (");
-            boolean first = true;
-            for(Column pk:pks.values()){
-                if(!first){
-                    builder.append(",");
-                }
-                delimiter(builder, pk.getName());
-                String order = pk.getOrder();
-                if(null != order){
-                    builder.append(" ").append(order);
-                }
-                first = false;
-            }
+            builder.append(",CONSTRAINT ");
+            delimiter(builder, name);
+            builder.append(" PRIMARY KEY (");
+            Column.sort(primary.getPositions(), pks);
+            //不支持 asc desc
+            delimiter(builder, Column.names(pks));
             builder.append(")");
         }
         return builder;
@@ -3675,14 +4002,14 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public StringBuilder partitionBy(DataRuntime runtime, StringBuilder builder, Table meta) throws Exception{
+    public StringBuilder partitionBy(DataRuntime runtime, StringBuilder builder, Table meta) throws Exception {
         return super.partitionBy(runtime, builder, meta);
     }
 
     /**
      * table[命令合成-子流程]<br/>
      * 子表执行分区依据(相关主表及分区值)
-     * 如CREATE TABLE hr_user_hr PARTITION OF hr_user FOR VALUES IN ('HR')
+     * 如CREATE TABLE hr_user_fi PARTITION OF hr_user FOR VALUES IN ('FI')
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param builder builder
      * @param meta 表
@@ -3690,7 +4017,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public StringBuilder partitionOf(DataRuntime runtime, StringBuilder builder, Table meta) throws Exception{
+    public StringBuilder partitionOf(DataRuntime runtime, StringBuilder builder, Table meta) throws Exception {
         return super.partitionOf(runtime, builder, meta);
     }
 
@@ -3723,7 +4050,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception DDL异常
      */
     @Override
-    public boolean create(DataRuntime runtime, View meta) throws Exception{
+    public boolean create(DataRuntime runtime, View meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -3736,7 +4063,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception DDL异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, View meta) throws Exception{
+    public boolean alter(DataRuntime runtime, View meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -3750,7 +4077,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception DDL异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, View meta) throws Exception{
+    public boolean drop(DataRuntime runtime, View meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -3765,7 +4092,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception DDL异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, View origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, View origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -3779,8 +4106,44 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, View meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
+    }
+
+    /**
+     * view[命令合成-子流程]<br/>
+     * 创建视图头部
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param builder builder
+     * @param meta 视图
+     * @return StringBuilder
+     * @throws Exception 异常
+     */
+    @Override
+    public StringBuilder buildCreateRunHead(DataRuntime runtime, StringBuilder builder, View meta) throws Exception {
+        if (null == builder) {
+            builder = new StringBuilder();
+        }
+        builder.append("CREATE");
+        if(meta.isMaterialize()){
+            builder.append(" MATERIALIZED");
+        }
+        builder.append(" VIEW ");
+        name(runtime, builder, meta);
+        return builder;
+    }
+    /**
+     * view[命令合成-子流程]<br/>
+     * 创建视图选项
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param builder builder
+     * @param meta 视图
+     * @return StringBuilder
+     * @throws Exception 异常
+     */
+    @Override
+    public StringBuilder buildCreateRunOption(DataRuntime runtime, StringBuilder builder, View meta) throws Exception {
+        return super.buildCreateRunOption(runtime, builder, meta);
     }
     /**
      * view[命令合成]<br/>
@@ -3792,7 +4155,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      */
 
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, View meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
     /**
@@ -3805,7 +4168,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, View meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
     /**
@@ -3817,7 +4180,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, View meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -3830,7 +4193,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAppendCommentRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildAppendCommentRun(DataRuntime runtime, View meta) throws Exception {
         return super.buildAppendCommentRun(runtime, meta);
     }
 
@@ -3843,7 +4206,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, View meta) throws Exception {
         return super.buildChangeCommentRun(runtime, meta);
     }
 
@@ -3902,7 +4265,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception DDL异常
      */
     @Override
-    public boolean create(DataRuntime runtime, MasterTable meta) throws Exception{
+    public boolean create(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -3915,7 +4278,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception DDL异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, MasterTable meta) throws Exception{
+    public boolean alter(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -3928,7 +4291,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception DDL异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, MasterTable meta) throws Exception{
+    public boolean drop(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -3942,7 +4305,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception DDL异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, MasterTable origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, MasterTable origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -3955,7 +4318,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, MasterTable meta) throws Exception {
         meta.setKeyword("TABLE");
         Table tab = meta;
         return super.buildCreateRun(runtime, tab);
@@ -3970,7 +4333,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
     /**
@@ -3982,7 +4345,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
     /**
@@ -3994,7 +4357,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -4007,7 +4370,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAppendCommentRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildAppendCommentRun(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.buildAppendCommentRun(runtime, meta);
     }
 
@@ -4020,7 +4383,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.buildChangeCommentRun(runtime, meta);
     }
 
@@ -4052,7 +4415,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception DDL异常
      */
     @Override
-    public boolean create(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public boolean create(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -4065,7 +4428,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception DDL异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public boolean alter(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -4079,7 +4442,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      */
 
     @Override
-    public boolean drop(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public boolean drop(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.drop(runtime, meta);
     }
     /**
@@ -4092,7 +4455,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception DDL异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, PartitionTable origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, PartitionTable origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
     /**
@@ -4104,7 +4467,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         meta.setKeyword("TABLE");
         Table tab = meta;
         return buildCreateRun(runtime, tab);
@@ -4119,7 +4482,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAppendCommentRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildAppendCommentRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.buildAppendCommentRun(runtime, meta);
     }
 
@@ -4132,7 +4495,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -4145,7 +4508,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
     /**
@@ -4157,7 +4520,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -4170,7 +4533,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.buildChangeCommentRun(runtime, meta);
     }
 
@@ -4203,11 +4566,11 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * List<Run> buildDropAutoIncrement(DataRuntime runtime, Column column)
      * StringBuilder define(DataRuntime runtime, StringBuilder builder, Column column)
      * StringBuilder type(DataRuntime runtime, StringBuilder builder, Column column)
-     * StringBuilder type(DataRuntime runtime, StringBuilder builder, Column column, String type, boolean isIgnorePrecision, boolean isIgnoreScale)
-     * boolean isIgnorePrecision(DataRuntime runtime, Column column)
-     * boolean isIgnoreScale(DataRuntime runtime, Column column)
+     * StringBuilder type(DataRuntime runtime, StringBuilder builder, Column column, String type, int ignorePrecision, boolean ignoreScale)
+     * int ignorePrecision(DataRuntime runtime, Column column)
+     * int ignoreScale(DataRuntime runtime, Column column)
      * Boolean checkIgnorePrecision(DataRuntime runtime, String datatype)
-     * Boolean checkIgnoreScale(DataRuntime runtime, String datatype)
+     * int checkIgnoreScale(DataRuntime runtime, String datatype)
      * StringBuilder nullable(DataRuntime runtime, StringBuilder builder, Column column)
      * StringBuilder charset(DataRuntime runtime, StringBuilder builder, Column column)
      * StringBuilder defaultValue(DataRuntime runtime, StringBuilder builder, Column column)
@@ -4229,7 +4592,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception DDL异常
      */
     @Override
-    public boolean add(DataRuntime runtime, Column meta) throws Exception{
+    public boolean add(DataRuntime runtime, Column meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -4243,7 +4606,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception DDL异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, Column meta, boolean trigger) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, Column meta, boolean trigger) throws Exception {
         return super.alter(runtime, table, meta, trigger);
     }
 
@@ -4256,7 +4619,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception DDL异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Column meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Column meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -4269,7 +4632,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception DDL异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Column meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Column meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -4283,7 +4646,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception DDL异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Column origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Column origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -4297,11 +4660,11 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, Column meta, boolean slice) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, Column meta, boolean slice) throws Exception {
         return super.buildAddRun(runtime, meta, slice);
     }
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, Column meta) throws Exception {
         return buildAddRun(runtime, meta, false);
     }
 
@@ -4315,11 +4678,11 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Column meta, boolean slice) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Column meta, boolean slice) throws Exception {
         return super.buildAlterRun(runtime, meta, slice);
     }
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Column meta) throws Exception {
         return buildAlterRun(runtime, meta, false);
     }
 
@@ -4333,12 +4696,12 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Column meta, boolean slice) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Column meta, boolean slice) throws Exception {
         return super.buildDropRun(runtime, meta, slice);
     }
 
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Column meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -4351,7 +4714,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Column meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -4378,7 +4741,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildChangeTypeRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildChangeTypeRun(DataRuntime runtime, Column meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -4389,7 +4752,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
         builder.append(" ALTER COLUMN ");
         delimiter(builder, meta.getName());
         builder.append(" TYPE ");
-        this.typeMetadata(runtime, builder, update);
+        type(runtime, builder, update);
         String type = update.getTypeName();
         if(type.contains("(")){
             type = type.substring(0,type.indexOf("("));
@@ -4449,7 +4812,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildChangeDefaultRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildChangeDefaultRun(DataRuntime runtime, Column meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -4492,7 +4855,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildChangeNullableRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildChangeNullableRun(DataRuntime runtime, Column meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -4525,11 +4888,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, Column meta) throws Exception {
         List<Run> runs = new ArrayList<>();
-        Run run = new SimpleRun(runtime);
-        runs.add(run);
-        StringBuilder builder = run.getBuilder();
         String comment = null;
         Column update = meta.getUpdate();
         if(null != update){
@@ -4539,6 +4899,9 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
             comment = meta.getComment();
         }
         if(BasicUtil.isNotEmpty(comment)) {
+            Run run = new SimpleRun(runtime);
+            runs.add(run);
+            StringBuilder builder = run.getBuilder();
             builder.append("COMMENT ON COLUMN ");
             name(runtime, builder, meta.getTable(true)).append(".");
             delimiter(builder, meta.getName());
@@ -4562,7 +4925,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAppendCommentRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildAppendCommentRun(DataRuntime runtime, Column meta) throws Exception {
         return buildChangeCommentRun(runtime, meta);
     }
 
@@ -4576,7 +4939,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildDropAutoIncrement(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildDropAutoIncrement(DataRuntime runtime, Column meta) throws Exception {
         return super.buildDropAutoIncrement(runtime, meta);
     }
 
@@ -4615,7 +4978,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return StringBuilder
      */
     @Override
-    public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta){
+    public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta){
 
         String type = meta.getTypeName();
         if(null == type){
@@ -4643,7 +5006,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
             }else{
                 meta.setType("SERIAL8");
             }
-        }else if(type.contains("int") || type.contains("long") || type.contains("serial") || type.contains("short")){
+        }else if(type.equals("int") || type.contains("long") || type.contains("serial") || type.contains("short")){
             if ("serial4".equals(type) || "int".equals(type) || "integer".equals(type)) {
                 meta.setType("int4");
             } else if ("serial8".equals(type) || "long".equals(type) || "bigint".equals(type)) {
@@ -4654,7 +5017,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
                 meta.setType("int8");
             }
         }
-        return super.typeMetadata(runtime, builder, meta);
+        return super.type(runtime, builder, meta);
     }
     /**
      * column[命令合成-子流程]<br/>
@@ -4663,128 +5026,16 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @param builder builder
      * @param meta 列
      * @param type 数据类型(已经过转换)
-     * @param isIgnorePrecision 是否忽略长度
-     * @param isIgnoreScale 是否忽略小数
+     * @param ignorePrecision 是否忽略长度
+     * @param ignoreScale 是否忽略小数
      * @return StringBuilder
      */
     @Override
-    public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta, String type, boolean isIgnorePrecision, boolean isIgnoreScale){
-        return super.typeMetadata(runtime, builder, meta, type, isIgnorePrecision, isIgnoreScale);
+    public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta, String type, int ignoreLength, int ignorePrecision, int ignoreScale){
+        return super.type(runtime, builder, meta, type, ignoreLength, ignorePrecision, ignoreScale);
     }
 
 
-    /**
-     * column[命令合成-子流程]<br/>
-     * 列定义:是否忽略长度
-     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param meta 列
-     * @return boolean
-     */
-    @Override
-    public boolean isIgnorePrecision(DataRuntime runtime, Column meta) {
-        return super.isIgnorePrecision(runtime, meta);
-    }
-    /**
-     * column[命令合成-子流程]<br/>
-     * 列定义:是否忽略精度
-     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param meta 列
-     * @return boolean
-     */
-    @Override
-    public boolean isIgnoreScale(DataRuntime runtime, Column meta) {
-        return super.isIgnoreScale(runtime, meta);
-    }
-    /**
-     * column[命令合成-子流程]<br/>
-     * 列定义:是否忽略长度
-     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param type 列数据类型
-     * @return Boolean 检测不到时返回null
-     */
-    @Override
-    public Boolean checkIgnorePrecision(DataRuntime runtime, String type) {
-        type = type.toUpperCase();
-        if (type.contains("INT")) {
-            return false;
-        }
-        if (type.contains("DATE")) {
-            return true;
-        }
-        if (type.contains("TIME")) {
-            return true;
-        }
-        if (type.contains("YEAR")) {
-            return true;
-        }
-        if (type.contains("TEXT")) {
-            return true;
-        }
-        if (type.contains("BLOB")) {
-            return true;
-        }
-        if (type.contains("JSON")) {
-            return true;
-        }
-        if (type.contains("POINT")) {
-            return true;
-        }
-        if (type.contains("LINE")) {
-            return true;
-        }
-        if (type.contains("POLYGON")) {
-            return true;
-        }
-        if (type.contains("GEOMETRY")) {
-            return true;
-        }
-        return null;
-    }
-    /**
-     * column[命令合成-子流程]<br/>
-     * 列定义:是否忽略精度
-     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param type 列数据类型
-     * @return Boolean 检测不到时返回null
-     */
-    @Override
-    public Boolean checkIgnoreScale(DataRuntime runtime, String type) {
-        type = type.toUpperCase();
-        if (type.contains("INT")) {
-            return true;
-        }
-        if (type.contains("DATE")) {
-            return true;
-        }
-        if (type.contains("TIME")) {
-            return true;
-        }
-        if (type.contains("YEAR")) {
-            return true;
-        }
-        if (type.contains("TEXT")) {
-            return true;
-        }
-        if (type.contains("BLOB")) {
-            return true;
-        }
-        if (type.contains("JSON")) {
-            return true;
-        }
-        if (type.contains("POINT")) {
-            return true;
-        }
-        if (type.contains("LINE")) {
-            return true;
-        }
-        if (type.contains("POLYGON")) {
-            return true;
-        }
-        if (type.contains("GEOMETRY")) {
-            return true;
-        }
-        return null;
-    }
     /**
      * column[命令合成-子流程]<br/>
      * 列定义:非空
@@ -4837,7 +5088,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
 
     /**
      * column[命令合成-子流程]<br/>
-     * 列定义:递增列
+     * 列定义:递增列,需要通过serial实现递增的在type(DataRuntime runtime, StringBuilder builder, Column meta)中实现
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param builder builder
      * @param meta 列
@@ -4918,7 +5169,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, Tag meta) throws Exception{
+    public boolean add(DataRuntime runtime, Tag meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -4932,7 +5183,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, Tag meta, boolean trigger) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, Tag meta, boolean trigger) throws Exception {
         return super.alter(runtime, table, meta, trigger);
     }
 
@@ -4946,7 +5197,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Tag meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Tag meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -4959,7 +5210,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Tag meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Tag meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -4973,7 +5224,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Tag origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Tag origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -4986,7 +5237,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, Tag meta) throws Exception {
         return super.buildAddRun(runtime, meta);
     }
     /**
@@ -4998,7 +5249,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Tag meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -5010,7 +5261,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Tag meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -5023,7 +5274,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Tag meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
     /**
@@ -5035,7 +5286,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildChangeDefaultRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildChangeDefaultRun(DataRuntime runtime, Tag meta) throws Exception {
         return super.buildChangeDefaultRun(runtime, meta);
     }
 
@@ -5048,7 +5299,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildChangeNullableRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildChangeNullableRun(DataRuntime runtime, Tag meta) throws Exception {
         return super.buildChangeNullableRun(runtime, meta);
     }
 
@@ -5061,7 +5312,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, Tag meta) throws Exception {
         return super.buildChangeCommentRun(runtime, meta);
     }
 
@@ -5074,7 +5325,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildChangeTypeRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildChangeTypeRun(DataRuntime runtime, Tag meta) throws Exception {
         return super.buildChangeTypeRun(runtime, meta);
     }
 
@@ -5119,7 +5370,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, PrimaryKey meta) throws Exception{
+    public boolean add(DataRuntime runtime, PrimaryKey meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -5132,7 +5383,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, PrimaryKey meta) throws Exception{
+    public boolean alter(DataRuntime runtime, PrimaryKey meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5145,7 +5396,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, PrimaryKey meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, PrimaryKey meta) throws Exception {
         return super.alter(runtime, table, meta);
     }
 
@@ -5158,7 +5409,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, PrimaryKey meta) throws Exception{
+    public boolean drop(DataRuntime runtime, PrimaryKey meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5172,7 +5423,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, PrimaryKey origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, PrimaryKey origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
     /**
@@ -5184,26 +5435,20 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
         StringBuilder builder = run.getBuilder();
-        Map<String,Column> columns = meta.getColumns();
-        if(columns.size()>0) {
-            if(!slice) {
+        LinkedHashMap<String,Column> columns = meta.getColumns();
+        if(null != columns && !columns.isEmpty()) {
+            if(!slice(slice)) {
                 builder.append("ALTER TABLE ");
                 name(runtime, builder, meta.getTable(true));
             }
             builder.append(" ADD PRIMARY KEY (");
-            boolean first = true;
-            for(Column column:columns.values()){
-                if(!first){
-                    builder.append(",");
-                }
-                delimiter(builder, column.getName());
-                first = false;
-            }
+            Column.sort(meta.getPositions(), columns);
+            delimiter(builder, Column.names(columns));
             builder.append(")");
 
         }
@@ -5219,7 +5464,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey origin, PrimaryKey meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey origin, PrimaryKey meta) throws Exception {
         return super.buildAlterRun(runtime, origin, meta);
     }
     /**
@@ -5231,13 +5476,15 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
         StringBuilder builder = run.getBuilder();
-        builder.append("ALTER TABLE ");
-        name(runtime, builder, meta.getTable(true));
+        if(!slice(slice)) {
+            builder.append("ALTER TABLE ");
+            name(runtime, builder, meta.getTable(true));
+        }
         builder.append(" DROP CONSTRAINT ");
         delimiter(builder, meta.getName());
         return runs;
@@ -5251,7 +5498,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, PrimaryKey meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, PrimaryKey meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -5280,7 +5527,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public boolean add(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -5293,7 +5540,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public boolean alter(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5306,7 +5553,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, ForeignKey meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, ForeignKey meta) throws Exception {
         return super.alter(runtime, table, meta);
     }
 
@@ -5319,7 +5566,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public boolean drop(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5333,7 +5580,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, ForeignKey origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, ForeignKey origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -5346,7 +5593,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.buildAddRun(runtime, meta);
     }
     /**
@@ -5362,7 +5609,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -5374,7 +5621,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -5387,7 +5634,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
     /* *****************************************************************************************************************
@@ -5400,7 +5647,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * boolean drop(DataRuntime runtime, Index meta)
      * boolean rename(DataRuntime runtime, Index origin, String name)
      * [命令合成]
-     * List<Run> buildAddRun(DataRuntime runtime, Index meta)
+     * List<Run> buildAppendIndexRun(DataRuntime runtime, Table meta)
      * List<Run> buildAlterRun(DataRuntime runtime, Index meta)
      * List<Run> buildDropRun(DataRuntime runtime, Index meta)
      * List<Run> buildRenameRun(DataRuntime runtime, Index meta)
@@ -5418,7 +5665,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, Index meta) throws Exception{
+    public boolean add(DataRuntime runtime, Index meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -5431,7 +5678,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Index meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Index meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5444,7 +5691,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, Index meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, Index meta) throws Exception {
         return super.alter(runtime, table, meta);
     }
 
@@ -5457,7 +5704,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Index meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Index meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5471,7 +5718,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Index origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Index origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -5483,8 +5730,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, Index meta) throws Exception{
-        return super.buildAddRun(runtime, meta);
+    public List<Run> buildAppendIndexRun(DataRuntime runtime, Table meta) throws Exception {
+        return super.buildAppendIndexRun(runtime, meta);
     }
     /**
      * index[命令合成]<br/>
@@ -5495,7 +5742,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Index meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Index meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
     /**
@@ -5506,7 +5753,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Index meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Index meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -5528,7 +5775,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Index meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Index meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -5541,8 +5788,8 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return StringBuilder
      */
     @Override
-    public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Index meta){
-        return super.typeMetadata(runtime, builder, meta);
+    public StringBuilder type(DataRuntime runtime, StringBuilder builder, Index meta){
+        return super.type(runtime, builder, meta);
     }
     /**
      * index[命令合成-子流程]<br/>
@@ -5581,7 +5828,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, Constraint meta) throws Exception{
+    public boolean add(DataRuntime runtime, Constraint meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -5594,7 +5841,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Constraint meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Constraint meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5607,7 +5854,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, Constraint meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, Constraint meta) throws Exception {
         return super.alter(runtime, table, meta);
     }
 
@@ -5620,7 +5867,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Constraint meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Constraint meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5634,7 +5881,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Constraint origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Constraint origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -5647,7 +5894,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, Constraint meta) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, Constraint meta) throws Exception {
         return super.buildAddRun(runtime, meta);
     }
 
@@ -5660,7 +5907,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Constraint meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Constraint meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
     /**
@@ -5671,7 +5918,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Constraint meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Constraint meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -5684,7 +5931,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Constraint meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Constraint meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -5706,7 +5953,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, Trigger meta) throws Exception{
+    public boolean add(DataRuntime runtime, Trigger meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -5719,7 +5966,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Trigger meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Trigger meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5732,7 +5979,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Trigger meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Trigger meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5746,7 +5993,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Trigger origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Trigger origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -5758,7 +6005,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, Trigger meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, Trigger meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
     }
     /**
@@ -5770,7 +6017,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Trigger meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Trigger meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -5782,7 +6029,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Trigger meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Trigger meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -5795,7 +6042,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Trigger meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Trigger meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
     /**
@@ -5837,7 +6084,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean create(DataRuntime runtime, Procedure meta) throws Exception{
+    public boolean create(DataRuntime runtime, Procedure meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -5850,7 +6097,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Procedure meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Procedure meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5863,7 +6110,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Procedure meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Procedure meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5877,7 +6124,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Procedure origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Procedure origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -5889,7 +6136,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, Procedure meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, Procedure meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
     }
     /**
@@ -5901,7 +6148,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Procedure meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Procedure meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -5913,7 +6160,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Procedure meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Procedure meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -5926,7 +6173,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Procedure meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Procedure meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -5968,7 +6215,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean create(DataRuntime runtime, Function meta) throws Exception{
+    public boolean create(DataRuntime runtime, Function meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -5981,7 +6228,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Function meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Function meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5994,7 +6241,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Function meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Function meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -6008,7 +6255,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Function origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Function origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -6021,7 +6268,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, Function meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, Function meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
     }
 
@@ -6034,7 +6281,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Function meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Function meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -6045,7 +6292,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Function meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Function meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -6058,10 +6305,128 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Function meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Function meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
+
+    /* *****************************************************************************************************************
+     * 													sequence
+     * -----------------------------------------------------------------------------------------------------------------
+     * [调用入口]
+     * boolean create(DataRuntime runtime, Sequence meta)
+     * boolean alter(DataRuntime runtime, Sequence meta)
+     * boolean drop(DataRuntime runtime, Sequence meta)
+     * boolean rename(DataRuntime runtime, Sequence origin, String name)
+     * [命令合成]
+     * List<Run> buildCreateRun(DataRuntime runtime, Sequence sequence)
+     * List<Run> buildAlterRun(DataRuntime runtime, Sequence sequence)
+     * List<Run> buildDropRun(DataRuntime runtime, Sequence sequence)
+     * List<Run> buildRenameRun(DataRuntime runtime, Sequence sequence)
+     ******************************************************************************************************************/
+
+    /**
+     * sequence[调用入口]<br/>
+     * 添加序列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return 是否执行成功
+     * @throws Exception 异常
+     */
+    @Override
+    public boolean create(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.create(runtime, meta);
+    }
+
+    /**
+     * sequence[调用入口]<br/>
+     * 修改序列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return 是否执行成功
+     * @throws Exception 异常
+     */
+    @Override
+    public boolean alter(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.alter(runtime, meta);
+    }
+
+    /**
+     * sequence[调用入口]<br/>
+     * 删除序列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return 是否执行成功
+     * @throws Exception 异常
+     */
+    @Override
+    public boolean drop(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.drop(runtime, meta);
+    }
+
+    /**
+     * sequence[调用入口]<br/>
+     * 重命名序列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param origin 序列
+     * @param name 新名称
+     * @return 是否执行成功
+     * @throws Exception 异常
+     */
+    @Override
+    public boolean rename(DataRuntime runtime, Sequence origin, String name) throws Exception {
+        return super.rename(runtime, origin, name);
+    }
+
+
+    /**
+     * sequence[命令合成]<br/>
+     * 添加序列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return String
+     */
+    @Override
+    public List<Run> buildCreateRun(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.buildCreateRun(runtime, meta);
+    }
+
+    /**
+     * sequence[命令合成]<br/>
+     * 修改序列
+     * 有可能生成多条SQL
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return List
+     */
+    @Override
+    public List<Run> buildAlterRun(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.buildAlterRun(runtime, meta);
+    }
+
+    /**
+     * sequence[命令合成]<br/>
+     * 删除序列
+     * @param meta 序列
+     * @return String
+     */
+    @Override
+    public List<Run> buildDropRun(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.buildDropRun(runtime, meta);
+    }
+
+    /**
+     * sequence[命令合成]<br/>
+     * 修改序列名
+     * 一般不直接调用,如果需要由buildAlterRun内部统一调用
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return String
+     */
+    @Override
+    public List<Run> buildRenameRun(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.buildRenameRun(runtime, meta);
+    }
 
     /* *****************************************************************************************************************
      *
@@ -6095,17 +6460,28 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
 	 * @param meta BaseMetadata
 	 * @param catalog catalog
 	 * @param schema schema
-	 * @param override 如果meta中有值，是否覆盖
+     * @param overrideMeta 如果meta中有值，是否覆盖
+     * @param overrideRuntime 如果runtime中有值，是否覆盖，注意结果集中可能跨多个schema，所以一般不要覆盖runtime,从con获取的可以覆盖ResultSet中获取的不要覆盖
 	 * @param <T> BaseMetadata
 	 */
 	@Override
-    public <T extends BaseMetadata> void correctSchemaFromJDBC(T meta, String catalog, String schema, boolean override){
-        super.correctSchemaFromJDBC(meta, catalog, schema, override);
+    public <T extends BaseMetadata> void correctSchemaFromJDBC(DataRuntime runtime, T meta, String catalog, String schema, boolean overrideRuntime, boolean overrideMeta){
+        super.correctSchemaFromJDBC(runtime, meta, catalog, schema, overrideRuntime, overrideMeta);
     }
+
+	/**
+	 * 识别根据jdbc返回的catalog与schema,部分数据库(如mysql)系统表与jdbc标准可能不一致根据实际情况处理<br/>
+	 * 注意一定不要处理从SQL中返回的，应该在SQL中处理好
+	 * @param meta BaseMetadata
+	 * @param catalog catalog
+	 * @param schema schema
+	 * @param <T> BaseMetadata
+	 */
 	@Override
-	public <T extends BaseMetadata> void correctSchemaFromJDBC(T meta, String catalog, String schema){
-		super.correctSchemaFromJDBC(meta, catalog, schema);
+	public <T extends BaseMetadata> void correctSchemaFromJDBC(DataRuntime runtime, T meta, String catalog, String schema){
+		correctSchemaFromJDBC(runtime, meta, catalog, schema, false, true);
 	}
+
 	/**
 	 * 在调用jdbc接口前处理业务中的catalog,schema,部分数据库(如mysql)业务系统与dbc标准可能不一致根据实际情况处理<br/>
 	 * @param catalog catalog
@@ -6129,6 +6505,41 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
         return super.identity(runtime, random, data, configs, keyholder);
     }
 
+    /**
+     * column[结果集封装]<br/>(方法1)<br/>
+     * 元数据长度列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta TypeMetadata
+     * @return String
+     */
+    @Override
+    public String columnMetadataLengthRefer(DataRuntime runtime, TypeMetadata meta){
+        return super.columnMetadataLengthRefer(runtime, meta);
+    }
+
+    /**
+     * column[结果集封装]<br/>(方法1)<br/>
+     * 元数据数字有效位数列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta TypeMetadata
+     * @return String
+     */
+    @Override
+    public String columnMetadataPrecisionRefer(DataRuntime runtime, TypeMetadata meta){
+        return super.columnMetadataPrecisionRefer(runtime, meta);
+    }
+
+    /**
+     * column[结果集封装]<br/>(方法1)<br/>
+     * 元数据数字小数位数列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta TypeMetadata
+     * @return String
+     */
+    @Override
+    public String columnMetadataScaleRefer(DataRuntime runtime, TypeMetadata meta){
+        return super.columnMetadataScaleRefer(runtime, meta);
+    }
     public String insertHead(ConfigStore configs){
         return super.insertHead(configs);
     }
@@ -6210,7 +6621,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      */
 
     @Override
-    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, DatabaseMetaData dbmd, Table table, String pattern) throws Exception{
+    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, DatabaseMetaData dbmd, Table table, String pattern) throws Exception {
         return super.columns(runtime, create, columns, dbmd, table, pattern);
     }
 
@@ -6242,7 +6653,7 @@ public abstract class PostgresGenusAdapter extends DefaultJDBCAdapter implements
      * @throws Exception
      */
     @Override
-    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, Table table, SqlRowSet set) throws Exception{
+    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, Table table, SqlRowSet set) throws Exception {
         return super.columns(runtime, create, columns, table, set);
     }
 

@@ -52,6 +52,7 @@ public class ClassUtil {
 	public static void regImplement(Class interfaceClass, Class implementClass){
 		INTERFACE_IMPLEMENT.put(interfaceClass, implementClass);
 	}
+
 	/**
 	 * 是否是基础类型(不包含String类型)
 	 * @param obj 对象或类, 如果是对象先getClass()
@@ -128,14 +129,23 @@ public class ClassUtil {
 		}
 		return list;
 	}
+
 	/**
-	 * 是否是bases子类或实现了bases接口(满足其中一个)
+	 * clazz是否是bases子类或实现了bases接口(满足其中一个)
 	 * @param clazz  类
 	 * @param bases  父类或接口
 	 * @return boolean
 	 */
 	public static boolean isInSub(Class<?> clazz, Class<?> ... bases){
-		if(null == bases || bases.length == 0){
+		List<Class> list = new ArrayList<>();//避免[null]
+		if(null != bases){
+			for(Class<?> base : bases){
+				if(null != base){
+					list.add(base);
+				}
+			}
+		}
+		if(list.isEmpty()){
 			return true;
 		}
 		for(Class<?> base : bases){
@@ -145,22 +155,32 @@ public class ClassUtil {
 		}
 		return false;
 	}
+
 	/**
-	 * 是否是bases子类或实现了basees接口(满足全部)
-	 * @param c  c
+	 * 是否是bases子类或实现了 bases 接口(满足全部)
+	 * @param clazz  clazz
 	 * @param bases  bases
 	 * @return boolean
 	 */
-	public static boolean isAllSub(Class<?> c, Class<?> ... bases){
-		if(null == bases || bases.length == 0){
-			return true;
-		}
-		for(Class<?> base : bases){
-			if(base.isAssignableFrom(c)){
-				return true;
+	public static boolean isAllSub(Class<?> clazz, Class<?> ... bases){
+		List<Class> list = new ArrayList<>();//避免[null]
+		if(null != bases){
+			for(Class<?> base : bases){
+				if(null != base){
+					list.add(base);
+				}
 			}
 		}
-		return false;
+		if(list.isEmpty()){
+			return true;
+		}
+
+		for(Class<?> base : bases){
+			if(!base.isAssignableFrom(clazz)){
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -317,7 +337,7 @@ public class ClassUtil {
 	}
 	public static Object parseAnnotationFieldValue(Class target, String annotation, String field){
 		List<Object> values = parseAnnotationFieldValues(target, annotation, field, 1);
-		if(values.size() > 0){
+		if(!values.isEmpty()){
 			return values.get(0);
 		}
 		return null;
@@ -342,7 +362,7 @@ public class ClassUtil {
 	}
 	public static Object parseAnnotationFieldValue(Field target, String annotation, String field){
 		List<Object> values = parseAnnotationFieldValues(target, annotation, field, 1);
-		if(values.size() > 0){
+		if(!values.isEmpty()){
 			return values.get(0);
 		}
 		return null;
@@ -558,6 +578,7 @@ public class ClassUtil {
 		}
 		return list;
 	}
+
 	/**
 	 * 根据注解名称 获取属性上的注解
 	 * @param field 属性
@@ -571,6 +592,7 @@ public class ClassUtil {
 		}
 		return null;
 	}
+
 	/**
 	 * 查询指定类的有annotation注解的属性
 	 * @param clazz  clazz
@@ -668,6 +690,7 @@ public class ClassUtil {
 		}
 		return null;
 	}
+
 	/**
 	 * 根据注解名与注解类属性 获取指定属性上的注解值
 	 * @param field field上的注解
@@ -712,7 +735,7 @@ public class ClassUtil {
 		if(gtype instanceof ParameterizedType) {
 			ParameterizedType pt = (ParameterizedType) gtype;
 			Type[] args = pt.getActualTypeArguments();
-			if (null != args && args.length > 0) {
+			if (null != args && args.length > 0 && args[0] instanceof Class) {
 				Class itemClass = (Class) args[0];
 				return itemClass;
 			}
@@ -755,6 +778,7 @@ public class ClassUtil {
 		}
 		return getComponentClass(obj.getClass());
 	}
+
 	/**
 	 * 对象类型<br/>
 	 * int[] > int[]<br/>
@@ -788,7 +812,7 @@ public class ClassUtil {
 		}
 		return type;
 	}
-	public static Object newInstance(Class clazz) throws Exception{
+	public static Object newInstance(Class clazz) throws Exception {
 		if(!clazz.isInterface()
 				&& !clazz.isAnnotation()
 				&& !clazz.isEnum()

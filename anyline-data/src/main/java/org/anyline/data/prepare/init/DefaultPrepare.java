@@ -45,6 +45,7 @@ public abstract class DefaultPrepare implements RunPrepare{
 	protected List<String> fetchKeys       = new ArrayList<>()	; // 最终需要封装的列
 	protected boolean valid 		       = true				;
 	protected String alias									;
+	protected int batch = 0;
 	protected boolean multiple		       = false				;
 	protected boolean strict		       = false				; // 严格格式 不能追加条件
 	protected String runtime		       = null				; //
@@ -271,6 +272,7 @@ public abstract class DefaultPrepare implements RunPrepare{
 		}
 		return this;
 	}
+
 	/**
 	 * 设置主键 先清空之前设置过和主键
 	 * 当前对象处于容器中时, 设置容器主键, 否则设置自身主键
@@ -301,6 +303,7 @@ public abstract class DefaultPrepare implements RunPrepare{
 		this.addPrimaryKey(primaryKeys);
 		return this;
 	}
+
 	/**
 	 * 读取主键
 	 * 主键为空时且容器有主键时, 读取容器主键, 否则返回默认主键
@@ -316,6 +319,7 @@ public abstract class DefaultPrepare implements RunPrepare{
 		}
 		return null;
 	}
+
 	/**
 	 * 自身是否有主键
 	 * @return boolean
@@ -501,4 +505,12 @@ public abstract class DefaultPrepare implements RunPrepare{
 		return this;
 	}
 
+	@Override
+	public int getBatch() {
+		return batch;
+	}
+
+	public void setBatch(int batch) {
+		this.batch = batch;
+	}
 }

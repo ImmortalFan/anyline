@@ -30,6 +30,10 @@ import org.anyline.data.runtime.RuntimeHolder;
 import org.anyline.data.util.DataSourceUtil;
 import org.anyline.entity.*;
 import org.anyline.metadata.*;
+import org.anyline.metadata.differ.MetadataDiffer;
+import org.anyline.metadata.graph.EdgeTable;
+import org.anyline.metadata.graph.GraphTable;
+import org.anyline.metadata.graph.VertexTable;
 import org.anyline.metadata.persistence.ManyToMany;
 import org.anyline.metadata.persistence.OneToMany;
 import org.anyline.metadata.type.DatabaseType;
@@ -71,6 +75,32 @@ public class DefaultDao<E> implements AnylineDao<E> {
 		return true;
 	}
 
+
+	/**
+	 * 根据差异生成SQL
+	 * @param differ differ
+	 * @return sqls
+	 */
+	@Override
+	public List<Run> ddls(DataRuntime runtime, MetadataDiffer differ){
+		if(null == runtime) {
+			runtime = runtime();
+		}
+		return runtime.getAdapter().ddls(runtime, null, differ);
+	}
+	/**
+	 * 根据差异生成SQL
+	 * @param differs differs
+	 * @return sqls
+	 */
+	@Override
+	public List<Run> ddls(DataRuntime runtime, List<MetadataDiffer> differs){
+		if(null == runtime) {
+			runtime = runtime();
+		}
+		return runtime.getAdapter().ddls(runtime, null, differs);
+	}
+
 	/* *****************************************************************************************************************
 	 *
 	 * 													DML
@@ -110,6 +140,7 @@ public class DefaultDao<E> implements AnylineDao<E> {
 		return runtime.getAdapter().querys(runtime, null, prepare, configs, conditions);
 
 	}
+
 	/**
 	 * 查询<br/>
 	 * @param prepare 构建最终执行命令的全部参数，包含表（或视图｜函数｜自定义SQL)查询条件 排序 分页等
@@ -130,7 +161,6 @@ public class DefaultDao<E> implements AnylineDao<E> {
 		}
 		return set;
 	}
-
 
 	/**
 	 * 查询序列值
@@ -200,8 +230,10 @@ public class DefaultDao<E> implements AnylineDao<E> {
 			runtime = runtime();
 		}
 		long result = runtime.getAdapter().update(runtime, random, batch, dest, data, configs, columns);
-		checkMany2ManyDependencySave(runtime, random, data, ConfigTable.ENTITY_FIELD_INSERT_DEPENDENCY, 1);
-		checkOne2ManyDependencySave(runtime, random, data, ConfigTable.ENTITY_FIELD_INSERT_DEPENDENCY, 1);
+		if(result > 0) {
+			checkMany2ManyDependencySave(runtime, random, data, ConfigTable.ENTITY_FIELD_INSERT_DEPENDENCY, 1);
+			checkOne2ManyDependencySave(runtime, random, data, ConfigTable.ENTITY_FIELD_INSERT_DEPENDENCY, 1);
+		}
 		return result;
 	}
 
@@ -592,7 +624,7 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	}
 
 	/**
-	 * 保存(insert|upate)
+	 * 保存(insert|update)
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
 	 * @param random 用来标记同一组命令
 	 * @param dest 表 如果不提供表名则根据data解析, 表名可以事实前缀&lt;数据源名&gt;表示切换数据源
@@ -639,7 +671,6 @@ public class DefaultDao<E> implements AnylineDao<E> {
 		return result;
 	}
 
-
 	/**
 	 * 查询
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
@@ -654,7 +685,6 @@ public class DefaultDao<E> implements AnylineDao<E> {
 			runtime = runtime();
 		}
 		return runtime.getAdapter().select(runtime, random, system, table, configs, run);
-
 	}
 
 	/**
@@ -676,11 +706,19 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	}
 
 	@Override
-	public long execute(DataRuntime runtime, String random, int batch, String sql, List<Object> values){
+	public long execute(DataRuntime runtime, String random, int batch, RunPrepare prepare, Collection<Object> values){
 		if(null == runtime){
 			runtime = runtime();
 		}
-		return runtime.getAdapter().execute(runtime, random, batch, null, sql, values);
+		return runtime.getAdapter().execute(runtime, random, batch, null, prepare, values);
+	}
+
+	@Override
+	public long execute(DataRuntime runtime, String random, int batch, int vol, RunPrepare prepare, Collection<Object> values){
+		if(null == runtime){
+			runtime = runtime();
+		}
+		return runtime.getAdapter().execute(runtime, random, batch, vol, null, prepare, values);
 	}
 
 	/**
@@ -794,7 +832,7 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	@Override
 	public DatabaseType type() {
 		DataRuntime runtime = runtime();
-		return runtime.getAdapter().typeMetadata();
+		return runtime.getAdapter().type();
 	}
 
 	@Override
@@ -898,10 +936,10 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	/* *****************************************************************************************************************
 	 * 													table
 	 * -----------------------------------------------------------------------------------------------------------------
-	 * LinkedHashMap<String, Table> tables(Catalog catalog, Schema schema, String name, String types)
-	 * LinkedHashMap<String, Table> tables(Schema schema, String name, String types)
-	 * LinkedHashMap<String, Table> tables(String name, String types)
-	 * LinkedHashMap<String, Table> tables(String types)
+	 * LinkedHashMap<String, Table> tables(Catalog catalog, Schema schema, String name, int types)
+	 * LinkedHashMap<String, Table> tables(Schema schema, String name, int types)
+	 * LinkedHashMap<String, Table> tables(String name, int types)
+	 * LinkedHashMap<String, Table> tables(int types)
 	 * LinkedHashMap<String, Table> tables()
 	 ******************************************************************************************************************/
 
@@ -911,25 +949,122 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	 * @param catalog 对于MySQL, 则对应相应的数据库, 对于Oracle来说, 则是对应相应的数据库实例, 可以不填, 也可以直接使用Connection的实例对象中的getCatalog()方法返回的值填充；
 	 * @param schema 可以理解为数据库的登录名, 而对于Oracle也可以理解成对该数据库操作的所有者的登录名。对于Oracle要特别注意, 其登陆名必须是大写, 不然的话是无法获取到相应的数据, 而MySQL则不做强制要求。
 	 * @param pattern 一般情况下如果要获取所有的表的话, 可以直接设置为null, 如果设置为特定的表名称, 则返回该表的具体信息。
-	 * @param types 以逗号分隔  "TABLE"、"VIEW"、"SYSTEM TABLE"、"GLOBAL TEMPORARY"、"LOCAL TEMPORARY"、"ALIAS" 和 "SYNONYM"
+	 * @param types BaseMetadata.TYPE
 	 * @return List
 	 */
 	@Override
-	public <T extends Table> List<T> tables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types, boolean strut){
+	public <T extends Table> List<T> tables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types, int struct){
 		if(null == runtime){
 			runtime = runtime();
 		}
-		return runtime.getAdapter().tables(runtime, random, greedy, catalog, schema, pattern, types, strut);
+		return runtime.getAdapter().tables(runtime, random, greedy, catalog, schema, pattern, types, struct);
 	}
 
 	@Override
-	public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern, String types, boolean strut){
+	public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern, int types, int struct){
 		if(null == runtime){
 			runtime = runtime();
 		}
-		return runtime.getAdapter().tables(runtime, random, catalog, schema, pattern, types, strut);
+		return runtime.getAdapter().tables(runtime, random, catalog, schema, pattern, types, struct);
 	}
 
+	/* *****************************************************************************************************************
+	 * 													vertexTable
+	 * -----------------------------------------------------------------------------------------------------------------
+	 * LinkedHashMap<String, VertexTable> vertexTables(Catalog catalog, Schema schema, String name, int types)
+	 * LinkedHashMap<String, VertexTable> vertexTables(Schema schema, String name, int types)
+	 * LinkedHashMap<String, VertexTable> vertexTables(String name, int types)
+	 * LinkedHashMap<String, VertexTable> vertexTables(int types)
+	 * LinkedHashMap<String, VertexTable> vertexTables()
+	 ******************************************************************************************************************/
+
+	/**
+	 * vertexTables
+	 * @param greedy 贪婪模式 true:如果不填写catalog或schema则查询全部 false:只在当前catalog和schema中查询
+	 * @param catalog 对于MySQL, 则对应相应的数据库, 对于Oracle来说, 则是对应相应的数据库实例, 可以不填, 也可以直接使用Connection的实例对象中的getCatalog()方法返回的值填充；
+	 * @param schema 可以理解为数据库的登录名, 而对于Oracle也可以理解成对该数据库操作的所有者的登录名。对于Oracle要特别注意, 其登陆名必须是大写, 不然的话是无法获取到相应的数据, 而MySQL则不做强制要求。
+	 * @param pattern 一般情况下如果要获取所有的表的话, 可以直接设置为null, 如果设置为特定的表名称, 则返回该表的具体信息。
+	 * @param types BaseMetadata.TYPE
+	 * @return List
+	 */
+	@Override
+	public <T extends VertexTable> List<T> vertexTables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types, int struct){
+		if(null == runtime){
+			runtime = runtime();
+		}
+		return runtime.getAdapter().vertexTables(runtime, random, greedy, catalog, schema, pattern, types, struct);
+	}
+
+	@Override
+	public <T extends VertexTable> LinkedHashMap<String, T> vertexTables(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern, int types, int struct){
+		if(null == runtime){
+			runtime = runtime();
+		}
+		return runtime.getAdapter().vertexTables(runtime, random, catalog, schema, pattern, types, struct);
+	}
+
+	/* *****************************************************************************************************************
+	 * 													EdgeTable
+	 * -----------------------------------------------------------------------------------------------------------------
+	 * LinkedHashMap<String, EdgeTable> edgeTables(Catalog catalog, Schema schema, String name, int types)
+	 * LinkedHashMap<String, EdgeTable> edgeTables(Schema schema, String name, int types)
+	 * LinkedHashMap<String, EdgeTable> edgeTables(String name, int types)
+	 * LinkedHashMap<String, EdgeTable> edgeTables(int types)
+	 * LinkedHashMap<String, EdgeTable> edgeTables()
+	 ******************************************************************************************************************/
+
+	/**
+	 * EdgeTables
+	 * @param greedy 贪婪模式 true:如果不填写catalog或schema则查询全部 false:只在当前catalog和schema中查询
+	 * @param catalog 对于MySQL, 则对应相应的数据库, 对于Oracle来说, 则是对应相应的数据库实例, 可以不填, 也可以直接使用Connection的实例对象中的getCatalog()方法返回的值填充；
+	 * @param schema 可以理解为数据库的登录名, 而对于Oracle也可以理解成对该数据库操作的所有者的登录名。对于Oracle要特别注意, 其登陆名必须是大写, 不然的话是无法获取到相应的数据, 而MySQL则不做强制要求。
+	 * @param pattern 一般情况下如果要获取所有的表的话, 可以直接设置为null, 如果设置为特定的表名称, 则返回该表的具体信息。
+	 * @param types BaseMetadata.TYPE
+	 * @return List
+	 */
+	@Override
+	public <T extends EdgeTable> List<T> edgeTables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types, int struct){
+		if(null == runtime){
+			runtime = runtime();
+		}
+		return runtime.getAdapter().edgeTables(runtime, random, greedy, catalog, schema, pattern, types, struct);
+	}
+
+	@Override
+	public <T extends EdgeTable> LinkedHashMap<String, T> edgeTables(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern, int types, int struct){
+		if(null == runtime){
+			runtime = runtime();
+		}
+		return runtime.getAdapter().edgeTables(runtime, random, catalog, schema, pattern, types, struct);
+	}
+
+	/**
+	 * 查询表的创建SQL
+	 * @param meta EdgeTable
+	 * @param init 是否还原初始状态(如自增ID)
+	 * @return list
+	 */
+	@Override
+	public List<String> ddl(DataRuntime runtime, String random, EdgeTable meta, boolean init){
+		if(null == runtime){
+			runtime = runtime();
+		}
+		return runtime.getAdapter().ddl(runtime, random, meta, init);
+	}
+
+	/**
+	 * 查询表的创建SQL
+	 * @param meta vertexTable
+	 * @param init 是否还原初始状态(如自增ID)
+	 * @return list
+	 */
+	@Override
+	public List<String> ddl(DataRuntime runtime, String random, VertexTable meta, boolean init){
+		if(null == runtime){
+			runtime = runtime();
+		}
+		return runtime.getAdapter().ddl(runtime, random, meta, init);
+	}
 
 	/**
 	 * 查询表的创建SQL
@@ -948,10 +1083,10 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	/* *****************************************************************************************************************
 	 * 													view
 	 * -----------------------------------------------------------------------------------------------------------------
-	 * LinkedHashMap<String, View> views(Catalog catalog, Schema schema, String name, String types)
-	 * LinkedHashMap<String, View> views(Schema schema, String name, String types)
-	 * LinkedHashMap<String, View> views(String name, String types)
-	 * LinkedHashMap<String, View> views(String types)
+	 * LinkedHashMap<String, View> views(Catalog catalog, Schema schema, String name, int types)
+	 * LinkedHashMap<String, View> views(Schema schema, String name, int types)
+	 * LinkedHashMap<String, View> views(String name, int types)
+	 * LinkedHashMap<String, View> views(int types)
 	 * LinkedHashMap<String, View> views()
 	 ******************************************************************************************************************/
 
@@ -961,17 +1096,16 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	 * @param catalog 对于MySQL, 则对应相应的数据库, 对于Oracle来说, 则是对应相应的数据库实例, 可以不填, 也可以直接使用Connection的实例对象中的getCatalog()方法返回的值填充；
 	 * @param schema 可以理解为数据库的登录名, 而对于Oracle也可以理解成对该数据库操作的所有者的登录名。对于Oracle要特别注意, 其登陆名必须是大写, 不然的话是无法获取到相应的数据, 而MySQL则不做强制要求。
 	 * @param pattern 一般情况下如果要获取所有的表的话, 可以直接设置为null, 如果设置为特定的表名称, 则返回该表的具体信息。
-	 * @param types 以逗号分隔  "TABLE"、"VIEW"、"SYSTEM TABLE"、"GLOBAL TEMPORARY"、"LOCAL TEMPORARY"、"ALIAS" 和 "SYNONYM"
+	 * @param types BaseMetadata.TYPE
 	 * @return List
 	 */
 	@Override
-	public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types){
+	public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types){
 		if(null == runtime){
 			runtime = runtime();
 		}
 		return runtime.getAdapter().views(runtime, random, greedy, catalog, schema, pattern, types);
 	}
-
 
 	/**
 	 * 查询view的创建SQL
@@ -988,18 +1122,18 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	/* *****************************************************************************************************************
 	 * 													master table
 	 * -----------------------------------------------------------------------------------------------------------------
-	 * LinkedHashMap<String, MasterTable> mtables(Catalog catalog, Schema schema, String name, String types)
-	 * LinkedHashMap<String, MasterTable> mtables(Schema schema, String name, String types)
-	 * LinkedHashMap<String, MasterTable> mtables(String name, String types)
-	 * LinkedHashMap<String, MasterTable> mtables(String types)
-	 * LinkedHashMap<String, MasterTable> mtables()
+	 * LinkedHashMap<String, MasterTable> masterTables(Catalog catalog, Schema schema, String name, int types)
+	 * LinkedHashMap<String, MasterTable> masterTables(Schema schema, String name, int types)
+	 * LinkedHashMap<String, MasterTable> masterTables(String name, int types)
+	 * LinkedHashMap<String, MasterTable> masterTables(int types)
+	 * LinkedHashMap<String, MasterTable> masterTables()
 	 ******************************************************************************************************************/
 	@Override
-	public <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types) {
+	public <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types) {
 		if(null == runtime){
 			runtime = runtime();
 		}
-		return runtime.getAdapter().mtables(runtime, random, greedy, catalog, schema, pattern, types);
+		return runtime.getAdapter().masterTables(runtime, random, greedy, catalog, schema, pattern, types);
 	}
 
 	/**
@@ -1017,22 +1151,21 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	/* *****************************************************************************************************************
 	 * 													partition table
 	 * -----------------------------------------------------------------------------------------------------------------
-	 * LinkedHashMap<String, PartitionTable> ptables(Catalog catalog, Schema schema, String master, String name)
-	 * LinkedHashMap<String, PartitionTable> ptables(Schema schema, String master, String name)
-	 * LinkedHashMap<String, PartitionTable> ptables(String master, String name)
-	 * LinkedHashMap<String, PartitionTable> ptables(String master)
-	 * LinkedHashMap<String, PartitionTable> ptables(MasterTable table)
+	 * LinkedHashMap<String, PartitionTable> partitionTables(Catalog catalog, Schema schema, String master, String name)
+	 * LinkedHashMap<String, PartitionTable> partitionTables(Schema schema, String master, String name)
+	 * LinkedHashMap<String, PartitionTable> partitionTables(String master, String name)
+	 * LinkedHashMap<String, PartitionTable> partitionTables(String master)
+	 * LinkedHashMap<String, PartitionTable> partitionTables(MasterTable table)
 	 ******************************************************************************************************************/
 
 
 	@Override
-	public <T extends PartitionTable> LinkedHashMap<String, T> ptables(DataRuntime runtime, String random, boolean greedy, MasterTable master, Map<String, Object> tags, String name){
+	public <T extends PartitionTable> LinkedHashMap<String, T> partitionTables(DataRuntime runtime, String random, boolean greedy, MasterTable master, Map<String, Object> tags, String name){
 		if(null == runtime){
 			runtime = runtime();
 		}
-		return runtime.getAdapter().ptables(runtime, random, greedy, master, tags, name);
+		return runtime.getAdapter().partitionTables(runtime, random, greedy, master, tags, name);
 	}
-
 
 	/**
 	 * 查询 PartitionTable 创建SQL
@@ -1069,6 +1202,7 @@ public class DefaultDao<E> implements AnylineDao<E> {
 		return runtime.getAdapter().columns(runtime, random, greedy, catalog, schema);
 
 	}
+
 	/* *****************************************************************************************************************
 	 * 													tag
 	 * -----------------------------------------------------------------------------------------------------------------
@@ -1239,6 +1373,38 @@ public class DefaultDao<E> implements AnylineDao<E> {
 		}
 		return runtime.getAdapter().ddl(runtime, random, function);
 	}
+
+
+	/* *****************************************************************************************************************
+	 * 													sequence
+	 ******************************************************************************************************************/
+	@Override
+	public <T extends Sequence> List<T> sequences(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String name){
+		if(null == runtime){
+			runtime = runtime();
+		}
+		return runtime.getAdapter().sequences(runtime, random, greedy, catalog, schema, name);
+	}
+	@Override
+	public <T extends Sequence> LinkedHashMap<String, T> sequences(DataRuntime runtime, String random, Catalog catalog, Schema schema, String name){
+		if(null == runtime){
+			runtime = runtime();
+		}
+		return runtime.getAdapter().sequences(runtime, random, catalog, schema, name);
+	}
+
+	/**
+	 * 查询 sequence 创建SQL
+	 * @param sequence 序列
+	 * @return list
+	 */
+	@Override
+	public List<String> ddl(DataRuntime runtime, String random, Sequence sequence){
+		if(null == runtime){
+			runtime = runtime();
+		}
+		return runtime.getAdapter().ddl(runtime, random, sequence);
+	}
 	/* *****************************************************************************************************************
 	 *
 	 * 													DDL
@@ -1281,10 +1447,11 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	}
 
 	@Override
-	public boolean drop(Table meta) throws Exception{
+	public boolean drop(Table meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().drop(runtime, meta);
 	}
+
 	/**
 	 * 重命名
 	 * @param origin 原表
@@ -1318,7 +1485,7 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	}
 
 	@Override
-	public boolean drop(View meta) throws Exception{
+	public boolean drop(View meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().drop(runtime, meta);
 	}
@@ -1338,17 +1505,17 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	 * boolean drop(MasterTable table) throws Exception
 	 ******************************************************************************************************************/
 	@Override
-	public boolean create(MasterTable meta) throws Exception{
+	public boolean create(MasterTable meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().create(runtime, meta);
 	}
 	@Override
-	public boolean alter(MasterTable meta) throws Exception{
+	public boolean alter(MasterTable meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().alter(runtime, meta);
 	}
 	@Override
-	public boolean drop(MasterTable meta) throws Exception{
+	public boolean drop(MasterTable meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().drop(runtime, meta);
 	}
@@ -1367,17 +1534,17 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	 ******************************************************************************************************************/
 
 	@Override
-	public boolean create(PartitionTable meta) throws Exception{
+	public boolean create(PartitionTable meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().create(runtime, meta);
 	}
 	@Override
-	public boolean alter(PartitionTable meta) throws Exception{
+	public boolean alter(PartitionTable meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().create(runtime, meta);
 	}
 	@Override
-	public boolean drop(PartitionTable meta) throws Exception{
+	public boolean drop(PartitionTable meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().drop(runtime, meta);
 	}
@@ -1398,24 +1565,25 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	 * private boolean alter(Table table, Column column, boolean trigger) throws Exception
 	 ******************************************************************************************************************/
 	@Override
-	public boolean add(Column meta) throws Exception{
+	public boolean add(Column meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().add(runtime, meta);
 	}
 	@Override
-	public boolean drop(Column meta) throws Exception{
+	public boolean drop(Column meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().drop(runtime, meta);
 	}
 	@Override
-	public boolean alter(Table table, Column column) throws Exception{
+	public boolean alter(Table table, Column column) throws Exception {
 		return alter(table, column, true);
 	}
 	@Override
-	public boolean alter(Column meta) throws Exception{
+	public boolean alter(Column meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().alter(runtime, meta);
 	}
+
 	/**
 	 * 修改列
 	 * @param meta 列
@@ -1423,7 +1591,7 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	 * @return boolean
 	 * @throws Exception 异常 SQL异常
 	 */
-	public boolean alter(Table table, Column meta, boolean trigger) throws Exception{
+	public boolean alter(Table table, Column meta, boolean trigger) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().alter(runtime, table, meta, trigger);
 	}
@@ -1447,24 +1615,25 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	 ******************************************************************************************************************/
 
 	@Override
-	public boolean add(Tag meta) throws Exception{
+	public boolean add(Tag meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().add(runtime, meta);
 	}
 	@Override
-	public boolean drop(Tag meta) throws Exception{
+	public boolean drop(Tag meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().drop(runtime, meta);
 	}
 	@Override
-	public boolean alter(Table table, Tag column) throws Exception{
+	public boolean alter(Table table, Tag column) throws Exception {
 		return alter(table, column, true);
 	}
 	@Override
-	public boolean alter(Tag meta) throws Exception{
+	public boolean alter(Tag meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().alter(runtime, meta);
 	}
+
 	/**
 	 * 修改标签
 	 * @param meta 标签
@@ -1472,7 +1641,7 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	 * @return boolean
 	 * @throws Exception 异常 SQL异常
 	 */
-	public boolean alter(Table table, Tag meta, boolean trigger) throws Exception{
+	public boolean alter(Table table, Tag meta, boolean trigger) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().alter(runtime, table, meta, trigger);
 	}
@@ -1503,7 +1672,7 @@ public class DefaultDao<E> implements AnylineDao<E> {
 		return runtime.getAdapter().alter(runtime, meta);
 	}
 	@Override
-	public boolean alter(Table table, PrimaryKey meta) throws Exception{
+	public boolean alter(Table table, PrimaryKey meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().alter(runtime, table, meta);
 	}
@@ -1538,7 +1707,7 @@ public class DefaultDao<E> implements AnylineDao<E> {
 		return runtime.getAdapter().alter(runtime, meta);
 	}
 	@Override
-	public boolean alter(Table table, ForeignKey meta) throws Exception{
+	public boolean alter(Table table, ForeignKey meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().alter(runtime, table, meta);
 	}
@@ -1572,7 +1741,7 @@ public class DefaultDao<E> implements AnylineDao<E> {
 		return runtime.getAdapter().alter(runtime, meta);
 	}
 	@Override
-	public boolean alter(Table table, Index meta) throws Exception{
+	public boolean alter(Table table, Index meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().alter(runtime, table, meta);
 	}
@@ -1607,7 +1776,7 @@ public class DefaultDao<E> implements AnylineDao<E> {
 		return runtime.getAdapter().add(runtime, meta);
 	}
 	@Override
-	public boolean alter(Table table, Constraint meta) throws Exception{
+	public boolean alter(Table table, Constraint meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().alter(runtime, table, meta);
 	}
@@ -1639,7 +1808,7 @@ public class DefaultDao<E> implements AnylineDao<E> {
 
 
 	@Override
-	public boolean alter(Trigger meta) throws Exception{
+	public boolean alter(Trigger meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().alter(runtime, meta);
 	}
@@ -1671,7 +1840,7 @@ public class DefaultDao<E> implements AnylineDao<E> {
 
 
 	@Override
-	public boolean alter(Procedure meta) throws Exception{
+	public boolean alter(Procedure meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().alter(runtime, meta);
 	}
@@ -1702,7 +1871,7 @@ public class DefaultDao<E> implements AnylineDao<E> {
 
 
 	@Override
-	public boolean alter(Function meta) throws Exception{
+	public boolean alter(Function meta) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().alter(runtime, meta);
 	}
@@ -1713,6 +1882,37 @@ public class DefaultDao<E> implements AnylineDao<E> {
 	}
 	@Override
 	public boolean rename(Function origin, String name) throws Exception {
+		DataRuntime runtime = runtime();
+		return runtime.getAdapter().rename(runtime, origin, name);
+	}
+
+	/* *****************************************************************************************************************
+	 * 													sequence
+	 * -----------------------------------------------------------------------------------------------------------------
+	 * boolean create(Sequence meta) throws Exception
+	 * boolean alter(Sequence meta) throws Exception
+	 * boolean drop(Sequence meta) throws Exception
+	 * boolean rename(Sequence origin, String name)  throws Exception
+	 ******************************************************************************************************************/
+	@Override
+	public boolean create(Sequence meta) throws Exception {
+		DataRuntime runtime = runtime();
+		return runtime.getAdapter().create(runtime, meta);
+	}
+
+
+	@Override
+	public boolean alter(Sequence meta) throws Exception {
+		DataRuntime runtime = runtime();
+		return runtime.getAdapter().alter(runtime, meta);
+	}
+	@Override
+	public boolean drop(Sequence meta) throws Exception {
+		DataRuntime runtime = runtime();
+		return runtime.getAdapter().drop(runtime, meta);
+	}
+	@Override
+	public boolean rename(Sequence origin, String name) throws Exception {
 		DataRuntime runtime = runtime();
 		return runtime.getAdapter().rename(runtime, origin, name);
 	}
@@ -1732,7 +1932,7 @@ public class DefaultDao<E> implements AnylineDao<E> {
 
 	private String random(DataRuntime runtime){
 		StringBuilder builder = new StringBuilder();
-		builder.append("[SQL:").append(System.currentTimeMillis()).append("-").append(BasicUtil.getRandomNumberString(8))
+		builder.append("[cmd:").append(System.currentTimeMillis()).append("-").append(BasicUtil.getRandomNumberString(8))
 				.append("][thread:")
 				.append(Thread.currentThread().getId()).append("][ds:").append(runtime.datasource()).append("]");
 		return builder.toString();

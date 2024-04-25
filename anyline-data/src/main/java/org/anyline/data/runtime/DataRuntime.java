@@ -18,6 +18,8 @@
 package org.anyline.data.runtime;
 
 import org.anyline.data.adapter.DriverAdapter;
+import org.anyline.util.BasicUtil;
+import org.anyline.util.regular.RegularUtil;
 
 public interface DataRuntime {
     String ANYLINE_DATASOURCE_BEAN_PREFIX = "anyline.datasource.";
@@ -52,6 +54,18 @@ public interface DataRuntime {
     String datasource();
     void setAdapter(DriverAdapter adapter);
 
+    /**
+     * 配置文件中设置adapter标识(url参数或adapter属性)
+     * @param adapter adapter标识
+     */
+    void setAdapterKey(String adapter);
+    String getAdapterKey();
+    void setSchema(String schema);
+    String getSchema();
+    void setCatalog(String catalog);
+    String getCatalog();
+
     void setHolder(RuntimeHolder holder);
     RuntimeHolder getHolder();
+
 }

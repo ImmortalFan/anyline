@@ -20,7 +20,7 @@ package org.anyline.data.prepare.xml.init;
 import org.anyline.data.prepare.Condition;
 import org.anyline.data.prepare.ConditionChain;
 import org.anyline.data.prepare.auto.AutoCondition;
-import org.anyline.data.prepare.init.DefaultConditionChain;
+import org.anyline.data.prepare.init.AbstractConditionChain;
 import org.anyline.data.run.RunValue;
 import org.anyline.data.runtime.DataRuntime;
 import org.anyline.util.BasicUtil;
@@ -28,10 +28,10 @@ import org.anyline.util.regular.RegularUtil;
 
 import java.util.List;
  
-public class DefaultXMLConditionChain extends DefaultConditionChain implements ConditionChain{
+public class DefaultXMLConditionChain extends AbstractConditionChain implements ConditionChain{
 
 	@Override
-	public String getRunText(String prefix, DataRuntime runtime){
+	public String getRunText(String prefix, DataRuntime runtime, boolean placeholder){
 		initRunValue(); 
 		StringBuilder builder = new StringBuilder(); 
 		if(null != conditions){
@@ -41,9 +41,9 @@ public class DefaultXMLConditionChain extends DefaultConditionChain implements C
 				}
 				String txt = ""; 
 				if(condition.getVariableType() == VARIABLE_PLACEHOLDER_TYPE_NONE){
-					txt = condition.getRunText(prefix, runtime);
+					txt = condition.getRunText(prefix, runtime, placeholder);
 				}else if(condition.isActive()){
-					txt = condition.getRunText(prefix, runtime);
+					txt = condition.getRunText(prefix, runtime, placeholder);
 					List<RunValue> values = condition.getRunValues();
 					if(BasicUtil.isEmpty(true, values)){
 						String reg = "=\\s*\\?";

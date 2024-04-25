@@ -1,5 +1,7 @@
 package org.anyline.data.jdbc.adapter.init;
 
+import org.anyline.data.jdbc.adapter.init.alias.OracleGenusTypeMetadataAlias;
+import org.anyline.metadata.adapter.MetadataAdapterHolder;
 import org.anyline.data.param.ConfigStore;
 import org.anyline.data.param.init.DefaultConfigStore;
 import org.anyline.data.prepare.RunPrepare;
@@ -9,9 +11,13 @@ import org.anyline.data.runtime.DataRuntime;
 import org.anyline.entity.*;
 import org.anyline.entity.generator.PrimaryGenerator;
 import org.anyline.metadata.*;
+import org.anyline.metadata.adapter.IndexMetadataAdapter;
+import org.anyline.metadata.adapter.PrimaryMetadataAdapter;
+import org.anyline.metadata.type.TypeMetadata;
 import org.anyline.proxy.EntityAdapterProxy;
 import org.anyline.util.BasicUtil;
 import org.anyline.util.BeanUtil;
+import org.anyline.util.ConfigTable;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.KeyHolder;
@@ -25,7 +31,52 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.*;
 
-public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements InitializingBean {
+public abstract class OracleGenusAdapter extends AbstractJDBCAdapter implements InitializingBean {
+
+    public OracleGenusAdapter(){
+        super();
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.CHAR, new TypeMetadata.Config("DATA_LENGTH", null, null, 0, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.TEXT, new TypeMetadata.Config("DATA_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.BOOLEAN, new TypeMetadata.Config("DATA_LENGTH", null, null, 1,1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.BYTES, new TypeMetadata.Config("DATA_LENGTH", null, null, 0, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.BLOB, new TypeMetadata.Config("DATA_LENGTH", null, null, 1,1,1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.INT, new TypeMetadata.Config("DATA_LENGTH", "DATA_PRECISION", null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.FLOAT, new TypeMetadata.Config("DATA_LENGTH", "DATA_PRECISION", "DATA_SCALE", 1, 0, 0));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.DATE, new TypeMetadata.Config("DATA_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.TIME, new TypeMetadata.Config("DATA_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.DATETIME, new TypeMetadata.Config("DATA_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.TIMESTAMP, new TypeMetadata.Config("DATA_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.COLLECTION, new TypeMetadata.Config("DATA_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.GEOMETRY, new TypeMetadata.Config("DATA_LENGTH", null, null, 1, 1, 1));
+        MetadataAdapterHolder.reg(type(), TypeMetadata.CATEGORY.OTHER, new TypeMetadata.Config("DATA_LENGTH", null, null, 1, 1, 1));
+
+        for(OracleGenusTypeMetadataAlias alias: OracleGenusTypeMetadataAlias.values()){
+            reg(alias);
+        }
+    }
+
+    @Override
+    public boolean supportCatalog() {
+        return false;
+    }
+
+    @Override
+    public boolean supportSchema() {
+        return super.supportSchema();
+    }
+
+    private static Map<Type, String> types = new HashMap<>();
+    static {
+        types.put(Table.TYPE.NORMAL, "TABLE");
+        types.put(Table.TYPE.VIEW, "VIEW");
+        types.put(View.TYPE.NORMAL, "VIEW");
+        types.put(BaseMetadata.TYPE.TABLE, "TABLE");
+        types.put(BaseMetadata.TYPE.VIEW, "VIEW");
+    }
+    @Override
+    public String name(Type type){
+        return types.get(type);
+    }
 
 
     /* *****************************************************************************************************************
@@ -171,7 +222,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
             }
         }
 
-        PrimaryGenerator generator = checkPrimaryGenerator(typeMetadata(), dest.getName());
+        PrimaryGenerator generator = checkPrimaryGenerator(type(), dest.getName());
         LinkedHashMap<String, Column> pks = null;
         if(null != generator) {
             pks = first.getPrimaryColumns();
@@ -210,12 +261,13 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
         if(null == list || list.isEmpty()){
             return;
         }
-        checkName(runtime, null, dest);
+        int batch = run.getBatch();
         StringBuilder builder = run.getBuilder();
         if(null == builder){
             builder = new StringBuilder();
             run.setBuilder(builder);
         }
+        checkName(runtime, null, dest);
         if(list instanceof DataSet){
             DataSet set = (DataSet) list;
             fillInsertContent(runtime, run, dest, set, configs, columns);
@@ -249,19 +301,20 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
             }
         }
 
-        PrimaryGenerator generator = checkPrimaryGenerator(typeMetadata(), dest.getName());
+        PrimaryGenerator generator = checkPrimaryGenerator(type(), dest.getName());
         LinkedHashMap<String, Column> pks = null;
         if(null != generator) {
             pks = EntityAdapterProxy.primaryKeys(first.getClass());
             columns.putAll(pks);
         }
+        String head = insertHead(configs);
         String select = insertsSelect(runtime, run, dest, list, configs, columns, sequens, generator, pks);
         Boolean override = null;
         if(null != configs){
             override = configs.override();
         }
         if(null == override) {
-            builder.append("INSERT INTO ");
+            builder.append(head);
             name(runtime, builder, dest).append(" (");
             boolean start = true;
             for (Column column : columns.values()) {
@@ -394,7 +447,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
             if(null == configs){
                 configs = new DefaultConfigStore();
             }
-            configs.IS_KEYHOLDER_IDENTITY(false);
+            configs.IS_KEY_HOLDER_IDENTITY(false);
             cnt = super.insert(runtime, random, data, configs, run, pks);
         }else{
             //单行的可以返回序列号
@@ -629,9 +682,9 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * List<Run> buildQuerySequence(DataRuntime runtime, boolean next, String ... names)
      * void fillQueryContent(DataRuntime runtime, Run run)
      * String mergeFinalQuery(DataRuntime runtime, Run run)
-     * RunValue createConditionLike(DataRuntime runtime, StringBuilder builder, Compare compare, Object value)
-     * Object createConditionFindInSet(DataRuntime runtime, StringBuilder builder, String column, Compare compare, Object value)
-     * StringBuilder createConditionIn(DataRuntime runtime, StringBuilder builder, Compare compare, Object value)
+     * RunValue createConditionLike(DataRuntime runtime, StringBuilder builder, Compare compare, Object value, boolean placeholder)
+     * Object createConditionFindInSet(DataRuntime runtime, StringBuilder builder, String column, Compare compare, Object value, boolean placeholder)
+     * StringBuilder createConditionIn(DataRuntime runtime, StringBuilder builder, Compare compare, Object value, boolean placeholder)
      * [命令执行]
      * DataSet select(DataRuntime runtime, String random, boolean system, String table, ConfigStore configs, Run run)
      * List<Map<String, Object>> maps(DataRuntime runtime, String random, ConfigStore configs, Run run)
@@ -753,7 +806,9 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
                     builder.append(",");
                 }
                 first = false;
-                builder.append(name).append(".").append(key).append(" AS ").append(name);
+                delimiter(builder,name);
+                builder.append(".").append(key).append(" AS ");
+                delimiter(builder,name);
             }
             String dummy = dummy();
             if(BasicUtil.isNotEmpty(dummy)) {
@@ -806,8 +861,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return value 有占位符时返回占位值，没有占位符返回null
      */
     @Override
-    public RunValue createConditionLike(DataRuntime runtime, StringBuilder builder, Compare compare, Object value) {
-        return super.createConditionLike(runtime, builder, compare, value);
+    public RunValue createConditionLike(DataRuntime runtime, StringBuilder builder, Compare compare, Object value, boolean placeholder) {
+        return super.createConditionLike(runtime, builder, compare, value, placeholder);
     }
     /**
      * select[命令合成-子流程] <br/>
@@ -821,8 +876,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return value
      */
     @Override
-    public Object createConditionFindInSet(DataRuntime runtime, StringBuilder builder, String column, Compare compare, Object value) {
-        return super.createConditionFindInSet(runtime, builder, column, compare, value);
+    public Object createConditionFindInSet(DataRuntime runtime, StringBuilder builder, String column, Compare compare, Object value, boolean placeholder) {
+        return super.createConditionFindInSet(runtime, builder, column, compare, value, placeholder);
     }
     /**
      * select[命令合成-子流程] <br/>
@@ -834,8 +889,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return builder
      */
     @Override
-    public StringBuilder createConditionIn(DataRuntime runtime, StringBuilder builder, Compare compare, Object value) {
-        return super.createConditionIn(runtime, builder, compare, value);
+    public StringBuilder createConditionIn(DataRuntime runtime, StringBuilder builder, Compare compare, Object value, boolean placeholder) {
+        return super.createConditionIn(runtime, builder, compare, value, placeholder);
     }
     /**
      * select [命令执行]<br/>
@@ -971,7 +1026,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
     @Override
     public String mergeFinalExists(DataRuntime runtime, Run run){
         String sql = "SELECT 1 AS IS_EXISTS FROM DUAL WHERE  EXISTS(" + run.getBuilder().toString() + ")";
-        sql = sql.replaceAll("WHERE\\s*1=1\\s*AND","WHERE");
+        sql = compressCondition(runtime, sql);
         return sql;
     }
 
@@ -981,7 +1036,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * -----------------------------------------------------------------------------------------------------------------
      * [调用入口]
      * long execute(DataRuntime runtime, String random, RunPrepare prepare, ConfigStore configs, String ... conditions)
-     * long execute(DataRuntime runtime, String random, int batch, ConfigStore configs, String sql, List<Object> values)
+     * long execute(DataRuntime runtime, String random, int batch, ConfigStore configs, RunPrepare prepare, Collection<Object> values)
      * boolean execute(DataRuntime runtime, String random, Procedure procedure)
      * [命令合成]
      * Run buildExecuteRun(DataRuntime runtime, RunPrepare prepare, ConfigStore configs, String ... conditions)
@@ -1005,8 +1060,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
     }
 
     @Override
-    public long execute(DataRuntime runtime, String random, int batch, ConfigStore configs, String cmd, List<Object> values){
-        return super.execute(runtime, random, batch, configs, cmd, values);
+    public long execute(DataRuntime runtime, String random, int batch, ConfigStore configs, RunPrepare prepare, Collection<Object> values){
+        return super.execute(runtime, random, batch, configs, prepare, values);
     }
     /**
      * procedure [命令执行]<br/>
@@ -1076,11 +1131,11 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * long delete(DataRuntime runtime, String random, String table, ConfigStore configs, String... conditions)
      * long truncate(DataRuntime runtime, String random, String table)
      * [命令合成]
-     * Run buildDeleteRun(DataRuntime runtime, String table, Object obj, String ... columns)
-     * Run buildDeleteRun(DataRuntime runtime, int batch, String table, String column, Object values)
+     * Run buildDeleteRun(DataRuntime runtime, String table, ConfigStore configs, Object obj, String ... columns)
+     * Run buildDeleteRun(DataRuntime runtime, int batch, String table, ConfigStore configs, String column, Object values)
      * List<Run> buildTruncateRun(DataRuntime runtime, String table)
-     * Run buildDeleteRunFromTable(DataRuntime runtime, int batch, String table, String column, Object values)
-     * Run buildDeleteRunFromEntity(DataRuntime runtime, String table, Object obj, String ... columns)
+     * Run buildDeleteRunFromTable(DataRuntime runtime, int batch, String table, ConfigStore configs,String column, Object values)
+     * Run buildDeleteRunFromEntity(DataRuntime runtime, String table, ConfigStore configs, Object obj, String ... columns)
      * void fillDeleteRunContent(DataRuntime runtime, Run run)
      * [命令执行]
      * long delete(DataRuntime runtime, String random, ConfigStore configs, Run run)
@@ -1154,8 +1209,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
      */
     @Override
-    public Run buildDeleteRun(DataRuntime runtime, Table dest, Object obj, String ... columns){
-        return super.buildDeleteRun(runtime, dest, obj, columns);
+    public Run buildDeleteRun(DataRuntime runtime, Table dest, ConfigStore configs, Object obj, String ... columns){
+        return super.buildDeleteRun(runtime, dest, configs, obj, columns);
     }
 
     /**
@@ -1168,8 +1223,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
      */
     @Override
-    public Run buildDeleteRun(DataRuntime runtime, int batch, String table, String key, Object values){
-        return super.buildDeleteRun(runtime, batch, table, key, values);
+    public Run buildDeleteRun(DataRuntime runtime, int batch, String table, ConfigStore configs, String key, Object values){
+        return super.buildDeleteRun(runtime, batch, table, configs, key, values);
     }
 
     @Override
@@ -1188,8 +1243,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
      */
     @Override
-    public Run buildDeleteRunFromTable(DataRuntime runtime, int batch, Table table, String column, Object values) {
-        return super.buildDeleteRunFromTable(runtime, batch, table, column, values);
+    public Run buildDeleteRunFromTable(DataRuntime runtime, int batch, Table table, ConfigStore configs, String column, Object values) {
+        return super.buildDeleteRunFromTable(runtime, batch, table, configs, column, values);
     }
 
     /**
@@ -1202,8 +1257,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return Run 最终执行命令 如果是JDBC类型库 会包含 SQL 与 参数值
      */
     @Override
-    public Run buildDeleteRunFromEntity(DataRuntime runtime, Table table, Object obj, String... columns) {
-        return super.buildDeleteRunFromEntity(runtime, table, obj, columns);
+    public Run buildDeleteRunFromEntity(DataRuntime runtime, Table table, ConfigStore configs, Object obj, String... columns) {
+        return super.buildDeleteRunFromEntity(runtime, table, configs, obj, columns);
     }
 
     /**
@@ -1297,7 +1352,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildQueryDatabasesRun(DataRuntime runtime, boolean greedy, String name) throws Exception{
+    public List<Run> buildQueryDatabasesRun(DataRuntime runtime, boolean greedy, String name) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -1316,7 +1371,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception
      */
     @Override
-    public LinkedHashMap<String, Database> databases(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Database> databases, DataSet set) throws Exception{
+    public LinkedHashMap<String, Database> databases(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Database> databases, DataSet set) throws Exception {
         if(null == databases){
             databases = new LinkedHashMap<>();
         }
@@ -1328,7 +1383,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
         return databases;
     }
     @Override
-    public List<Database> databases(DataRuntime runtime, int index, boolean create, List<Database> databases, DataSet set) throws Exception{
+    public List<Database> databases(DataRuntime runtime, int index, boolean create, List<Database> databases, DataSet set) throws Exception {
         return super.databases(runtime, index, create, databases, set);
     }
 	/**
@@ -1343,9 +1398,10 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
 	 * @throws Exception 异常
 	 */
 	@Override
-	public Database database(DataRuntime runtime, int index, boolean create, Database database, DataSet set) throws Exception{
+	public Database database(DataRuntime runtime, int index, boolean create, Database database, DataSet set) throws Exception {
 		return super.database(runtime, index, create, database, set);
 	}
+
 	/**
 	 * database[结果集封装]<br/>
 	 * 当前database 根据驱动内置接口补充
@@ -1356,7 +1412,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
 	 * @throws Exception 异常
 	 */
 	@Override
-	public Database database(DataRuntime runtime, boolean create, Database database) throws Exception{
+	public Database database(DataRuntime runtime, boolean create, Database database) throws Exception {
 		return super.database(runtime, create, database);
 	}
 
@@ -1374,6 +1430,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
 	public String product(DataRuntime runtime, int index, boolean create, String product, DataSet set){
 		return super.product(runtime, index, create, product, set);
 	}
+
 	/**
 	 * database[结果集封装]<br/>
 	 * 根据JDBC内置接口 product
@@ -1387,6 +1444,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
 	public String product(DataRuntime runtime, boolean create, String product){
 		return super.product(runtime, create, product);
 	}
+
 	/**
 	 * database[结果集封装]<br/>
 	 * 根据查询结果集构造 version
@@ -1401,6 +1459,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
 	public String version(DataRuntime runtime, int index, boolean create, String version, DataSet set){
 		return super.version(runtime, index, create, version, set);
 	}
+
 	/**
 	 * database[结果集封装]<br/>
 	 * 根据JDBC内置接口 version
@@ -1462,7 +1521,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildQueryCatalogsRun(DataRuntime runtime, boolean greedy, String name) throws Exception{
+    public List<Run> buildQueryCatalogsRun(DataRuntime runtime, boolean greedy, String name) throws Exception {
         return super.buildQueryCatalogsRun(runtime, greedy, name);
     }
     /**
@@ -1477,7 +1536,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public LinkedHashMap<String, Catalog> catalogs(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Catalog> catalogs, DataSet set) throws Exception{
+    public LinkedHashMap<String, Catalog> catalogs(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Catalog> catalogs, DataSet set) throws Exception {
         return super.catalogs(runtime, index, create, catalogs, set);
     }
     /**
@@ -1492,9 +1551,10 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Catalog> catalogs(DataRuntime runtime, int index, boolean create, List<Catalog> catalogs, DataSet set) throws Exception{
+    public List<Catalog> catalogs(DataRuntime runtime, int index, boolean create, List<Catalog> catalogs, DataSet set) throws Exception {
         return super.catalogs(runtime, index, create, catalogs, set);
-    }/**
+    }
+	/**
      * catalog[结果集封装]<br/>
      * 根据驱动内置接口补充 catalog
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
@@ -1533,9 +1593,10 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
 	 * @throws Exception 异常
 	 */
 	@Override
-	public Catalog catalog(DataRuntime runtime, int index, boolean create, Catalog catalog, DataSet set) throws Exception{
+	public Catalog catalog(DataRuntime runtime, int index, boolean create, Catalog catalog, DataSet set) throws Exception {
 		return super.catalog(runtime, index, create, catalog, set);
 	}
+
 	/**
 	 * catalog[结果集封装]<br/>
 	 * 当前catalog 根据驱动内置接口补充
@@ -1546,7 +1607,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
 	 * @throws Exception 异常
 	 */
 	@Override
-	public Catalog catalog(DataRuntime runtime, boolean create, Catalog catalog) throws Exception{
+	public Catalog catalog(DataRuntime runtime, boolean create, Catalog catalog) throws Exception {
 		return super.catalog(runtime, create, catalog);
 	}
 
@@ -1650,7 +1711,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildQueryProductRun(DataRuntime runtime) throws Exception{
+    public List<Run> buildQueryProductRun(DataRuntime runtime) throws Exception {
         return super.buildQueryProductRun(runtime);
     }
     /**
@@ -1661,7 +1722,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildQueryVersionRun(DataRuntime runtime) throws Exception{
+    public List<Run> buildQueryVersionRun(DataRuntime runtime) throws Exception {
         return super.buildQueryVersionRun(runtime);
     }
     /**
@@ -1674,7 +1735,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildQuerySchemasRun(DataRuntime runtime, boolean greedy, Catalog catalog, String name) throws Exception{
+    public List<Run> buildQuerySchemasRun(DataRuntime runtime, boolean greedy, Catalog catalog, String name) throws Exception {
         return super.buildQuerySchemasRun(runtime, greedy, catalog, name);
     }
     /**
@@ -1689,11 +1750,11 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public LinkedHashMap<String, Schema> schemas(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Schema> schemas, DataSet set) throws Exception{
+    public LinkedHashMap<String, Schema> schemas(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, Schema> schemas, DataSet set) throws Exception {
         return super.schemas(runtime, index, create, schemas, set);
     }
     @Override
-    public List<Schema> schemas(DataRuntime runtime, int index, boolean create, List<Schema> schemas, DataSet set) throws Exception{
+    public List<Schema> schemas(DataRuntime runtime, int index, boolean create, List<Schema> schemas, DataSet set) throws Exception {
         return super.schemas(runtime, index, create, schemas, set);
     }
 
@@ -1709,7 +1770,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
 	 * @throws Exception 异常
 	 */
 	@Override
-	public Schema schema(DataRuntime runtime, int index, boolean create, Schema schema, DataSet set) throws Exception{
+	public Schema schema(DataRuntime runtime, int index, boolean create, Schema schema, DataSet set) throws Exception {
 		return super.schema(runtime, index, create, schema, set);
 	}
 
@@ -1723,7 +1784,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
 	 * @throws Exception 异常
 	 */
 	@Override
-	public Schema schema(DataRuntime runtime, boolean create, Schema schema) throws Exception{
+	public Schema schema(DataRuntime runtime, boolean create, Schema schema) throws Exception {
 		return super.schema(runtime, create, schema);
 	}
 
@@ -1731,16 +1792,16 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * 													table
      * -----------------------------------------------------------------------------------------------------------------
      * [调用入口]
-     * <T extends Table> List<T> tables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types, boolean strut)
-     * <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern, String types, boolean strut)
+     * <T extends Table> List<T> tables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types, boolean struct)
+     * <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern, String types, boolean struct)
      * [命令合成]
-     * List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types)
-     * List<Run> buildQueryTablesCommentRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types)
+     * List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, int types)
+     * List<Run> buildQueryTablesCommentRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types)
      * [结果集封装]<br/>
      * <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
      * <T extends Table> List<T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, List<T> tables, DataSet set)
-     * <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, String ... types)
-     * <T extends Table> List<T> tables(DataRuntime runtime, boolean create, List<T> tables, Catalog catalog, Schema schema, String pattern, String ... types)
+     * <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, int types)
+     * <T extends Table> List<T> tables(DataRuntime runtime, boolean create, List<T> tables, Catalog catalog, Schema schema, String pattern, int types)
      * <T extends Table> LinkedHashMap<String, T> comments(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
      * [调用入口]
      * List<String> ddl(DataRuntime runtime, String random, Table table, boolean init)
@@ -1759,14 +1820,14 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types  "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
-     * @param strut 是否查询表结构
+     * @param types  BaseMetadata.TYPE.
+     * @param struct 是否查询表结构
      * @return List
      * @param <T> Table
      */
     @Override
-    public <T extends Table> List<T> tables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types, boolean strut){
-        return super.tables(runtime, random, greedy, catalog, schema, pattern, types, strut);
+    public <T extends Table> List<T> tables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types, int struct){
+        return super.tables(runtime, random, greedy, catalog, schema, pattern, types, struct);
     }
 
     /**
@@ -1783,8 +1844,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
     }
 
     @Override
-    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern, String types, boolean strut){
-        return super.tables(runtime, random, catalog, schema, pattern, types, strut);
+    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern, int types, int struct){
+        return super.tables(runtime, random, catalog, schema, pattern, types, struct);
     }
 
     /**
@@ -1795,11 +1856,11 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types  "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types  BaseMetadata.TYPE.
      * @return String
      */
     @Override
-    public List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
+    public List<Run> buildQueryTablesRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         /*
 		ALL_TABLES：当前登录用户可见的所有表
 		DBA_TABLES：数据库中所有表
@@ -1809,55 +1870,31 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
         Run run = new SimpleRun(runtime);
         runs.add(run);
         StringBuilder builder = run.getBuilder();
-//		builder.append("SELECT T.TABLE_NAME, T.OWNER, TC.COMMENTS \n");
-//		builder.append("FROM SYS.ALL_ALL_TABLES T \n");
-//		builder.append("LEFT JOIN SYS.ALL_TAB_COMMENTS TC  ON  TC.OWNER  = T.OWNER  AND TC.TABLE_NAME  = T.TABLE_NAME \n");
-//		builder.append("WHERE T.IOT_NAME IS NULL  AND T.NESTED = 'NO'  AND T.SECONDARY = 'N' ");
-//		if(BasicUtil.isNotEmpty(schema)){
-//			builder.append("AND T.OWNER = '").append(schema.getName()).append("'");
-//		}
-//		if(BasicUtil.isNotEmpty(pattern)){
-//			builder.append(" AND T.TABLE_NAME LIKE '").append(pattern).append("'");
-//		}
-//
-//		runs.add(run);
-//		return runs;
-        // jack 2023年5月2日 19点55分 由于之前查询表名的方式会意外失效，特进行调整,兼容table和view
-        //增加types列用于后期扩展
-/*
-		builder.append(" SELECT * FROM (" );
-		builder.append(" SELECT A.TABLE_NAME, B.COMMENTS, 'TABLE' TABLE_TYPE FROM USER_TABLES A, USER_TAB_COMMENTS B WHERE A.TABLE_NAME = B.TABLE_NAME");
-		builder.append(" UNION ALL ");
-		builder.append(" SELECT A.VIEW_NAME, B.COMMENTS, 'VIEW'  TABLE_TYPE FROM USER_VIEWS  A, USER_TAB_COMMENTS B WHERE A.VIEW_NAME = B.TABLE_NAME");
-		builder.append(" ) T WHERE 1=1");
-
-		if(BasicUtil.isNotEmpty(pattern)){
-			builder.append(" AND TABLE_NAME LIKE '").append(pattern).append("'");
-		}
-*/
         //需要跨schema查询
         builder.append("SELECT M.OWNER AS TABLE_SCHEMA, M.OBJECT_NAME AS TABLE_NAME, M.OBJECT_TYPE AS TABLE_TYPE, M.CREATED AS CREATE_TIME, M.LAST_DDL_TIME AS UPDATE_TIME, M.TEMPORARY AS IS_TEMPORARY, F.COMMENTS\n");
         builder.append("FROM ALL_OBJECTS M LEFT JOIN ALL_TAB_COMMENTS F \n");
         builder.append("ON M.OBJECT_NAME = F.TABLE_NAME  AND M.OWNER = F.OWNER AND M.object_type = F.TABLE_TYPE \n");
-        builder.append("WHERE M.OWNER NOT IN('CTXSYS','EXFSYS','WMSYS','MDSYS','SYSTEM','OLAPSYS','SYSMAN','APEX_030200','SYS') AND M.OBJECT_TYPE IN('TABLE','VIEW')");
+        builder.append("WHERE 1=1");
         if(BasicUtil.isNotEmpty(schema)){
             builder.append(" AND M.OWNER = '").append(schema.getName()).append("'");
         }
         if(BasicUtil.isNotEmpty(pattern)){
             builder.append(" AND M.OBJECT_NAME LIKE '").append(pattern).append("'");
         }
-        if(BasicUtil.isNotEmpty(types)){
-            String[] tmps = types.split(",");
+        List<String> tps = names(Table.types(types));
+        if(null != tps && !tps.isEmpty()){;
             builder.append(" AND M.OBJECT_TYPE IN(");
-            int idx = 0;
-            for(String tmp:tmps){
-                if(idx > 0){
+            boolean first = true;
+            for(String tmp:tps){
+                if(!first){
                     builder.append(",");
                 }
                 builder.append("'").append(tmp).append("'");
-                idx ++;
+                first = false;
             }
             builder.append(")");
+        }else{
+            builder.append(" AND M.OBJECT_TYPE IN('TABLE','VIEW')");
         }
         return runs;
     }
@@ -1870,16 +1907,16 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types types BaseMetadata.TYPE.
      * @return String
      */
     @Override
-    public List<Run> buildQueryTablesCommentRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
+    public List<Run> buildQueryTablesCommentRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
         StringBuilder builder = run.getBuilder();
-        builder.append("SELECT * FROM ALL_TAB_COMMENTS WHERE OWNER NOT IN('CTXSYS','EXFSYS','WMSYS','MDSYS','SYSTEM','OLAPSYS','SYSMAN','APEX_030200','SYS')\n");
+        builder.append("SELECT * FROM ALL_TAB_COMMENTS WHERE 1=1 \n");
         if(BasicUtil.isNotEmpty(schema)){
             builder.append(" AND OWNER = '").append(schema.getName()).append("'");
         }
@@ -1890,7 +1927,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
     }
 
     /**
-     * table[结果集封装]<br/> <br/>
+     * table[结果集封装]<br/>
      *  根据查询结果集构造Table
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param index 第几条SQL 对照buildQueryTablesRun返回顺序
@@ -1903,12 +1940,12 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception{
+    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception {
         return super.tables(runtime, index, create, catalog, schema, tables, set);
     }
 
     /**
-     * table[结果集封装]<br/> <br/>
+     * table[结果集封装]<br/>
      *  根据查询结果集构造Table
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param index 第几条SQL 对照buildQueryTablesRun返回顺序
@@ -1921,11 +1958,11 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends Table> List<T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, List<T> tables, DataSet set) throws Exception{
+    public <T extends Table> List<T> tables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, List<T> tables, DataSet set) throws Exception {
         return super.tables(runtime, index, create, catalog, schema, tables, set);
     }
     /**
-     * table[结果集封装]<br/> <br/>
+     * table[结果集封装]<br/>
      * 根据驱动内置方法补充
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param create 上一步没有查到的,这一步是否需要新创建
@@ -1933,13 +1970,13 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types types BaseMetadata.TYPE.
      * @return tables
      * @throws Exception 异常
      */
 
     @Override
-    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, String ... types) throws Exception{
+    public <T extends Table> LinkedHashMap<String, T> tables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.tables(runtime, create, tables, catalog, schema, pattern, types);
     }
 
@@ -1952,12 +1989,12 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types types BaseMetadata.TYPE.
      * @return tables
      * @throws Exception 异常
      */
     @Override
-    public <T extends Table> List<T> tables(DataRuntime runtime, boolean create, List<T> tables, Catalog catalog, Schema schema, String pattern, String ... types) throws Exception{
+    public <T extends Table> List<T> tables(DataRuntime runtime, boolean create, List<T> tables, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.tables(runtime, create, tables, catalog, schema, pattern, types);
     }
 
@@ -1975,7 +2012,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends Table> LinkedHashMap<String, T> comments(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception{
+    public <T extends Table> LinkedHashMap<String, T> comments(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception {
         return super.comments(runtime, index, create, catalog, schema, tables, set);
     }
 
@@ -1993,7 +2030,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends Table> List<T> comments(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, List<T> tables, DataSet set) throws Exception{
+    public <T extends Table> List<T> comments(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, List<T> tables, DataSet set) throws Exception {
         return super.comments(runtime, index, create, catalog, schema, tables, set);
     }
 
@@ -2019,7 +2056,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Table table) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Table table) throws Exception {
         return super.buildQueryDdlsRun(runtime, table);
     }
 
@@ -2042,12 +2079,12 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * 													view
      * -----------------------------------------------------------------------------------------------------------------
      * [调用入口]
-     * <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types)
+     * <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types)
      * [命令合成]
-     * List<Run> buildQueryViewsRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types)
+     * List<Run> buildQueryViewsRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, int types)
      * [结果集封装]<br/>
      * <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> views, DataSet set)
-     * <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, boolean create, LinkedHashMap<String, T> views, Catalog catalog, Schema schema, String pattern, String ... types)
+     * <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, boolean create, LinkedHashMap<String, T> views, Catalog catalog, Schema schema, String pattern, int types)
      * [调用入口]
      * List<String> ddl(DataRuntime runtime, String random, View view)
      * [命令合成]
@@ -2066,12 +2103,12 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types  "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types  BaseMetadata.TYPE.
      * @return List
      * @param <T> View
      */
     @Override
-    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types){
+    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types){
         return super.views(runtime, random, greedy, catalog, schema, pattern, types);
     }
     /**
@@ -2082,20 +2119,12 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types types BaseMetadata.TYPE.
      * @return List
      */
     @Override
-    public List<Run> buildQueryViewsRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
-        List<Run> runs = new ArrayList<>();
-        Run run = new SimpleRun(runtime);
-        runs.add(run);
-        StringBuilder builder = run.getBuilder();
-        builder.append("SELECT A.VIEW_NAME,A.TEXT DEFINITION_SQL, B.COMMENTS, 'VIEW'  TABLE_TYPE FROM USER_VIEWS  A, USER_TAB_COMMENTS B WHERE A.VIEW_NAME = B.TABLE_NAME");
-        if(BasicUtil.isNotEmpty(pattern)){
-            builder.append(" AND TABLE_NAME LIKE '").append(pattern).append("'");
-        }
-        return runs;
+    public List<Run> buildQueryViewsRun(DataRuntime runtime, boolean greedy, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
+        return buildQueryTablesRun(runtime, greedy, catalog, schema, pattern, types);
     }
 
 
@@ -2113,18 +2142,19 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> views, DataSet set) throws Exception{
+    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> views, DataSet set) throws Exception {
         if(null == views){
             views = new LinkedHashMap<>();
         }
         for(DataRow row:set){
-            String name = row.getString("VIEW_NAME");
+            String name = row.getString("TABLE_NAME");
+            String schemaName = row.getString("TABLE_SCHEMA");
             T view = views.get(name.toUpperCase());
             if(null == view){
                 view = (T)new View();
             }
             view.setCatalog(catalog);
-            view.setSchema(schema);
+            view.setSchema(schemaName);
             view.setName(name);
             view.setComment(row.getString("COMMENTS"));
             view.setDefinition(row.getString("DEFINITION_SQL"));
@@ -2141,12 +2171,12 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types types "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types types BaseMetadata.TYPE.
      * @return views
      * @throws Exception 异常
      */
     @Override
-    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, boolean create, LinkedHashMap<String, T> views, Catalog catalog, Schema schema, String pattern, String ... types) throws Exception{
+    public <T extends View> LinkedHashMap<String, T> views(DataRuntime runtime, boolean create, LinkedHashMap<String, T> views, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.views(runtime, create, views, catalog, schema, pattern, types);
     }
 
@@ -2170,7 +2200,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, View view) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, View view) throws Exception {
         return super.buildQueryDdlsRun(runtime, view);
     }
 
@@ -2192,13 +2222,13 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * 													master table
      * -----------------------------------------------------------------------------------------------------------------
      * [调用入口]
-     * <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types)
+     * <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types)
      * [命令合成]
-     * List<Run> buildQueryMasterTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types)
+     * List<Run> buildQueryMasterTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types)
      * [结果集封装]<br/>
-     * <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
+     * <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
      * [结果集封装]<br/>
-     * <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, String ... types)
+     * <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, int types)
      * [调用入口]
      * List<String> ddl(DataRuntime runtime, String random, MasterTable table)
      * [命令合成]
@@ -2216,13 +2246,13 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @param catalog catalog
      * @param schema schema
      * @param pattern 名称统配符或正则
-     * @param types  "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
+     * @param types  BaseMetadata.TYPE.
      * @return List
      * @param <T> MasterTable
      */
     @Override
-    public <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, String types){
-        return super.mtables(runtime, random, greedy, catalog, schema, pattern, types);
+    public <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern, int types){
+        return super.masterTables(runtime, random, greedy, catalog, schema, pattern, types);
     }
     /**
      * master table[命令合成]<br/>
@@ -2235,7 +2265,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildQueryMasterTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
+    public List<Run> buildQueryMasterTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.buildQueryMasterTablesRun(runtime, catalog, schema, pattern, types);
     }
 
@@ -2253,8 +2283,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception{
-        return super.mtables(runtime, index, create, catalog, schema, tables, set);
+    public <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, int index, boolean create, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception {
+        return super.masterTables(runtime, index, create, catalog, schema, tables, set);
     }
     /**
      * master table[结果集封装]<br/>
@@ -2268,8 +2298,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends MasterTable> LinkedHashMap<String, T> mtables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, String ... types) throws Exception{
-        return super.mtables(runtime, create, tables, catalog, schema, pattern, types);
+    public <T extends MasterTable> LinkedHashMap<String, T> masterTables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
+        return super.masterTables(runtime, create, tables, catalog, schema, pattern, types);
     }
 
     /**
@@ -2291,7 +2321,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, MasterTable table) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, MasterTable table) throws Exception {
         return super.buildQueryDdlsRun(runtime, table);
     }
     /**
@@ -2312,14 +2342,14 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * 													partition table
      * -----------------------------------------------------------------------------------------------------------------
      * [调用入口]
-     * <T extends PartitionTable> LinkedHashMap<String,T> ptables(DataRuntime runtime, String random, boolean greedy, MasterTable master, Map<String, Object> tags, String pattern)
+     * <T extends PartitionTable> LinkedHashMap<String,T> partitionTables(DataRuntime runtime, String random, boolean greedy, MasterTable master, Map<String, Object> tags, String pattern)
      * [命令合成]
-     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types)
-     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, MasterTable master, Map<String,Object> tags, String pattern)
-     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, MasterTable master, Map<String,Object> tags)
+     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types)
+     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Table master, Map<String,Object> tags, String pattern)
+     * List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Table master, Map<String,Object> tags)
      * [结果集封装]<br/>
-     * <T extends PartitionTable> LinkedHashMap<String, T> ptables(DataRuntime runtime, int total, int index, boolean create, MasterTable master, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
-     * <T extends PartitionTable> LinkedHashMap<String,T> ptables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, MasterTable master)
+     * <T extends PartitionTable> LinkedHashMap<String, T> partitionTables(DataRuntime runtime, int total, int index, boolean create, MasterTable master, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set)
+     * <T extends PartitionTable> LinkedHashMap<String,T> partitionTables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, MasterTable master)
      * [调用入口]
      * List<String> ddl(DataRuntime runtime, String random, PartitionTable table)
      * [命令合成]
@@ -2339,8 +2369,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @param <T> MasterTable
      */
     @Override
-    public <T extends PartitionTable> LinkedHashMap<String,T> ptables(DataRuntime runtime, String random, boolean greedy, MasterTable master, Map<String, Object> tags, String pattern){
-        return super.ptables(runtime, random, greedy, master, tags, pattern);
+    public <T extends PartitionTable> LinkedHashMap<String,T> partitionTables(DataRuntime runtime, String random, boolean greedy, MasterTable master, Map<String, Object> tags, String pattern){
+        return super.partitionTables(runtime, random, greedy, master, tags, pattern);
     }
 
     /**
@@ -2354,7 +2384,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, String types) throws Exception{
+    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern, int types) throws Exception {
         return super.buildQueryPartitionTablesRun(runtime, catalog, schema, pattern, types);
     }
     /**
@@ -2368,7 +2398,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, MasterTable master, Map<String,Object> tags, String name) throws Exception{
+    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Table master, Map<String,Object> tags, String name) throws Exception {
         return super.buildQueryPartitionTablesRun(runtime, master, tags, name);
     }
     /**
@@ -2381,7 +2411,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, MasterTable master, Map<String,Object> tags) throws Exception{
+    public List<Run> buildQueryPartitionTablesRun(DataRuntime runtime, Table master, Map<String,Object> tags) throws Exception {
         return super.buildQueryPartitionTablesRun(runtime, master, tags);
     }
     /**
@@ -2400,8 +2430,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends PartitionTable> LinkedHashMap<String, T> ptables(DataRuntime runtime, int total, int index, boolean create, MasterTable master, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception{
-        return super.ptables(runtime, total, index, create, master, catalog, schema, tables, set);
+    public <T extends PartitionTable> LinkedHashMap<String, T> partitionTables(DataRuntime runtime, int total, int index, boolean create, MasterTable master, Catalog catalog, Schema schema, LinkedHashMap<String, T> tables, DataSet set) throws Exception {
+        return super.partitionTables(runtime, total, index, create, master, catalog, schema, tables, set);
     }
     /**
      * partition table[结果集封装]<br/>
@@ -2416,8 +2446,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends PartitionTable> LinkedHashMap<String,T> ptables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, MasterTable master) throws Exception{
-        return super.ptables(runtime, create, tables, catalog, schema, master);
+    public <T extends PartitionTable> LinkedHashMap<String,T> partitionTables(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tables, Catalog catalog, Schema schema, MasterTable master) throws Exception {
+        return super.partitionTables(runtime, create, tables, catalog, schema, master);
     }
     /**
      * partition table[调用入口]<br/>
@@ -2439,7 +2469,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, PartitionTable table) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, PartitionTable table) throws Exception {
         return super.buildQueryDdlsRun(runtime, table);
     }
 
@@ -2488,7 +2518,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
 
     /**
      * column[调用入口]<br/>
-     * 查询全部表的列
+     * 查询列
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param random 用来标记同一组命令
      * @param greedy 贪婪模式 true:如果不填写catalog或schema则查询全部 false:只在当前catalog和schema中查询
@@ -2507,18 +2537,17 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * 查询表上的列
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param table 表
-     * @param metadata 是否根据metadata(true:SELECT * FROM T WHERE 1=0,false:查询系统表)
+     * @param metadata 是否根据metadata(true:SELECT * FROM T WHERE 1=0, false:查询系统表)
      * @return sqls
      */
     @Override
-    public List<Run> buildQueryColumnsRun(DataRuntime runtime, Table table, boolean metadata) throws Exception{
+    public List<Run> buildQueryColumnsRun(DataRuntime runtime, Table table, boolean metadata) throws Exception {
         List<Run> runs = new ArrayList<>();
         Catalog catalog = null;
         Schema schema = null;
         String name = null;
         if(null != table){
             name = table.getName();
-            catalog = table.getCatalog();
             schema = table.getSchema();
         }
         Run run = new SimpleRun(runtime);
@@ -2531,14 +2560,14 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
         }else{
             builder.append("SELECT M.*, F.COMMENTS AS COLUMN_COMMENT FROM ALL_TAB_COLUMNS M \n");
             builder.append("LEFT JOIN ALL_COL_COMMENTS F ON M.TABLE_NAME = F.TABLE_NAME AND M.COLUMN_NAME = F.COLUMN_NAME AND M.OWNER = F.OWNER\n");
-            builder.append("WHERE M.OWNER NOT IN('CTXSYS','EXFSYS','WMSYS','MDSYS','SYSTEM','OLAPSYS','SYSMAN','APEX_030200','SYS')\n");
+            builder.append("WHERE 1=1\n");
             if (BasicUtil.isNotEmpty(name)) {
                 builder.append("AND M.TABLE_NAME = '").append(name).append("'");
             }
             if(BasicUtil.isNotEmpty(schema)){
                 builder.append(" AND M.OWNER = '").append(schema.getName()).append("'");
             }
-            builder.append(" ORDER BY M.TABLE_NAME");
+            //builder.append("\nORDER BY M.TABLE_NAME");
         }
         return runs;
     }
@@ -2556,12 +2585,12 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> columns, DataSet set) throws Exception{
+    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> columns, DataSet set) throws Exception {
         set.removeColumn("CHARACTER_SET_NAME");
         return super.columns(runtime, index, create, table, columns, set);
     }
     @Override
-    public <T extends Column> List<T> columns(DataRuntime runtime, int index, boolean create, Table table, List<T> columns, DataSet set) throws Exception{
+    public <T extends Column> List<T> columns(DataRuntime runtime, int index, boolean create, Table table, List<T> columns, DataSet set) throws Exception {
         return super.columns(runtime, index, create, table, columns, set);
     }
 
@@ -2571,12 +2600,12 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param create 上一步没有查到的,这一步是否需要新创建
      * @param table 表
-     * @return columns 上一步查询结果
-     * @return pattern attern
+     * @param columns 上一步查询结果
+     * @param pattern 名称
      * @throws Exception 异常
      */
     @Override
-    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, Table table, String pattern) throws Exception{
+    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, Table table, String pattern) throws Exception {
         return super.columns(runtime, create, columns, table, pattern);
     }
 
@@ -2618,7 +2647,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return sqls
      */
     @Override
-    public List<Run> buildQueryTagsRun(DataRuntime runtime, Table table, boolean metadata) throws Exception{
+    public List<Run> buildQueryTagsRun(DataRuntime runtime, Table table, boolean metadata) throws Exception {
         return super.buildQueryTagsRun(runtime, table, metadata);
     }
 
@@ -2635,7 +2664,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends Tag> LinkedHashMap<String, T> tags(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> tags, DataSet set) throws Exception{
+    public <T extends Tag> LinkedHashMap<String, T> tags(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> tags, DataSet set) throws Exception {
         return super.tags(runtime, index, create, table, tags, set);
     }
     /**
@@ -2651,7 +2680,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends Tag> LinkedHashMap<String, T> tags(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tags, Table table, String pattern) throws Exception{
+    public <T extends Tag> LinkedHashMap<String, T> tags(DataRuntime runtime, boolean create, LinkedHashMap<String, T> tags, Table table, String pattern) throws Exception {
         return super.tags(runtime, create, tags, table, pattern);
     }
 
@@ -2663,7 +2692,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * [命令合成]
      * List<Run> buildQueryPrimaryRun(DataRuntime runtime, Table table) throws Exception
      * [结构集封装]
-     * PrimaryKey primary(DataRuntime runtime, int index, Table table, DataSet set)
+     * <T extends PrimaryKey> T init(DataRuntime runtime, int index, T primary, Table table, DataSet set)
      ******************************************************************************************************************/
     /**
      * primary[调用入口]<br/>
@@ -2687,51 +2716,72 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return sqls
      */
     @Override
-    public List<Run> buildQueryPrimaryRun(DataRuntime runtime, Table table) throws Exception{
+    public List<Run> buildQueryPrimaryRun(DataRuntime runtime, Table table) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
         StringBuilder builder = run.getBuilder();
-        builder.append("SELECT COL.* FROM USER_CONSTRAINTS CON,USER_CONS_COLUMNS COL\n");
+        builder.append("SELECT COL.* FROM USER_CONSTRAINTS CON, USER_CONS_COLUMNS COL\n");
         builder.append("WHERE CON.CONSTRAINT_NAME = COL.CONSTRAINT_NAME\n");
         builder.append("AND CON.CONSTRAINT_TYPE = 'P'\n");
         builder.append("AND COL.TABLE_NAME = '").append(table.getName()).append("'\n");
         if(BasicUtil.isNotEmpty(table.getSchema())){
-            builder.append(" AND COL.OWNER = '").append(table.getSchema()).append("'");
+            builder.append(" AND COL.OWNER = '").append(table.getSchemaName()).append("'");
         }
         return runs;
     }
 
     /**
      * primary[结构集封装]<br/>
-     *  根据查询结果集构造PrimaryKey
+     * 根据查询结果集构造PrimaryKey基础属性
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param index 第几条查询SQL 对照 buildQueryIndexsRun 返回顺序
+     * @param index 第几条查询SQL 对照 buildQueryIndexesRun 返回顺序
      * @param table 表
      * @param set sql查询结果
      * @throws Exception 异常
      */
     @Override
-    public PrimaryKey primary(DataRuntime runtime, int index, Table table, DataSet set) throws Exception{
-        PrimaryKey primary = null;
-        for(DataRow row:set){
-            if(null == primary){
-                primary = new PrimaryKey();
-                primary.setName(row.getString("CONSTRAINT_NAME"));
-                primary.setTable(table);
-            }
-            String col = row.getString("COLUMN_NAME");
-            Column column = primary.getColumn(col);
-            if(null == column){
-                column = new Column(col);
-            }
-            column.setTable(table);
-            column.setPosition(row.getInt("POSITION",0));
-            primary.addColumn(column);
-        }
-        return primary;
+    public <T extends PrimaryKey> T init(DataRuntime runtime, int index, T primary, Table table, DataSet set) throws Exception {
+        return super.init(runtime, index, primary, table, set);
     }
 
+    /**
+     * primary[结构集封装]<br/>
+     * 根据查询结果集构造PrimaryKey更多属性
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param index 第几条查询SQL 对照 buildQueryIndexesRun 返回顺序
+     * @param table 表
+     * @param set sql查询结果
+     * @throws Exception 异常
+     */
+    @Override
+    public <T extends PrimaryKey> T detail(DataRuntime runtime, int index, T primary, Table table, DataSet set) throws Exception {
+        return super.detail(runtime, index, primary, table, set);
+    }
+
+    /**
+     * primary[结构集封装-依据]<br/>
+     * 读取primary key元数据结果集的依据
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @return PrimaryMetadataAdapter
+     */
+    @Override
+    public PrimaryMetadataAdapter primaryMetadataAdapter(DataRuntime runtime){
+        PrimaryMetadataAdapter config = super.primaryMetadataAdapter(runtime);
+        config.setNameRefer("CONSTRAINT_NAME");
+        config.setCatalogRefer((String)null);
+        config.setSchemaRefer("OWNER");
+        config.setTableRefer("TABLE_NAME");
+        config.setColumnRefer("COLUMN_NAME");
+        config.setColumnPositionRefer("POSITION");
+        config.setColumnOrderRefer((String)null);
+        return config;
+    }
+
+    @Override
+    public PrimaryKey primary(DataRuntime runtime, Table table) throws Exception {
+        return super.primary(runtime, table);
+    }
 
     /* *****************************************************************************************************************
      * 													foreign
@@ -2755,7 +2805,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      */
     @Override
     public <T extends ForeignKey> LinkedHashMap<String, T> foreigns(DataRuntime runtime, String random, boolean greedy, Table table){
-        return super.foreigns(runtime, random, greedy,table);
+        return super.foreigns(runtime, random, greedy, table);
     }
     /**
      * foreign[命令合成]<br/>
@@ -2765,7 +2815,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return sqls
      */
     @Override
-    public List<Run> buildQueryForeignsRun(DataRuntime runtime, Table table) throws Exception{
+    public List<Run> buildQueryForeignsRun(DataRuntime runtime, Table table) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -2776,8 +2826,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
         builder.append("JOIN USER_CONSTRAINTS RC ON UC.R_CONSTRAINT_NAME = RC.CONSTRAINT_NAME \n");
         builder.append("JOIN USER_CONS_COLUMNS RCC ON RC.CONSTRAINT_NAME = RCC.CONSTRAINT_NAME AND KCU.POSITION = RCC.POSITION");
         if(null != table){
-            if(BasicUtil.isNotEmpty(table.getCatalog())){
-                builder.append(" AND OWNER = '").append(table.getCatalog()).append("'\n");
+            if(BasicUtil.isNotEmpty(table.getCatalogName())){
+                builder.append(" AND UC.OWNER = '").append(table.getCatalogName()).append("'\n");
             }
             builder.append(" AND UC.TABLE_NAME = '").append(table.getName()).append("'\n");
         }
@@ -2794,7 +2844,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends ForeignKey> LinkedHashMap<String, T> foreigns(DataRuntime runtime, int index, Table table, LinkedHashMap<String, T> foreigns, DataSet set) throws Exception{
+    public <T extends ForeignKey> LinkedHashMap<String, T> foreigns(DataRuntime runtime, int index, Table table, LinkedHashMap<String, T> foreigns, DataSet set) throws Exception {
         if(null == foreigns){
             foreigns = new LinkedHashMap<>();
         }
@@ -2808,7 +2858,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
                 foreign.setReference(row.getString("REFERENCED_TABLE_NAME"));
                 foreigns.put(name.toUpperCase(), foreign);
             }
-            Table refTable = new Table(row.getString("REFERENCED_CATALOG_NAME"),row.getString("REFERENCED_SCHEMA_NAME"),row.getString("REFERENCED_TABLE_NAME"));
+            Table refTable = new Table(row.getString("REFERENCED_CATALOG_NAME"), row.getString("REFERENCED_SCHEMA_NAME"), row.getString("REFERENCED_TABLE_NAME"));
             Column reference = new Column(row.getString("REFERENCED_COLUMN_NAME"));
             reference.setTable(refTable);
             foreign.addColumn(new Column(row.getString("COLUMN_NAME")).setReference(reference).setPosition(row.getInt("ORDINAL_POSITION", 0)));
@@ -2826,7 +2876,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * <T extends Index> List<T> indexs(DataRuntime runtime, String random, boolean greedy, Table table, String pattern)
      * <T extends Index> LinkedHashMap<T, Index> indexs(DataRuntime runtime, String random, Table table, String pattern)
      * [命令合成]
-     * List<Run> buildQueryIndexsRun(DataRuntime runtime, Table table, String name)
+     * List<Run> buildQueryIndexesRun(DataRuntime runtime, Table table, String name)
      * [结果集封装]<br/>
      * <T extends Index> List<T> indexs(DataRuntime runtime, int index, boolean create, Table table, List<T> indexs, DataSet set)
      * <T extends Index> LinkedHashMap<String, T> indexs(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> indexs, DataSet set)
@@ -2871,15 +2921,34 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return sqls
      */
     @Override
-    public List<Run> buildQueryIndexsRun(DataRuntime runtime, Table table, String name){
-        return super.buildQueryIndexsRun(runtime, table, name);
+    public List<Run> buildQueryIndexesRun(DataRuntime runtime, Table table, String name){
+        List<Run> runs = new ArrayList<>();
+        Run run = new SimpleRun(runtime);
+        runs.add(run);
+        StringBuilder builder = run.getBuilder();
+        builder.append("SELECT M.*, F.COLUMN_EXPRESSION FROM ALL_IND_COLUMNS M\n");
+        builder.append("LEFT JOIN ALL_IND_EXPRESSIONS F\n");
+        builder.append("ON M.INDEX_OWNER = F.INDEX_OWNER AND M.INDEX_NAME = F.INDEX_NAME AND M.COLUMN_POSITION = F.COLUMN_POSITION\n");
+        builder.append("WHERE 1=1\n");
+        String schema = table.getSchemaName();
+        String tab = table.getName();
+        if(BasicUtil.isNotEmpty(schema)){
+            builder.append("AND M.INDEX_OWNER = '").append(schema).append("'\n");
+        }
+        if(BasicUtil.isNotEmpty(tab)){
+            builder.append("AND M.TABLE_NAME = '").append(tab).append("'\n");
+        }
+        if(BasicUtil.isNotEmpty(name)){
+            builder.append("AND M.INDEX_NAME = '").append(name).append("'\n");
+        }
+        return runs;
     }
 
     /**
      * index[结果集封装]<br/>
      *  根据查询结果集构造Index
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param index 第几条查询SQL 对照 buildQueryIndexsRun 返回顺序
+     * @param index 第几条查询SQL 对照 buildQueryIndexesRun 返回顺序
      * @param create 上一步没有查到的,这一步是否需要新创建
      * @param table 表
      * @param indexs 上一步查询结果
@@ -2888,14 +2957,14 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends Index> LinkedHashMap<String, T> indexs(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> indexs, DataSet set) throws Exception{
+    public <T extends Index> LinkedHashMap<String, T> indexs(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> indexs, DataSet set) throws Exception {
         return super.indexs(runtime, index, create, table, indexs, set);
     }
     /**
      * index[结果集封装]<br/>
      *  根据查询结果集构造Index
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param index 第几条查询SQL 对照 buildQueryIndexsRun 返回顺序
+     * @param index 第几条查询SQL 对照 buildQueryIndexesRun 返回顺序
      * @param create 上一步没有查到的,这一步是否需要新创建
      * @param table 表
      * @param indexs 上一步查询结果
@@ -2904,8 +2973,11 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends Index> List<T> indexs(DataRuntime runtime, int index, boolean create, Table table, List<T> indexs, DataSet set) throws Exception{
-        return super.indexs(runtime, index, create, table, indexs, set);
+    public <T extends Index> List<T> indexs(DataRuntime runtime, int index, boolean create, Table table, List<T> indexs, DataSet set) throws Exception {
+        if(null == indexs){
+            indexs = new ArrayList<>();
+        }
+        return indexs;
     }
 
     /**
@@ -2920,7 +2992,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends Index> List<T> indexs(DataRuntime runtime, boolean create, List<T> indexs, Table table, boolean unique, boolean approximate) throws Exception{
+    public <T extends Index> List<T> indexs(DataRuntime runtime, boolean create, List<T> indexs, Table table, boolean unique, boolean approximate) throws Exception {
         return super.indexs(runtime, create, indexs, table, unique, approximate);
     }
     /**
@@ -2935,11 +3007,58 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends Index> LinkedHashMap<String, T> indexs(DataRuntime runtime, boolean create, LinkedHashMap<String, T> indexs, Table table, boolean unique, boolean approximate) throws Exception{
+    public <T extends Index> LinkedHashMap<String, T> indexs(DataRuntime runtime, boolean create, LinkedHashMap<String, T> indexs, Table table, boolean unique, boolean approximate) throws Exception {
         return super.indexs(runtime, create, indexs, table, unique, approximate);
     }
 
 
+    /**
+     * index[结构集封装]<br/>
+     * 根据查询结果集构造index基础属性(name, table, schema, catalog)
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param index 第几条查询SQL 对照 buildQueryIndexesRun 返回顺序
+     * @param meta 上一步封装结果
+     * @param table 表
+     * @param row sql查询结果
+     * @throws Exception 异常
+     */
+    @Override
+    public <T extends Index> T init(DataRuntime runtime, int index, T meta, Table table, DataRow row) throws Exception{
+        return super.init(runtime, index, meta, table, row);
+    }
+
+    /**
+     * index[结构集封装]<br/>
+     * 根据查询结果集构造index更多属性(column,order, position)
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param index 第几条查询SQL 对照 buildQueryIndexesRun 返回顺序
+     * @param meta 上一步封装结果
+     * @param table 表
+     * @param row sql查询结果
+     * @throws Exception 异常
+     */
+    @Override
+    public <T extends Index> T detail(DataRuntime runtime, int index, T meta, Table table, DataRow row) throws Exception{
+        return super.detail(runtime, index, meta, table, row);
+    }
+    /**
+     * index[结构集封装-依据]<br/>
+     * 读取index元数据结果集的依据
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @return IndexMetadataAdapter
+     */
+    @Override
+    public IndexMetadataAdapter indexMetadataAdapter(DataRuntime runtime){
+        IndexMetadataAdapter adapter =  super.indexMetadataAdapter(runtime);
+        adapter.setNameRefer("INDEX_NAME");
+        adapter.setTableRefer("TABLE_NAME");
+        adapter.setSchemaRefer("INDEX_OWNER");
+        adapter.setCatalogRefer("");
+        adapter.setColumnRefer("COLUMN_EXPRESSION,COLUMN_NAME");
+        adapter.setColumnOrderRefer("DESCEND");
+        adapter.setColumnPositionRefer("COLUMN_POSITION");
+        return adapter;
+    }
     /* *****************************************************************************************************************
      * 													constraint
      * -----------------------------------------------------------------------------------------------------------------
@@ -2993,7 +3112,26 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      */
     @Override
     public List<Run> buildQueryConstraintsRun(DataRuntime runtime, Table table, Column column, String pattern) {
-        return super.buildQueryConstraintsRun(runtime, table, column, pattern);
+        List<Run> runs = new ArrayList<>();
+        Run run = new SimpleRun(runtime);
+        runs.add(run);
+        StringBuilder builder = run.getBuilder();
+        builder.append("SELECT * FROM USER_CONSTRAINTS WHERE 1=1");
+        String catalog = null;
+        String schema = null;
+        String tab = null;
+        if(null != table){
+            catalog = table.getCatalogName();
+            schema = table.getSchemaName();
+            tab = table.getName();
+        }
+        if(BasicUtil.isNotEmpty(schema)){
+            builder.append(" AND OWNER = '").append(schema).append("'");
+        }
+        if(BasicUtil.isNotEmpty(tab)){
+            builder.append(" AND TABLE_NAME = '").append(tab).append("'");
+        }
+        return runs;
     }
 
     /**
@@ -3009,7 +3147,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends Constraint> List<T> constraints(DataRuntime runtime, int index, boolean create, Table table, List<T> constraints, DataSet set) throws Exception{
+    public <T extends Constraint> List<T> constraints(DataRuntime runtime, int index, boolean create, Table table, List<T> constraints, DataSet set) throws Exception {
         return super.constraints(runtime, index, create, table, constraints, set);
     }
     /**
@@ -3026,8 +3164,41 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends Constraint> LinkedHashMap<String, T> constraints(DataRuntime runtime, int index, boolean create, Table table, Column column, LinkedHashMap<String, T> constraints, DataSet set) throws Exception{
-        return super.constraints(runtime, index, create, table, column, constraints, set);
+    public <T extends Constraint> LinkedHashMap<String, T> constraints(DataRuntime runtime, int index, boolean create, Table table, Column column, LinkedHashMap<String, T> constraints, DataSet set) throws Exception {
+        if(null == constraints){
+            constraints = new LinkedHashMap<>();
+        }
+        for(DataRow row:set){
+            String name = row.getString("CONSTRAINT_NAME");
+            if(null == name){
+                continue;
+            }
+            T constraint = constraints.get(name.toUpperCase());
+            if(null == constraint && create){
+                constraint = (T)new Constraint();
+                constraints.put(name.toUpperCase(), constraint);
+            };
+
+            String schema = row.getString("OWNER");
+            constraint.setSchema(schema);
+            if(null == table){
+                table = new Table(null, schema, row.getString("TABLE_NAME"));
+            }
+            constraint.setTable(table);
+            constraint.setName(name);
+            String type = row.getString("CONSTRAINT_TYPE");
+            if("P".equalsIgnoreCase(type)){
+                constraint.setType(Constraint.TYPE.PRIMARY_KEY);
+            }else if("R".equalsIgnoreCase(type)){
+                constraint.setType(Constraint.TYPE.FOREIGN_KEY);
+            }else if("C".equalsIgnoreCase(type)){
+                String chk = row.getString("SEARCH_CONDITION");
+                if(null != chk && chk.contains("IS NOT NULL")){
+                    constraint.setType(Constraint.TYPE.NOT_NULL);
+                }
+            }
+        }
+        return constraints;
     }
 
 
@@ -3106,7 +3277,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return LinkedHashMap
      * @throws Exception 异常
      */
-    public <T extends Trigger> LinkedHashMap<String, T> triggers(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> triggers, DataSet set) throws Exception{
+    public <T extends Trigger> LinkedHashMap<String, T> triggers(DataRuntime runtime, int index, boolean create, Table table, LinkedHashMap<String, T> triggers, DataSet set) throws Exception {
         if(null == triggers){
             triggers = new LinkedHashMap<>();
         }
@@ -3220,7 +3391,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends Procedure> LinkedHashMap<String, T> procedures(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> procedures, DataSet set) throws Exception{
+    public <T extends Procedure> LinkedHashMap<String, T> procedures(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> procedures, DataSet set) throws Exception {
         return super.procedures(runtime, index, create, procedures, set);
     }
 
@@ -3271,7 +3442,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Procedure procedure) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Procedure procedure) throws Exception {
         return super.buildQueryDdlsRun(runtime, procedure);
     }
 
@@ -3368,7 +3539,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends Function> List<T> functions(DataRuntime runtime, int index, boolean create, List<T> functions, DataSet set) throws Exception{
+    public <T extends Function> List<T> functions(DataRuntime runtime, int index, boolean create, List<T> functions, DataSet set) throws Exception {
         return super.functions(runtime, index, create, functions, set);
     }
     /**
@@ -3383,7 +3554,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public <T extends Function> LinkedHashMap<String, T> functions(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> functions, DataSet set) throws Exception{
+    public <T extends Function> LinkedHashMap<String, T> functions(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> functions, DataSet set) throws Exception {
         return super.functions(runtime, index, create, functions, set);
     }
 
@@ -3422,7 +3593,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Function meta) throws Exception{
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Function meta) throws Exception {
         return super.buildQueryDdlsRun(runtime, meta);
     }
     /**
@@ -3440,6 +3611,200 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
         return super.ddl(runtime, index, function, ddls, set);
     }
 
+
+    /* *****************************************************************************************************************
+     * 													sequence
+     * -----------------------------------------------------------------------------------------------------------------
+     * [调用入口]
+     * <T extends Sequence> List<T> sequences(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern);
+     * <T extends Sequence> LinkedHashMap<String, T> sequences(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern);
+     * [命令合成]
+     * List<Run> buildQuerySequencesRun(DataRuntime runtime, Catalog catalog, Schema schema, String pattern) ;
+     * [结果集封装]<br/>
+     * <T extends Sequence> List<T> sequences(DataRuntime runtime, int index, boolean create, List<T> sequences, DataSet set) throws Exception;
+     * <T extends Sequence> LinkedHashMap<String, T> sequences(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> sequences, DataSet set) throws Exception;
+     * <T extends Sequence> List<T> sequences(DataRuntime runtime, boolean create, List<T> sequences, DataSet set) throws Exception;
+     * <T extends Sequence> LinkedHashMap<String, T> sequences(DataRuntime runtime, boolean create, LinkedHashMap<String, T> sequences, DataSet set) throws Exception;
+     * [调用入口]
+     * List<String> ddl(DataRuntime runtime, String random, Sequence sequence);
+     * [命令合成]
+     * List<Run> buildQueryDdlsRun(DataRuntime runtime, Sequence sequence) throws Exception;
+     * [结果集封装]<br/>
+     * List<String> ddl(DataRuntime runtime, int index, Sequence sequence, List<String> ddls, DataSet set)
+     ******************************************************************************************************************/
+    /**
+     *
+     * sequence[调用入口]<br/>
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param random 用来标记同一组命令
+     * @param greedy 贪婪模式 true:如果不填写catalog或schema则查询全部 false:只在当前catalog和schema中查询
+     * @param catalog catalog
+     * @param schema schema
+     * @param pattern 名称统配符或正则
+     * @return  LinkedHashMap
+     * @param <T> Index
+     */
+    @Override
+    public <T extends Sequence> List<T> sequences(DataRuntime runtime, String random, boolean greedy, Catalog catalog, Schema schema, String pattern) {
+        return super.sequences(runtime, random, greedy, catalog, schema, pattern);
+    }
+    /**
+     *
+     * sequence[调用入口]<br/>
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param random 用来标记同一组命令
+     * @param catalog catalog
+     * @param schema schema
+     * @param pattern 名称统配符或正则
+     * @return  LinkedHashMap
+     * @param <T> Index
+     */
+    @Override
+    public <T extends Sequence> LinkedHashMap<String, T> sequences(DataRuntime runtime, String random, Catalog catalog, Schema schema, String pattern) {
+        return super.sequences(runtime, random, catalog, schema, pattern);
+    }
+    /**
+     * sequence[命令合成]<br/>
+     * 查询表上的 Trigger
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param catalog catalog
+     * @param schema schema
+     * @param name 名称统配符或正则
+     * @return sqls
+     */
+    @Override
+    public List<Run> buildQuerySequencesRun(DataRuntime runtime, Catalog catalog, Schema schema, String name) {
+        List<Run> runs = new ArrayList<>();
+        Run run = new SimpleRun(runtime);
+        runs.add(run);
+        StringBuilder builder = run.getBuilder();
+        builder.append("SELECT * FROM all_sequences WHERE 1=1\n");
+        if(BasicUtil.isNotEmpty(schema)){
+            builder.append(" AND SEQUENCE_OWNER = '").append(schema.getName()).append("'");
+        }
+        if(BasicUtil.isNotEmpty(name)){
+            builder.append(" AND SEQUENCE_NAME = '").append(name).append("'");
+        }
+        return runs;
+    }
+
+    /**
+     * sequence[结果集封装]<br/>
+     * 根据查询结果集构造 Trigger
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param index 第几条查询SQL 对照 buildQueryConstraintsRun 返回顺序
+     * @param create 上一步没有查到的,这一步是否需要新创建
+     * @param sequences 上一步查询结果
+     * @param set 查询结果集
+     * @return LinkedHashMap
+     * @throws Exception 异常
+     */
+    @Override
+    public <T extends Sequence> List<T> sequences(DataRuntime runtime, int index, boolean create, List<T> sequences, DataSet set) throws Exception {
+        if(null == sequences){
+            sequences = new ArrayList<>();
+        }
+        for(DataRow row:set){
+            String name = row.getString("SEQUENCE_NAME");
+            Sequence sequence = new Sequence(name);
+            sequences.add((T)init(sequence, row));
+        }
+        return sequences;
+    }
+    /**
+     * sequence[结果集封装]<br/>
+     * 根据查询结果集构造 Trigger
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param index 第几条查询SQL 对照 buildQueryConstraintsRun 返回顺序
+     * @param create 上一步没有查到的,这一步是否需要新创建
+     * @param sequences 上一步查询结果
+     * @param set 查询结果集
+     * @return LinkedHashMap
+     * @throws Exception 异常
+     */
+    @Override
+    public <T extends Sequence> LinkedHashMap<String, T> sequences(DataRuntime runtime, int index, boolean create, LinkedHashMap<String, T> sequences, DataSet set) throws Exception {
+        if(null == sequences){
+            sequences = new LinkedHashMap<>();
+        }
+        for(DataRow row:set){
+            String name = row.getString("SEQUENCE_NAME");
+            Sequence sequence = sequences.get(name.toUpperCase());
+            sequences.put(name.toUpperCase(), (T)init(sequence, row));
+        }
+        return sequences;
+    }
+    protected Sequence init(Sequence sequence, DataRow row){
+        if(null == sequence){
+            sequence = new Sequence();
+        }
+        sequence.setName(row.getString("SEQUENCE_NAME"));
+        sequence.setSchema(new Schema(row.getString("SEQUENCE_OWNER")));
+        sequence.setLast(row.getLong("LAST_NUMBER", (Long)null));
+        sequence.setMin(row.getLong("MIN_VALUE", (Long)null));
+        sequence.setMax(row.getLong("MAX_VALUE", (Long)null));
+        sequence.setIncrement(row.getInt("INCREMENT_BY", 1));
+        sequence.setCache(row.getInt("CACHE_SIZE", null));
+        sequence.setCycle(row.getBoolean("CYCLE_FLAG", null));
+        return sequence;
+    }
+    /**
+     * sequence[结果集封装]<br/>
+     * 根据驱动内置接口补充 Sequence
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param create 上一步没有查到的,这一步是否需要新创建
+     * @param sequences 上一步查询结果
+     * @return LinkedHashMap
+     * @throws Exception 异常
+     */
+    @Override
+    public <T extends Sequence> List<T> sequences(DataRuntime runtime, boolean create, List<T> sequences) throws Exception {
+        return super.sequences(runtime, create, sequences);
+    }
+
+    /**
+     *
+     * sequence[调用入口]<br/>
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param random 用来标记同一组命令
+     * @param meta Sequence
+     * @return ddl
+     */
+    @Override
+    public List<String> ddl(DataRuntime runtime, String random, Sequence meta){
+        return super.ddl(runtime, random, meta);
+    }
+
+    /**
+     * sequence[命令合成]<br/>
+     * 查询序列DDL
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return List
+     */
+    @Override
+    public List<Run> buildQueryDdlsRun(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.buildQueryDdlsRun(runtime, meta);
+    }
+    /**
+     * sequence[结果集封装]<br/>
+     * 查询 Sequence DDL
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param index 第几条SQL 对照 buildQueryDdlsRun 返回顺序
+     * @param sequence Sequence
+     * @param ddls 上一步查询结果
+     * @param set 查询结果集
+     * @return List
+     */
+    @Override
+    public List<String> ddl(DataRuntime runtime, int index, Sequence sequence, List<String> ddls, DataSet set){
+        return super.ddl(runtime, index, sequence, ddls, set);
+    }
+
+    /* *****************************************************************************************************************
+     * 													common
+     * ----------------------------------------------------------------------------------------------------------------
+     */
     /**
      *
      * 根据 catalog, schema, name检测tables集合中是否存在
@@ -3535,11 +3900,11 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * boolean drop(DataRuntime runtime, Table meta)
      * boolean rename(DataRuntime runtime, Table origin, String name)
      * [命令合成]
-     * List<Run> buildCreateRun(DataRuntime runtime, Table table)
-     * List<Run> buildAlterRun(DataRuntime runtime, Table table)
-     * List<Run> buildAlterRun(DataRuntime runtime, Table table, Collection<Column> columns)
-     * List<Run> buildRenameRun(DataRuntime runtime, Table table)
-     * List<Run> buildDropRun(DataRuntime runtime, Table table)
+     * List<Run> buildCreateRun(DataRuntime runtime, Table meta)
+     * List<Run> buildAlterRun(DataRuntime runtime, Table meta)
+     * List<Run> buildAlterRun(DataRuntime runtime, Table meta, Collection<Column> columns)
+     * List<Run> buildRenameRun(DataRuntime runtime, Table meta)
+     * List<Run> buildDropRun(DataRuntime runtime, Table meta)
      * [命令合成-子流程]
      * List<Run> buildAppendCommentRun(DataRuntime runtime, Table table)
      * List<Run> buildChangeCommentRun(DataRuntime runtime, Table table)
@@ -3559,7 +3924,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception DDL异常
      */
     @Override
-    public boolean create(DataRuntime runtime, Table meta) throws Exception{
+    public boolean create(DataRuntime runtime, Table meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -3573,7 +3938,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      */
 
     @Override
-    public boolean alter(DataRuntime runtime, Table meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Table meta) throws Exception {
         return super.alter(runtime, meta);
     }
     /**
@@ -3586,7 +3951,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      */
 
     @Override
-    public boolean drop(DataRuntime runtime, Table meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Table meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -3601,7 +3966,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      */
 
     @Override
-    public boolean rename(DataRuntime runtime, Table origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Table origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -3613,7 +3978,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public  String keyword(Table meta){
+    public  String keyword(BaseMetadata meta)
+{
         return meta.getKeyword();
     }
 
@@ -3632,7 +3998,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, Table meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, Table meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
     }
     /**
@@ -3644,7 +4010,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Table meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Table meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -3653,13 +4019,13 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * 修改列
      * 有可能生成多条SQL,根据数据库类型优先合并成一条执行
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param table 表
+     * @param meta 表
      * @param columns 列
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Table table, Collection<Column> columns) throws Exception{
-        return super.buildAlterRun(runtime, table, columns);
+    public List<Run> buildAlterRun(DataRuntime runtime, Table meta, Collection<Column> columns) throws Exception {
+        return super.buildAlterRun(runtime, meta, columns);
     }
 
     /**
@@ -3694,7 +4060,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Table meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Table meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -3707,7 +4073,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAppendCommentRun(DataRuntime runtime, Table meta) throws Exception{
+    public List<Run> buildAppendCommentRun(DataRuntime runtime, Table meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         if(BasicUtil.isNotEmpty(meta.getComment())){
             Run run = new SimpleRun(runtime);
@@ -3722,6 +4088,39 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
 
     /**
      * table[命令合成-子流程]<br/>
+     * 创建表完成后追加列备注,创建过程能添加备注的不需要实现与comment(DataRuntime runtime, StringBuilder builder, Column meta)二选一实现
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 表
+     * @return sql
+     * @throws Exception 异常
+     */
+    @Override
+    public List<Run> buildAppendColumnCommentRun(DataRuntime runtime, Table meta) throws Exception {
+        List<Run> runs = new ArrayList<>();
+        LinkedHashMap<String, Column> columns = meta.getColumns();
+        for(Column column:columns.values()){
+            String comment = column.getComment();
+            if(BasicUtil.isNotEmpty(comment)) {
+                Run run = new SimpleRun(runtime);
+                runs.add(run);
+                StringBuilder builder = run.getBuilder();
+                builder.append("COMMENT ON COLUMN ");
+                name(runtime, builder, meta).append(".");
+                Column update = (Column)column.getUpdate();
+                String name = null;
+                if(null != update){
+                    name = update.getName();
+                }else{
+                    name = column.getName();
+                }
+                delimiter(builder, name);
+                builder.append(" IS '").append(comment).append("'");
+            }
+        }
+        return runs;
+    }
+    /**
+     * table[命令合成-子流程]<br/>
      * 修改备注
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param meta 表
@@ -3729,7 +4128,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, Table meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, Table meta) throws Exception {
         return super.buildChangeCommentRun(runtime, meta);
     }
 
@@ -3751,7 +4150,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
 
     /**
      * table[命令合成-子流程]<br/>
-     * 检测表主键(在没有显式设置主键时根据其他条件判断如自增)
+     * 检测表主键(在没有显式设置主键时根据其他条件判断如自增),同时根据主键对象给相关列设置主键标识
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param table 表
      */
@@ -3772,14 +4171,22 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
     public StringBuilder primary(DataRuntime runtime, StringBuilder builder, Table meta){
         PrimaryKey primary = meta.getPrimaryKey();
         LinkedHashMap<String, Column> pks = null;
+        String name = null;
         if(null != primary){
             pks = primary.getColumns();
+            name = primary.getName();
         }else{
             pks = meta.primarys();
         }
         if(!pks.isEmpty()){
-            builder.append(",CONSTRAINT ").append("PK_").append(meta.getName()).append(" PRIMARY KEY (");
+            if(BasicUtil.isEmpty(name)){
+                name = "PK_" + meta.getName();
+            }
+            builder.append(",CONSTRAINT ");
+            delimiter(builder, name);
+            builder.append(" PRIMARY KEY (");
             boolean first = true;
+            Column.sort(primary.getPositions(), pks);
             for(Column pk:pks.values()){
                 if(!first){
                     builder.append(",");
@@ -3793,6 +4200,19 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
             }
             builder.append(")");
         }
+        return builder;
+    }
+
+    /**
+     * table[命令合成-子流程]<br/>
+     * 创建表 engine
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param builder builder
+     * @param meta 表
+     * @return StringBuilder
+     */
+    @Override
+    public StringBuilder engine(DataRuntime runtime, StringBuilder builder, Table meta){
         return builder;
     }
 
@@ -3833,14 +4253,14 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public StringBuilder partitionBy(DataRuntime runtime, StringBuilder builder, Table meta) throws Exception{
+    public StringBuilder partitionBy(DataRuntime runtime, StringBuilder builder, Table meta) throws Exception {
         return super.partitionBy(runtime, builder, meta);
     }
 
     /**
      * table[命令合成-子流程]<br/>
      * 子表执行分区依据(相关主表及分区值)
-     * 如CREATE TABLE hr_user_hr PARTITION OF hr_user FOR VALUES IN ('HR')
+     * 如CREATE TABLE hr_user_fi PARTITION OF hr_user FOR VALUES IN ('FI')
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param builder builder
      * @param meta 表
@@ -3848,7 +4268,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public StringBuilder partitionOf(DataRuntime runtime, StringBuilder builder, Table meta) throws Exception{
+    public StringBuilder partitionOf(DataRuntime runtime, StringBuilder builder, Table meta) throws Exception {
         return super.partitionOf(runtime, builder, meta);
     }
 
@@ -3881,7 +4301,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception DDL异常
      */
     @Override
-    public boolean create(DataRuntime runtime, View meta) throws Exception{
+    public boolean create(DataRuntime runtime, View meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -3894,7 +4314,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception DDL异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, View meta) throws Exception{
+    public boolean alter(DataRuntime runtime, View meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -3908,7 +4328,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception DDL异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, View meta) throws Exception{
+    public boolean drop(DataRuntime runtime, View meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -3923,7 +4343,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception DDL异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, View origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, View origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -3937,7 +4357,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, View meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
     }
     /**
@@ -3950,9 +4370,36 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      */
 
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, View meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
+    /**
+     * view[命令合成-子流程]<br/>
+     * 创建视图头部
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param builder builder
+     * @param meta 视图
+     * @return StringBuilder
+     * @throws Exception 异常
+     */
+    @Override
+    public StringBuilder buildCreateRunHead(DataRuntime runtime, StringBuilder builder, View meta) throws Exception {
+        return super.buildCreateRunHead(runtime, builder, meta);
+    }
+    /**
+     * view[命令合成-子流程]<br/>
+     * 创建视图选项
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param builder builder
+     * @param meta 视图
+     * @return StringBuilder
+     * @throws Exception 异常
+     */
+    @Override
+    public StringBuilder buildCreateRunOption(DataRuntime runtime, StringBuilder builder, View meta) throws Exception {
+        return super.buildCreateRunOption(runtime, builder, meta);
+    }
+
     /**
      * view[命令合成]<br/>
      * 重命名
@@ -3963,7 +4410,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, View meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
     /**
@@ -3975,7 +4422,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, View meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -3988,7 +4435,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAppendCommentRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildAppendCommentRun(DataRuntime runtime, View meta) throws Exception {
         return super.buildAppendCommentRun(runtime, meta);
     }
 
@@ -4001,7 +4448,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, View meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, View meta) throws Exception {
         return super.buildChangeCommentRun(runtime, meta);
     }
 
@@ -4060,7 +4507,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception DDL异常
      */
     @Override
-    public boolean create(DataRuntime runtime, MasterTable meta) throws Exception{
+    public boolean create(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -4073,7 +4520,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception DDL异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, MasterTable meta) throws Exception{
+    public boolean alter(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -4086,7 +4533,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception DDL异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, MasterTable meta) throws Exception{
+    public boolean drop(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -4100,7 +4547,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception DDL异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, MasterTable origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, MasterTable origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -4113,7 +4560,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
     }
 
@@ -4126,7 +4573,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
     /**
@@ -4138,7 +4585,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
     /**
@@ -4150,7 +4597,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -4163,7 +4610,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAppendCommentRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildAppendCommentRun(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.buildAppendCommentRun(runtime, meta);
     }
 
@@ -4176,7 +4623,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, MasterTable meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, MasterTable meta) throws Exception {
         return super.buildChangeCommentRun(runtime, meta);
     }
 
@@ -4208,7 +4655,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception DDL异常
      */
     @Override
-    public boolean create(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public boolean create(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -4221,7 +4668,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception DDL异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public boolean alter(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -4235,7 +4682,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      */
 
     @Override
-    public boolean drop(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public boolean drop(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.drop(runtime, meta);
     }
     /**
@@ -4248,7 +4695,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception DDL异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, PartitionTable origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, PartitionTable origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
     /**
@@ -4260,7 +4707,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
     }
 
@@ -4273,7 +4720,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAppendCommentRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildAppendCommentRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.buildAppendCommentRun(runtime, meta);
     }
 
@@ -4286,7 +4733,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -4299,7 +4746,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
     /**
@@ -4311,7 +4758,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -4324,7 +4771,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, PartitionTable meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, PartitionTable meta) throws Exception {
         return super.buildChangeCommentRun(runtime, meta);
     }
 
@@ -4357,11 +4804,11 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * List<Run> buildDropAutoIncrement(DataRuntime runtime, Column column)
      * StringBuilder define(DataRuntime runtime, StringBuilder builder, Column column)
      * StringBuilder type(DataRuntime runtime, StringBuilder builder, Column column)
-     * StringBuilder type(DataRuntime runtime, StringBuilder builder, Column column, String type, boolean isIgnorePrecision, boolean isIgnoreScale)
-     * boolean isIgnorePrecision(DataRuntime runtime, Column column)
-     * boolean isIgnoreScale(DataRuntime runtime, Column column)
+     * StringBuilder type(DataRuntime runtime, StringBuilder builder, Column column, String type, int ignorePrecision, boolean ignoreScale)
+     * int ignorePrecision(DataRuntime runtime, Column column)
+     * int ignoreScale(DataRuntime runtime, Column column)
      * Boolean checkIgnorePrecision(DataRuntime runtime, String datatype)
-     * Boolean checkIgnoreScale(DataRuntime runtime, String datatype)
+     * int checkIgnoreScale(DataRuntime runtime, String datatype)
      * StringBuilder nullable(DataRuntime runtime, StringBuilder builder, Column column)
      * StringBuilder charset(DataRuntime runtime, StringBuilder builder, Column column)
      * StringBuilder defaultValue(DataRuntime runtime, StringBuilder builder, Column column)
@@ -4383,7 +4830,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception DDL异常
      */
     @Override
-    public boolean add(DataRuntime runtime, Column meta) throws Exception{
+    public boolean add(DataRuntime runtime, Column meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -4397,7 +4844,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception DDL异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, Column meta, boolean trigger) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, Column meta, boolean trigger) throws Exception {
         return super.alter(runtime, table, meta, trigger);
     }
 
@@ -4410,7 +4857,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception DDL异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Column meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Column meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -4423,7 +4870,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception DDL异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Column meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Column meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -4437,7 +4884,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception DDL异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Column origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Column origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -4451,12 +4898,12 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, Column meta, boolean slice) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, Column meta, boolean slice) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
         StringBuilder builder = run.getBuilder();
-        if(!slice) {
+        if(!slice(slice)) {
             Table table = meta.getTable(true);
             builder.append("ALTER TABLE ");
             name(runtime, builder, table);
@@ -4472,7 +4919,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
         return runs;
     }
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, Column meta) throws Exception {
         return super.buildAddRun(runtime, meta);
     }
 
@@ -4486,11 +4933,11 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Column meta, boolean slice) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Column meta, boolean slice) throws Exception {
         return super.buildAlterRun(runtime, meta, slice);
     }
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Column meta) throws Exception {
         return buildAlterRun(runtime, meta, false);
     }
 
@@ -4504,12 +4951,12 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Column meta, boolean slice) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Column meta, boolean slice) throws Exception {
         return super.buildDropRun(runtime, meta, slice);
     }
 
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Column meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -4522,7 +4969,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Column meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -4551,24 +4998,21 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildChangeTypeRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildChangeTypeRun(DataRuntime runtime, Column meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         Column update = meta.getUpdate();
         String name = meta.getName();
         String type = meta.getTypeName();
-        if(type.contains("(")){
-            type = type.substring(0,type.indexOf("("));
-        }
         String uname = update.getName();
-        String utype = update.getTypeName();
-        if(uname.endsWith("_TMP_UPDATE_TYPE")){
+
+        TypeMetadata update_metadata = update.getTypeMetadata();
+        TypeMetadata column_metadata = meta.getTypeMetadata();
+
+        if(uname.endsWith(ConfigTable.ALTER_COLUMN_TYPE_SUFFIX)){
             runs.addAll(buildDropRun(runtime, update));
         }else {
-            if (utype != null && utype.contains("(")) {
-                utype = utype.substring(0, utype.indexOf("("));
-            }
-            if (!type.equals(utype)) {
-                String tmp_name = meta.getName() + "_TMP_UPDATE_TYPE";
+            if (null != update_metadata && !update_metadata.equals(column_metadata)) {
+                String tmp_name = meta.getName() + ConfigTable.ALTER_COLUMN_TYPE_SUFFIX;
 
                 update.setName(tmp_name);
                 runs.addAll(buildRenameRun(runtime, meta));
@@ -4600,7 +5044,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
                 name(runtime, builder, meta.getTable(true));
                 builder.append(" MODIFY(");
                 delimiter(builder, meta.getName()).append(" ");
-                this.typeMetadata(runtime, builder, meta.getUpdate());
+                type(runtime, builder, meta.getUpdate());
                 builder.append(")");
                 runs.add(new SimpleRun(runtime, builder));
             }
@@ -4657,7 +5101,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildChangeDefaultRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildChangeDefaultRun(DataRuntime runtime, Column meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -4692,7 +5136,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildChangeNullableRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildChangeNullableRun(DataRuntime runtime, Column meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -4725,11 +5169,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, Column meta) throws Exception {
         List<Run> runs = new ArrayList<>();
-        Run run = new SimpleRun(runtime);
-        runs.add(run);
-        StringBuilder builder = run.getBuilder();
         String comment = null;
         if(null != meta.getUpdate()){
             comment = meta.getUpdate().getComment();
@@ -4737,6 +5178,9 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
             comment = meta.getComment();
         }
         if(BasicUtil.isNotEmpty(comment)) {
+            Run run = new SimpleRun(runtime);
+            runs.add(run);
+            StringBuilder builder = run.getBuilder();
             builder.append("COMMENT ON COLUMN ");
             name(runtime, builder, meta.getTable(true)).append(".");
             Column update = meta.getUpdate();
@@ -4761,7 +5205,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildAppendCommentRun(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildAppendCommentRun(DataRuntime runtime, Column meta) throws Exception {
         return buildChangeCommentRun(runtime, meta);
     }
 
@@ -4775,7 +5219,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public List<Run> buildDropAutoIncrement(DataRuntime runtime, Column meta) throws Exception{
+    public List<Run> buildDropAutoIncrement(DataRuntime runtime, Column meta) throws Exception {
         return super.buildDropAutoIncrement(runtime, meta);
     }
 
@@ -4814,8 +5258,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return StringBuilder
      */
     @Override
-    public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta){
-        return super.typeMetadata(runtime, builder, meta);
+    public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta){
+        return super.type(runtime, builder, meta);
     }
     /**
      * column[命令合成-子流程]<br/>
@@ -4824,128 +5268,17 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @param builder builder
      * @param meta 列
      * @param type 数据类型(已经过转换)
-     * @param isIgnorePrecision 是否忽略长度
-     * @param isIgnoreScale 是否忽略小数
+     * @param ignorePrecision 是否忽略长度
+     * @param ignoreScale 是否忽略小数
      * @return StringBuilder
      */
     @Override
-    public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Column meta, String type, boolean isIgnorePrecision, boolean isIgnoreScale){
-        return super.typeMetadata(runtime, builder, meta, type, isIgnorePrecision, isIgnoreScale);
+    public StringBuilder type(DataRuntime runtime, StringBuilder builder, Column meta, String type, int ignoreLength, int ignorePrecision, int ignoreScale){
+        return super.type(runtime, builder, meta, type, ignoreLength, ignorePrecision, ignoreScale);
     }
 
 
-    /**
-     * column[命令合成-子流程]<br/>
-     * 列定义:是否忽略长度
-     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param meta 列
-     * @return boolean
-     */
-    @Override
-    public boolean isIgnorePrecision(DataRuntime runtime, Column meta) {
-        return super.isIgnorePrecision(runtime, meta);
-    }
-    /**
-     * column[命令合成-子流程]<br/>
-     * 列定义:是否忽略精度
-     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param meta 列
-     * @return boolean
-     */
-    @Override
-    public boolean isIgnoreScale(DataRuntime runtime, Column meta) {
-        return super.isIgnoreScale(runtime, meta);
-    }
-    /**
-     * column[命令合成-子流程]<br/>
-     * 列定义:是否忽略长度
-     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param type 列数据类型
-     * @return Boolean 检测不到时返回null
-     */
-    @Override
-    public Boolean checkIgnorePrecision(DataRuntime runtime, String type) {
-        type = type.toUpperCase();
-        if (type.contains("INT")) {
-            return false;
-        }
-        if (type.contains("DATE")) {
-            return true;
-        }
-        if (type.contains("TIME")) {
-            return true;
-        }
-        if (type.contains("YEAR")) {
-            return true;
-        }
-        if (type.contains("TEXT")) {
-            return true;
-        }
-        if (type.contains("BLOB")) {
-            return true;
-        }
-        if (type.contains("JSON")) {
-            return true;
-        }
-        if (type.contains("POINT")) {
-            return true;
-        }
-        if (type.contains("LINE")) {
-            return true;
-        }
-        if (type.contains("POLYGON")) {
-            return true;
-        }
-        if (type.contains("GEOMETRY")) {
-            return true;
-        }
-        return null;
-    }
-    /**
-     * column[命令合成-子流程]<br/>
-     * 列定义:是否忽略精度
-     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-     * @param type 列数据类型
-     * @return Boolean 检测不到时返回null
-     */
-    @Override
-    public Boolean checkIgnoreScale(DataRuntime runtime, String type) {
-        type = type.toUpperCase();
-        if (type.contains("INT")) {
-            return true;
-        }
-        if (type.contains("DATE")) {
-            return true;
-        }
-        if (type.contains("TIME")) {
-            return true;
-        }
-        if (type.contains("YEAR")) {
-            return true;
-        }
-        if (type.contains("TEXT")) {
-            return true;
-        }
-        if (type.contains("BLOB")) {
-            return true;
-        }
-        if (type.contains("JSON")) {
-            return true;
-        }
-        if (type.contains("POINT")) {
-            return true;
-        }
-        if (type.contains("LINE")) {
-            return true;
-        }
-        if (type.contains("POLYGON")) {
-            return true;
-        }
-        if (type.contains("GEOMETRY")) {
-            return true;
-        }
-        return null;
-    }
+    
     /**
      * column[命令合成-子流程]<br/>
      * 列定义:非空
@@ -4998,7 +5331,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
 
     /**
      * column[命令合成-子流程]<br/>
-     * 列定义:递增列
+     * 列定义:递增列,需要通过serial实现递增的在type(DataRuntime runtime, StringBuilder builder, Column meta)中实现
      * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
      * @param builder builder
      * @param meta 列
@@ -5078,7 +5411,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, Tag meta) throws Exception{
+    public boolean add(DataRuntime runtime, Tag meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -5092,7 +5425,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, Tag meta, boolean trigger) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, Tag meta, boolean trigger) throws Exception {
         return super.alter(runtime, table, meta, trigger);
     }
 
@@ -5106,7 +5439,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Tag meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Tag meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5119,7 +5452,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Tag meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Tag meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5133,7 +5466,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Tag origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Tag origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -5146,7 +5479,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, Tag meta) throws Exception {
         return super.buildAddRun(runtime, meta);
     }
     /**
@@ -5158,7 +5491,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Tag meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -5170,7 +5503,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Tag meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -5183,7 +5516,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Tag meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
     /**
@@ -5195,7 +5528,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildChangeDefaultRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildChangeDefaultRun(DataRuntime runtime, Tag meta) throws Exception {
         return super.buildChangeDefaultRun(runtime, meta);
     }
 
@@ -5208,7 +5541,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildChangeNullableRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildChangeNullableRun(DataRuntime runtime, Tag meta) throws Exception {
         return super.buildChangeNullableRun(runtime, meta);
     }
 
@@ -5221,7 +5554,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildChangeCommentRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildChangeCommentRun(DataRuntime runtime, Tag meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -5244,7 +5577,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildChangeTypeRun(DataRuntime runtime, Tag meta) throws Exception{
+    public List<Run> buildChangeTypeRun(DataRuntime runtime, Tag meta) throws Exception {
         return super.buildChangeTypeRun(runtime, meta);
     }
 
@@ -5289,7 +5622,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, PrimaryKey meta) throws Exception{
+    public boolean add(DataRuntime runtime, PrimaryKey meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -5302,7 +5635,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, PrimaryKey meta) throws Exception{
+    public boolean alter(DataRuntime runtime, PrimaryKey meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5315,7 +5648,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, PrimaryKey meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, PrimaryKey meta) throws Exception {
         return super.alter(runtime, table, meta);
     }
 
@@ -5328,7 +5661,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, PrimaryKey meta) throws Exception{
+    public boolean drop(DataRuntime runtime, PrimaryKey meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5342,7 +5675,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, PrimaryKey origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, PrimaryKey origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
     /**
@@ -5354,26 +5687,26 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
         StringBuilder builder = run.getBuilder();
-        Map<String,Column> columns = meta.getColumns();
-        if(columns.size()>0) {
-            if(!slice) {
+        LinkedHashMap<String,Column> columns = meta.getColumns();
+        if(null != columns && !columns.isEmpty()) {
+            if(!slice(slice)) {
                 builder.append("ALTER TABLE ");
                 name(runtime, builder, meta.getTable(true));
             }
-            builder.append(" ADD CONSTRAINT ").append(meta.getTableName(true)).append("_PK").append(" PRIMARY KEY(");
-            boolean first = true;
-            for(Column column:columns.values()){
-                if(!first){
-                    builder.append(",");
-                }
-                delimiter(builder, column.getName());
-                first = false;
+            String name = meta.getName();
+            if(BasicUtil.isEmpty(name)){
+                name = "PK_" + meta.getTableName(true);
             }
+            builder.append(" ADD CONSTRAINT ");
+            delimiter(builder, name);
+            builder.append(" PRIMARY KEY(");
+            Column.sort(meta.getPositions(), columns);
+            delimiter(builder, Column.names(columns));
             builder.append(")");
 
         }
@@ -5389,7 +5722,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey origin, PrimaryKey meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, PrimaryKey origin, PrimaryKey meta) throws Exception {
         return super.buildAlterRun(runtime, origin, meta);
     }
     /**
@@ -5401,13 +5734,15 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, PrimaryKey meta, boolean slice) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
         StringBuilder builder = run.getBuilder();
-        builder.append("ALTER TABLE ");
-        name(runtime, builder, meta.getTable(true));
+        if(!slice(slice)) {
+            builder.append("ALTER TABLE ");
+            name(runtime, builder, meta.getTable(true));
+        }
         builder.append(" DROP PRIMARY KEY");
         return runs;
     }
@@ -5420,7 +5755,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, PrimaryKey meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, PrimaryKey meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -5449,7 +5784,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public boolean add(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -5462,7 +5797,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public boolean alter(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5475,7 +5810,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, ForeignKey meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, ForeignKey meta) throws Exception {
         return super.alter(runtime, table, meta);
     }
 
@@ -5488,7 +5823,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public boolean drop(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5502,7 +5837,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, ForeignKey origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, ForeignKey origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -5515,7 +5850,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.buildAddRun(runtime, meta);
     }
     /**
@@ -5531,7 +5866,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -5543,7 +5878,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -5556,7 +5891,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, ForeignKey meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, ForeignKey meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
     /* *****************************************************************************************************************
@@ -5569,7 +5904,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * boolean drop(DataRuntime runtime, Index meta)
      * boolean rename(DataRuntime runtime, Index origin, String name)
      * [命令合成]
-     * List<Run> buildAddRun(DataRuntime runtime, Index meta)
+     * List<Run> buildAppendIndexRun(DataRuntime runtime, Table meta)
      * List<Run> buildAlterRun(DataRuntime runtime, Index meta)
      * List<Run> buildDropRun(DataRuntime runtime, Index meta)
      * List<Run> buildRenameRun(DataRuntime runtime, Index meta)
@@ -5587,7 +5922,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, Index meta) throws Exception{
+    public boolean add(DataRuntime runtime, Index meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -5600,7 +5935,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Index meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Index meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5613,7 +5948,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, Index meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, Index meta) throws Exception {
         return super.alter(runtime, table, meta);
     }
 
@@ -5626,7 +5961,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Index meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Index meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5640,7 +5975,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Index origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Index origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -5652,8 +5987,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, Index meta) throws Exception{
-        return super.buildAddRun(runtime, meta);
+    public List<Run> buildAppendIndexRun(DataRuntime runtime, Table meta) throws Exception {
+        return super.buildAppendIndexRun(runtime, meta);
     }
     /**
      * index[命令合成]<br/>
@@ -5664,7 +5999,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Index meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Index meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
     /**
@@ -5675,7 +6010,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Index meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Index meta) throws Exception {
         List<Run> runs = new ArrayList<>();
         Run run = new SimpleRun(runtime);
         runs.add(run);
@@ -5699,7 +6034,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Index meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Index meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -5712,8 +6047,8 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return StringBuilder
      */
     @Override
-    public StringBuilder typeMetadata(DataRuntime runtime, StringBuilder builder, Index meta){
-        return super.typeMetadata(runtime, builder, meta);
+    public StringBuilder type(DataRuntime runtime, StringBuilder builder, Index meta){
+        return super.type(runtime, builder, meta);
     }
     /**
      * index[命令合成-子流程]<br/>
@@ -5752,7 +6087,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, Constraint meta) throws Exception{
+    public boolean add(DataRuntime runtime, Constraint meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -5765,7 +6100,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Constraint meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Constraint meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5778,7 +6113,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Table table, Constraint meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Table table, Constraint meta) throws Exception {
         return super.alter(runtime, table, meta);
     }
 
@@ -5791,7 +6126,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Constraint meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Constraint meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5805,7 +6140,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Constraint origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Constraint origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -5818,7 +6153,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildAddRun(DataRuntime runtime, Constraint meta) throws Exception{
+    public List<Run> buildAddRun(DataRuntime runtime, Constraint meta) throws Exception {
         return super.buildAddRun(runtime, meta);
     }
 
@@ -5831,7 +6166,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Constraint meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Constraint meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
     /**
@@ -5842,7 +6177,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Constraint meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Constraint meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -5855,7 +6190,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Constraint meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Constraint meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -5877,7 +6212,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean add(DataRuntime runtime, Trigger meta) throws Exception{
+    public boolean add(DataRuntime runtime, Trigger meta) throws Exception {
         return super.add(runtime, meta);
     }
 
@@ -5890,7 +6225,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Trigger meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Trigger meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -5903,7 +6238,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Trigger meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Trigger meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -5917,7 +6252,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Trigger origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Trigger origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -5929,7 +6264,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, Trigger meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, Trigger meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
     }
     /**
@@ -5941,7 +6276,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Trigger meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Trigger meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -5953,7 +6288,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Trigger meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Trigger meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -5966,7 +6301,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Trigger meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Trigger meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
     /**
@@ -6008,7 +6343,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean create(DataRuntime runtime, Procedure meta) throws Exception{
+    public boolean create(DataRuntime runtime, Procedure meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -6021,7 +6356,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Procedure meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Procedure meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -6034,7 +6369,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Procedure meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Procedure meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -6048,7 +6383,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Procedure origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Procedure origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -6060,7 +6395,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, Procedure meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, Procedure meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
     }
     /**
@@ -6072,7 +6407,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Procedure meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Procedure meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -6084,7 +6419,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Procedure meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Procedure meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -6097,7 +6432,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Procedure meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Procedure meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -6139,7 +6474,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean create(DataRuntime runtime, Function meta) throws Exception{
+    public boolean create(DataRuntime runtime, Function meta) throws Exception {
         return super.create(runtime, meta);
     }
 
@@ -6152,7 +6487,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean alter(DataRuntime runtime, Function meta) throws Exception{
+    public boolean alter(DataRuntime runtime, Function meta) throws Exception {
         return super.alter(runtime, meta);
     }
 
@@ -6165,7 +6500,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean drop(DataRuntime runtime, Function meta) throws Exception{
+    public boolean drop(DataRuntime runtime, Function meta) throws Exception {
         return super.drop(runtime, meta);
     }
 
@@ -6179,7 +6514,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception 异常
      */
     @Override
-    public boolean rename(DataRuntime runtime, Function origin, String name) throws Exception{
+    public boolean rename(DataRuntime runtime, Function origin, String name) throws Exception {
         return super.rename(runtime, origin, name);
     }
 
@@ -6192,7 +6527,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildCreateRun(DataRuntime runtime, Function meta) throws Exception{
+    public List<Run> buildCreateRun(DataRuntime runtime, Function meta) throws Exception {
         return super.buildCreateRun(runtime, meta);
     }
 
@@ -6205,7 +6540,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return List
      */
     @Override
-    public List<Run> buildAlterRun(DataRuntime runtime, Function meta) throws Exception{
+    public List<Run> buildAlterRun(DataRuntime runtime, Function meta) throws Exception {
         return super.buildAlterRun(runtime, meta);
     }
 
@@ -6216,7 +6551,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildDropRun(DataRuntime runtime, Function meta) throws Exception{
+    public List<Run> buildDropRun(DataRuntime runtime, Function meta) throws Exception {
         return super.buildDropRun(runtime, meta);
     }
 
@@ -6229,7 +6564,127 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @return String
      */
     @Override
-    public List<Run> buildRenameRun(DataRuntime runtime, Function meta) throws Exception{
+    public List<Run> buildRenameRun(DataRuntime runtime, Function meta) throws Exception {
+        return super.buildRenameRun(runtime, meta);
+    }
+
+
+
+    /* *****************************************************************************************************************
+     * 													sequence
+     * -----------------------------------------------------------------------------------------------------------------
+     * [调用入口]
+     * boolean create(DataRuntime runtime, Sequence meta)
+     * boolean alter(DataRuntime runtime, Sequence meta)
+     * boolean drop(DataRuntime runtime, Sequence meta)
+     * boolean rename(DataRuntime runtime, Sequence origin, String name)
+     * [命令合成]
+     * List<Run> buildCreateRun(DataRuntime runtime, Sequence sequence)
+     * List<Run> buildAlterRun(DataRuntime runtime, Sequence sequence)
+     * List<Run> buildDropRun(DataRuntime runtime, Sequence sequence)
+     * List<Run> buildRenameRun(DataRuntime runtime, Sequence sequence)
+     ******************************************************************************************************************/
+
+    /**
+     * sequence[调用入口]<br/>
+     * 添加序列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return 是否执行成功
+     * @throws Exception 异常
+     */
+    @Override
+    public boolean create(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.create(runtime, meta);
+    }
+
+    /**
+     * sequence[调用入口]<br/>
+     * 修改序列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return 是否执行成功
+     * @throws Exception 异常
+     */
+    @Override
+    public boolean alter(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.alter(runtime, meta);
+    }
+
+    /**
+     * sequence[调用入口]<br/>
+     * 删除序列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return 是否执行成功
+     * @throws Exception 异常
+     */
+    @Override
+    public boolean drop(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.drop(runtime, meta);
+    }
+
+    /**
+     * sequence[调用入口]<br/>
+     * 重命名序列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param origin 序列
+     * @param name 新名称
+     * @return 是否执行成功
+     * @throws Exception 异常
+     */
+    @Override
+    public boolean rename(DataRuntime runtime, Sequence origin, String name) throws Exception {
+        return super.rename(runtime, origin, name);
+    }
+
+
+    /**
+     * sequence[命令合成]<br/>
+     * 添加序列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return String
+     */
+    @Override
+    public List<Run> buildCreateRun(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.buildCreateRun(runtime, meta);
+    }
+
+    /**
+     * sequence[命令合成]<br/>
+     * 修改序列
+     * 有可能生成多条SQL
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return List
+     */
+    @Override
+    public List<Run> buildAlterRun(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.buildAlterRun(runtime, meta);
+    }
+
+    /**
+     * sequence[命令合成]<br/>
+     * 删除序列
+     * @param meta 序列
+     * @return String
+     */
+    @Override
+    public List<Run> buildDropRun(DataRuntime runtime, Sequence meta) throws Exception {
+        return super.buildDropRun(runtime, meta);
+    }
+
+    /**
+     * sequence[命令合成]<br/>
+     * 修改序列名
+     * 一般不直接调用,如果需要由buildAlterRun内部统一调用
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta 序列
+     * @return String
+     */
+    @Override
+    public List<Run> buildRenameRun(DataRuntime runtime, Sequence meta) throws Exception {
         return super.buildRenameRun(runtime, meta);
     }
 
@@ -6266,17 +6721,28 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
 	 * @param meta BaseMetadata
 	 * @param catalog catalog
 	 * @param schema schema
-	 * @param override 如果meta中有值，是否覆盖
+     * @param overrideMeta 如果meta中有值，是否覆盖
+     * @param overrideRuntime 如果runtime中有值，是否覆盖，注意结果集中可能跨多个schema，所以一般不要覆盖runtime,从con获取的可以覆盖ResultSet中获取的不要覆盖
 	 * @param <T> BaseMetadata
 	 */
 	@Override
-    public <T extends BaseMetadata> void correctSchemaFromJDBC(T meta, String catalog, String schema, boolean override){
-        super.correctSchemaFromJDBC(meta, catalog, schema, override);
+    public <T extends BaseMetadata> void correctSchemaFromJDBC(DataRuntime runtime, T meta, String catalog, String schema, boolean overrideRuntime, boolean overrideMeta){
+        super.correctSchemaFromJDBC(runtime, meta, catalog, schema, overrideRuntime, overrideMeta);
     }
+
+	/**
+	 * 识别根据jdbc返回的catalog与schema,部分数据库(如mysql)系统表与jdbc标准可能不一致根据实际情况处理<br/>
+	 * 注意一定不要处理从SQL中返回的，应该在SQL中处理好
+	 * @param meta BaseMetadata
+	 * @param catalog catalog
+	 * @param schema schema
+	 * @param <T> BaseMetadata
+	 */
 	@Override
-	public <T extends BaseMetadata> void correctSchemaFromJDBC(T meta, String catalog, String schema){
-		super.correctSchemaFromJDBC(meta, catalog, schema);
+	public <T extends BaseMetadata> void correctSchemaFromJDBC(DataRuntime runtime, T meta, String catalog, String schema){
+		correctSchemaFromJDBC(runtime, meta, catalog, schema, false, true);
 	}
+
 	/**
 	 * 在调用jdbc接口前处理业务中的catalog,schema,部分数据库(如mysql)业务系统与dbc标准可能不一致根据实际情况处理<br/>
 	 * @param catalog catalog
@@ -6305,6 +6771,41 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
     }
 
     /**
+     * column[结果集封装]<br/>(方法1)<br/>
+     * 元数据长度列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta TypeMetadata
+     * @return String
+     */
+    @Override
+    public String columnMetadataLengthRefer(DataRuntime runtime, TypeMetadata meta){
+        return super.columnMetadataLengthRefer(runtime, meta);
+    }
+
+    /**
+     * column[结果集封装]<br/>(方法1)<br/>
+     * 元数据数字有效位数列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta TypeMetadata
+     * @return String
+     */
+    @Override
+    public String columnMetadataPrecisionRefer(DataRuntime runtime, TypeMetadata meta){
+        return super.columnMetadataPrecisionRefer(runtime, meta);
+    }
+
+    /**
+     * column[结果集封装]<br/>(方法1)<br/>
+     * 元数据数字小数位数列
+     * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
+     * @param meta TypeMetadata
+     * @return String
+     */
+    @Override
+    public String columnMetadataScaleRefer(DataRuntime runtime, TypeMetadata meta){
+        return super.columnMetadataScaleRefer(runtime, meta);
+    }
+    /**
      *
      * column[结果集封装-子流程](方法2)<br/>
      * 方法(2)表头内部遍历
@@ -6314,7 +6815,6 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @param index 第几列
      * @return Column
      */
-
     @Override
     public Column column(DataRuntime runtime, Column column, ResultSetMetaData rsm, int index){
         return super.column(runtime, column, rsm, index);
@@ -6337,7 +6837,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      */
 
     @Override
-    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, DatabaseMetaData dbmd, Table table, String pattern) throws Exception{
+    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, DatabaseMetaData dbmd, Table table, String pattern) throws Exception {
         return super.columns(runtime, create, columns, dbmd, table, pattern);
     }
 
@@ -6369,7 +6869,7 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
      * @throws Exception
      */
     @Override
-    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, Table table, SqlRowSet set) throws Exception{
+    public <T extends Column> LinkedHashMap<String, T> columns(DataRuntime runtime, boolean create, LinkedHashMap<String, T> columns, Table table, SqlRowSet set) throws Exception {
         return super.columns(runtime, create, columns, table, set);
     }
 
@@ -6500,19 +7000,24 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
     protected String insertsSelect(DataRuntime runtime, Run run, Table dest, DataSet set, ConfigStore configs, LinkedHashMap<String, Column> columns, Map<String, Sequence> sequens, PrimaryGenerator generator, LinkedHashMap<String, Column> pks){
         StringBuilder builder = new StringBuilder();
         builder.append(insertSelectHead(columns, sequens));
-        int col = 0;
+        boolean first = true;
+        boolean batch = run.getBatch() > 1;
         for(DataRow row:set) {
             if(row.hasPrimaryKeys() && null != generator){
-                generator.create(row, typeMetadata(),dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
+                generator.create(row, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
             }
-
-            if(col > 0){
+            if(!first && !batch){
                 builder.append("\n\tUNION ALL");
             }
-            builder.append("\n\tSELECT ");
-            builder.append(insertValue(runtime, run, row, true,true, true,false, columns));
-            builder.append(" FROM DUAL ");
-            col ++;
+            if(first || !batch) {
+                builder.append("\n\tSELECT ");
+            }
+            //只添加占位值
+            builder.append(insertValue(runtime, run, row, first,true,true, true,false, columns));
+            if(first || !batch) {
+                builder.append(" FROM DUAL ");
+            }
+            first = false;
         }
         builder.append(") I ");
         return builder.toString();
@@ -6520,19 +7025,25 @@ public abstract class OracleGenusAdapter extends DefaultJDBCAdapter implements I
     protected String insertsSelect(DataRuntime runtime, Run run, Table dest, Collection list, ConfigStore configs, LinkedHashMap<String, Column> columns, Map<String, Sequence> sequens, PrimaryGenerator generator, LinkedHashMap<String, Column> pks){
         StringBuilder builder = new StringBuilder();
         builder.append(insertSelectHead(columns, sequens));
-        int col = 0;
+        boolean batch = run.getBatch() > 1;
+        boolean first = true;
         for(Object obj:list){
             boolean create = EntityAdapterProxy.createPrimaryValue(obj, pks);
             if(!create && null != generator){
-                generator.create(obj, typeMetadata(),dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
+                generator.create(obj, type(), dest.getName().replace(getDelimiterFr(), "").replace(getDelimiterTo(), ""), pks, null);
             }
-            if(col > 0){
+            if(!first && !batch){
                 builder.append("\n\tUNION ALL");
             }
-            builder.append("\n\tSELECT ");
-            builder.append(insertValue(runtime, run, obj, true,true, true,false, columns));
-            builder.append(" FROM DUAL ");
-            col ++;
+            if(first || !batch) {
+                builder.append("\n\tSELECT ");
+            }
+            //只添加占位值
+            builder.append(insertValue(runtime, run, obj, first,true,true, true,false, columns));
+            if(first || !batch) {
+                builder.append(" FROM DUAL ");
+            }
+            first = false;
         }
         builder.append(") I ");
         return builder.toString();

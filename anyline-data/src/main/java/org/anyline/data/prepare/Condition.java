@@ -39,22 +39,23 @@ public interface Condition extends Cloneable{
 	 * 运行时文本 
 	 * @param prefix 前缀
 	 * @param runtime 运行环境主要包含驱动适配器 数据源或客户端
-	 * @param join 是否携带开头的连接符号(and or)默认true
+	 * @param connector 是否携带开头的连接符号(and or)默认true
 	 * @return String
 	 */
-	default String getRunText(boolean join, String prefix, DataRuntime runtime){
-		String txt = getRunText(prefix, runtime).trim();
-		if(!join){
-			String upper = txt.toUpperCase();
-			if(upper.startsWith("AND")){
+	default String getRunText(boolean connector, String prefix, DataRuntime runtime, boolean placeholder){
+		String txt = getRunText(prefix, runtime, placeholder).trim();
+		if(!connector){
+			txt = txt.trim();
+			String up = txt.toUpperCase();
+			if(up.startsWith("AND ") || up.startsWith("AND(")){
 				txt = txt.substring(3);
-			}else if(upper.startsWith("OR")){
+			}else if(up.startsWith("OR ") || up.startsWith("OR(")){
 				txt = txt.substring(2);
 			}
 		}
 		return txt;
 	}
-	String getRunText(String prefix, DataRuntime runtime);
+	String getRunText(String prefix, DataRuntime runtime, boolean placeholder);
 
 	/**
 	 * 静态SQL

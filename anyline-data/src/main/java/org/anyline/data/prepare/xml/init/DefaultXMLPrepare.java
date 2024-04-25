@@ -23,7 +23,7 @@ import org.anyline.data.prepare.RunPrepare;
 import org.anyline.data.prepare.Variable;
 import org.anyline.data.param.ConfigParser;
 import org.anyline.data.param.ParseResult;
-import org.anyline.data.prepare.init.DefaultPrepare;
+import org.anyline.data.prepare.init.AbstractRunPrepare;
 import org.anyline.data.prepare.init.DefaultVariable;
 import org.anyline.data.prepare.SyntaxHelper;
 import org.anyline.data.prepare.xml.XMLPrepare;
@@ -38,7 +38,7 @@ import org.anyline.util.regular.RegularUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-public class DefaultXMLPrepare extends DefaultPrepare implements XMLPrepare {
+public class DefaultXMLPrepare extends AbstractRunPrepare implements XMLPrepare {
 	/*解析XML*/ 
 	private String id; 
 	private String text;
@@ -135,11 +135,11 @@ public class DefaultXMLPrepare extends DefaultPrepare implements XMLPrepare {
 
 			// AND CD = {CD} || CD LIKE '%{CD}%' || CD IN ({CD}) || CD = ${CD} || CD = #{CD}
 			//{CD} 用来兼容旧版本，新版本中不要用，避免与josn格式冲突
-			keys = RegularUtil.fetchs(text, RunPrepare.SQL_PARAM_VARIABLE_REGEX_EL, Regular.MATCH_MODE.CONTAIN);
+			keys = RegularUtil.fetchs(text, RunPrepare.SQL_VAR_PLACEHOLDER_REGEX, Regular.MATCH_MODE.CONTAIN);
 			type = Variable.KEY_TYPE_SIGN_V2 ;
 			if(keys.size() == 0){
 				// AND CD = :CD || CD LIKE ':CD' || CD IN (:CD) || CD = ::CD
-				keys = RegularUtil.fetchs(text, RunPrepare.SQL_PARAM_VARIABLE_REGEX, Regular.MATCH_MODE.CONTAIN);
+				keys = RegularUtil.fetchs(text, RunPrepare.SQL_VAR_PLACEHOLDER_REGEX_EXT, Regular.MATCH_MODE.CONTAIN);
 				type = Variable.KEY_TYPE_SIGN_V1 ;
 			} 
 			if(BasicUtil.isNotEmpty(true,keys)){

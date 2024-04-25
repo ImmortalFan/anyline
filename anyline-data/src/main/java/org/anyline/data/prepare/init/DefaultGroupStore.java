@@ -22,10 +22,11 @@ import org.anyline.data.prepare.GroupStore;
 import org.anyline.util.BasicUtil;
 import org.anyline.util.SQLUtil;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
  
-public class DefaultGroupStore implements GroupStore {
+public class DefaultGroupStore implements GroupStore, Serializable {
 	private static final long serialVersionUID = 1257282062069295247L;
 	private List<Group> groups;
  
@@ -60,7 +61,7 @@ public class DefaultGroupStore implements GroupStore {
 		} 
 		String[] tmps = str.split(","); // 多列排序
 		for (String tmp : tmps) {
-			group(new DefaultGroup(tmp));
+			group(new AbstractGroup(tmp));
 		} 
 	} 
  
@@ -84,7 +85,7 @@ public class DefaultGroupStore implements GroupStore {
 	@Override 
 	public String getRunText(String delimiter) {
 		StringBuilder builder = new StringBuilder(); 
-		if(null != groups && groups.size() > 0){
+		if(null != groups && !groups.isEmpty()){
 			builder.append(" GROUP BY "); 
 			for(int i=0; i<groups.size(); i++){
 				Group group = groups.get(i);
@@ -98,5 +99,11 @@ public class DefaultGroupStore implements GroupStore {
 			} 
 		} 
 		return builder.toString(); 
-	} 
+	}
+	public boolean isEmpty(){
+		if(null != groups){
+			return groups.isEmpty();
+		}
+		return true;
+	}
 } 

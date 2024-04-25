@@ -43,17 +43,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.beans.Transient;
+import java.io.Serializable;
 import java.util.*;
 
 
-public class DefaultPageNavi implements PageNavi{
+public class DefaultPageNavi implements PageNavi, Serializable {
 	protected static final long serialVersionUID = 3593100423479113410L;
 	protected static final Logger log = LoggerFactory.getLogger(DefaultPageNavi.class);
  
 	protected static final String BR 					= "\n"; 
 	protected static final String TAB 					= "\t"; 
 	protected static final String BR_TAB 				= "\n\t"; 
-	 
+
+	protected int dataSize					= 0			; // 查询结果行数
 	protected long totalRow					= 0			; // 记录总数 (rows)
 	protected long totalPage				= 0 		; // 最大页数 (pages)
 	protected long curPage					= 1 		; // 当前页数
@@ -62,6 +64,8 @@ public class DefaultPageNavi implements PageNavi{
 	protected int pageRows					= 10		; // 每页多少条
 	protected long displayPageFirst 		= 0			; // 显示的第一页标签
 	protected long displayPageLast 			= 0			; // 显示的最后页标签
+
+	protected Boolean requiredTotal			= null		; // map方法时默认不需要总行数
 	protected String baseLink				= null		; // 基础URL
 	protected OrderStore orders				= null 		; // 排序依据(根据 orderCol 排序分页)
 	protected int calType 					= 0			; // 分页计算方式(0-按页数 1-按开始结束数)
@@ -137,12 +141,39 @@ public class DefaultPageNavi implements PageNavi{
 		setTotalRow(rows);
 		return this;
 	}
-	/** 
+
+
+	/**
+	 * 设置是否需要是查询总行数<br/>
+	 * maps国为性能考虑默认不查总行数，通过这个配置强制开启总行数查询，执行完成后会在page navi中存放总行数结果
+	 * @param required 是否
+	 * @return this
+	 */
+	public PageNavi total(boolean required){
+		requiredTotal = required;
+		return this;
+	}
+	public Boolean requiredTotal(){
+		return requiredTotal;
+	}
+	@Override
+	public PageNavi setDataSize(int size) {
+		this.dataSize = size;
+		return this;
+	}
+
+	@Override
+	public int getDataSize() {
+		return this.dataSize;
+	}
+
+	/**
 	 * 分页计算方式 
 	 * @param type	0-按页数 1-按开始结束记录数 
 	 */ 
-	public void setCalType(int type){
-		this.calType = type; 
+	public PageNavi setCalType(int type){
+		this.calType = type;
+		return this;
 	} 
 	public int getCalType(){
 		return calType; 
@@ -150,7 +181,7 @@ public class DefaultPageNavi implements PageNavi{
 	/** 
 	 * 计算分页变量 
 	 */ 
-	public void calculate() {
+	public PageNavi calculate() {
 		long totalPage = (totalRow - 1) / pageRows + 1;
 		// 当前页是否超出总页数 
 		if(curPage > totalPage){
@@ -172,7 +203,8 @@ public class DefaultPageNavi implements PageNavi{
 		setDisplayPageLast(displayPageFirst + pageRange - 1);		// 显示的最后页 
 		if (displayPageLast > totalPage){
 			setDisplayPageLast(totalPage); 
-		} 
+		}
+		return this;
 	} 
 	 
 	/** 
@@ -214,8 +246,9 @@ public class DefaultPageNavi implements PageNavi{
 	 * 设置页面显示的第一页 
 	 * @param displayPageFirst  displayPageFirst
 	 */ 
-	public void setDisplayPageFirst(long displayPageFirst) {
-		this.displayPageFirst = displayPageFirst; 
+	public PageNavi setDisplayPageFirst(long displayPageFirst) {
+		this.displayPageFirst = displayPageFirst;
+		return this;
 	} 
 	/** 
 	 * 页面显示的最后一页 set
@@ -225,19 +258,19 @@ public class DefaultPageNavi implements PageNavi{
 		return displayPageLast; 
 	}
 
-
 	/** 
 	 * 设置页面显示的最后一页 
 	 * @param displayPageLast  displayPageLast
 	 */ 
-	public void setDisplayPageLast(long displayPageLast) {
-		this.displayPageLast = displayPageLast; 
+	public PageNavi setDisplayPageLast(long displayPageLast) {
+		this.displayPageLast = displayPageLast;
+		return this;
 	} 
  
 	@SuppressWarnings({"unchecked","rawtypes" })
-	public void addParam(String key, Object value){
+	public PageNavi addParam(String key, Object value){
 		if(null == key || null == value){
-			return; 
+			return this;
 		} 
 		if(null == this.params){
 			this.params = new HashMap<String, List<Object>>();
@@ -252,6 +285,7 @@ public class DefaultPageNavi implements PageNavi{
 			values.add(value); 
 		} 
 		params.put(key, values);
+		return this;
 	} 
 	public Object getParams(String key){
 		Object result = null; 
@@ -311,9 +345,14 @@ public class DefaultPageNavi implements PageNavi{
 		return this; 
 	}
 	@Override
+	public OrderStore getOrders(){
+		return orders;
+	}
+	@Override
 	public PageNavi order(Order order){
 		return order(order, true);
 	}
+
 	/** 
 	 * 设置排序方式 
 	 * @param order  order
@@ -356,6 +395,7 @@ public class DefaultPageNavi implements PageNavi{
 		calculate();
 		return this;
 	}
+
 	/** 
 	 * 设置最后一页 
 	 * @param totalPage  totalPage

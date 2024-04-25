@@ -272,7 +272,7 @@ public class XMLRun extends BasicRun implements Run {
 		}
 
 		builder.append(result);
-		appendCondition(); 
+		appendCondition(true);
 		appendStaticCondition(); 
 		appendGroup(); 
 		// appendOrderStore();
@@ -394,14 +394,18 @@ public class XMLRun extends BasicRun implements Run {
 	/** 
 	 * 拼接查询条件
 	 */ 
-	private void appendCondition(){
+	private void appendCondition(boolean placeholder){
 		if(null == conditionChain || !conditionChain.isActive()){
 			return; 
 		} 
 		if(!endWithWhere(builder.toString())){
 			builder.append(" WHERE 1=1");
 		}
-		builder.append(conditionChain.getRunText(null, runtime));
+		String condition = conditionChain.getRunText(null, runtime, placeholder);
+		if(!condition.isEmpty()){
+			emptyCondition = false;
+		}
+		builder.append(condition);
 		addValues(conditionChain.getRunValues()); 
 //		if(null != staticConditions){
 //			for(String con:staticConditions){

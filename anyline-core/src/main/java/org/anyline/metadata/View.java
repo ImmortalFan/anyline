@@ -18,9 +18,33 @@
 package org.anyline.metadata;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 public class View extends Table<View> implements Serializable {
+    public enum TYPE implements Type{
+        NORMAL(2);
+        public final int value;
+        TYPE(int value){
+            this.value = value;
+        }
+        public int value(){
+            return value;
+        }
+    }
+
+    private static Map<Integer, Type> types = new HashMap<>();
+    static {
+        for(TYPE type: TYPE.values()){
+            types.put(type.value, type);
+        }
+    }
+    public static Map<Integer, Type> types(){
+        return types;
+    }
+
     protected String keyword = "VIEW"            ;
+    protected boolean materialize = false        ; //是否物化
     protected String definition;
 
     public String getDefinition() {
@@ -57,7 +81,16 @@ public class View extends Table<View> implements Serializable {
         return keyword;
     }
 
+    public boolean isMaterialize() {
+        return materialize;
+    }
+
+    public void setMaterialize(boolean materialize) {
+        this.materialize = materialize;
+    }
+
     public String toString(){
         return this.keyword+":"+name;
     }
+
 }

@@ -47,7 +47,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
-public class DataRow extends LinkedHashMap<String, Object> implements Serializable {
+public class DataRow extends LinkedHashMap<String, Object> implements Serializable, AnyData {
     private static final long serialVersionUID = -2098827041540802313L;
     private static final Logger log = LoggerFactory.getLogger(DataRow.class);
 
@@ -75,8 +75,8 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
     protected String category                         = null                  ; // 分类
     protected LinkedHashMap<String, Column> metadatas = null                  ; // 数据类型相关(需要开启ConfigTable.IS_AUTO_CHECK_METADATA)
     protected transient DataSet container             = null                  ; // 包含当前对象的容器
-    protected transient Map<String, DataSet> containers= new HashMap()         ; // 包含当前对象的容器s
-    protected transient Map<String, DataRow> parents   = new Hashtable()       ; // 上级
+    protected transient Map<String, DataSet> containers= new HashMap()        ; // 包含当前对象的容器s
+    protected transient Map<String, DataRow> parents   = new Hashtable()      ; // 上级
     protected List<String> primaryKeys                = new ArrayList()       ; // 主键
     protected List<String> updateColumns              = new ArrayList()       ; // 需要参与update insert操作
     protected List<String> ignoreUpdateColumns        = new ArrayList()       ; // 不参与update insert操作
@@ -84,7 +84,7 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
     protected String dataSource                       = null                  ; // 数据源(表|视图|XML定义SQL)
     protected Catalog catalog                         = null                  ; // catalog
     protected Schema schema                           = null                  ; // schema
-    protected Table table                             = null                  ; // table
+    protected LinkedHashMap<String, Table> tables     = new LinkedHashMap<>() ; // 数据来源表(图数据库可能来自多个表) //TODO 解析sql中多个表(未实现)
     protected DataRow attributes                      = null                  ; // 属性
     protected DataRow tags                            = null                  ; // 标签
     protected DataRow relations                       = null                  ; // 对外关系
@@ -299,7 +299,7 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
                 List<String> ks = BeanUtil.getMapKeys(mp);
                 for (String k : ks) {
                     Object value = mp.get(k);
-                    if (null != value && value instanceof Map) {
+                    if (value instanceof Map) {
                         value = parse(value);
                     }
                     row.put(k, value);
@@ -1079,21 +1079,46 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
         return setPrimaryKey(false, pks);
     }
 
-
+    public Column getPrimaryColumn() {
+        LinkedHashMap<String, Column> columns = getPrimaryColumns();
+        if(!columns.isEmpty()){
+            return columns.values().iterator().next();
+        }
+        String pk = getPrimaryKey();
+        if(null == pk){
+            pk = DataRow.DEFAULT_PRIMARY_KEY;
+        }
+        Column column = null;
+        if(null != metadatas){
+            column = metadatas.get(pk.toUpperCase());
+        }else{
+            column = new Column(pk);
+        }
+        return column;
+    }
     public LinkedHashMap<String, Column> getPrimaryColumns() {
         LinkedHashMap<String, Column> columns = new LinkedHashMap<>();
-        List<String> pks = getPrimaryKeys();
-        if(null != pks){
-           for(String pk:pks){
-               Column column = null;
-               if(null != metadatas){
-                   column = metadatas.get(pk.toUpperCase());
-               }
-               if(null == column){
-                   column = new Column(pk);
-               }
-               columns.put(pk.toUpperCase(), column);
-           }
+        if(null != metadatas){
+            for(Column column:metadatas.values()){
+                if(column.isPrimaryKey() == 1){
+                    columns.put(column.getName().toUpperCase(), column);
+                }
+            }
+        }
+        if(columns.isEmpty()){
+            List<String> pks = getPrimaryKeys();
+            if(null != pks){
+                for(String pk:pks){
+                    Column column = null;
+                    if(null != metadatas){
+                        column = metadatas.get(pk.toUpperCase());
+                    }
+                    if(null == column){
+                        column = new Column(pk);
+                    }
+                    columns.put(pk.toUpperCase(), column);
+                }
+            }
         }
         return columns;
     }
@@ -1126,7 +1151,7 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
 
     public String getPrimaryKey() {
         List<String> keys = getPrimaryKeys();
-        if (null != keys && keys.size() > 0) {
+        if (null != keys && !keys.isEmpty()) {
             return keys.get(0);
         }
         return null;
@@ -1154,7 +1179,13 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
         }
         return null;
     }
-
+    public DataRow setPrimaryValue(Object value){
+        String key = getPrimaryKey();
+        if (null != key) {
+            put(key, value);
+        }
+        return this;
+    }
     /**
      * 是否有主键
      * @return boolean
@@ -1177,7 +1208,7 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
      * @return boolean
      */
     public boolean hasSelfPrimaryKeys() {
-        if (null != primaryKeys && primaryKeys.size() > 0) {
+        if (null != primaryKeys && !primaryKeys.isEmpty()) {
             return true;
         } else {
             return false;
@@ -1243,16 +1274,27 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
         }
         if (dest.contains(".") && !dest.contains(":")) {
             String[] tmps = dest.split("\\.");
+            Catalog catalog = null;
+            Schema schema = null;
+            Table table = null;
             if(tmps.length == 2){
-                setSchema(tmps[0]);
-                setTable(tmps[1]);
+                schema = new Schema(tmps[0]);
+                table = new Table(tmps[1]);
+                table.setSchema(schema);
             }else if(tmps.length == 3){
-                setCatalog(tmps[0]);
-                setSchema(tmps[1]);
-                setTable(tmps[2]);
+                catalog = new Catalog(tmps[0]);
+                schema = new Schema(tmps[1]);
+                schema.setCatalog(catalog);
+                table = new Table(tmps[2]);
+                table.setSchema(schema);
+                table.setCatalog(catalog);
             }
+            setCatalog(catalog);
+            setSchema(schema);
+            setTable(table);
         }else{
-            setTable(dest);
+            Table table = new Table(dest);
+            setTable(table);
         }
         return this;
     }
@@ -1755,11 +1797,84 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
     }
 
     /**
+     * 返回第1个非空值
+     * @param keys keys
+     * @return String
+     */
+    public String getStringWithoutEmpty(String ... keys) {
+        if(null == keys){
+            return null;
+        }
+        String result = null;
+        for(String key:keys) {
+            if (null == key) {
+                continue;
+            }
+            if (key.contains("${") && key.contains("}")) {
+                result = BeanUtil.parseFinalValue(this, key);
+            } else {
+                if(!contains(key)){
+                    continue;
+                }
+                Object value = get(key);
+                if (null != value) {
+                    if(value instanceof byte[]){
+                        result = new String((byte[])value);
+                    }else {
+                        result = value.toString();
+                    }
+                }
+            }
+            if(BasicUtil.isNotEmpty(result)){
+                break;
+            }
+        }
+        return result;
+    }
+    /**
+     * 返回第1个非NULL值
+     * @param keys keys
+     * @return String
+     */
+    public String getStringWithoutNull(String ... keys) {
+        if(null == keys){
+            return null;
+        }
+        String result = null;
+        for(String key:keys) {
+            if (null == key) {
+                continue;
+            }
+            if (key.contains("${") && key.contains("}")) {
+                result = BeanUtil.parseFinalValue(this, key);
+            } else {
+                if(!contains(key)){
+                    continue;
+                }
+                Object value = get(key);
+                if (null != value) {
+                    if(value instanceof byte[]){
+                        result = new String((byte[])value);
+                    }else {
+                        result = value.toString();
+                    }
+                }
+            }
+            if(null != result){
+                break;
+            }
+        }
+        return result;
+    }
+    /**
      * 返回第1个存在的key对应的值, 有可能返回null或""
      * @param keys keys
      * @return String
      */
     public String getString(String ... keys) {
+        if(null == keys){
+            return null;
+        }
         String result = null;
         for(String key:keys) {
             if (null == key) {
@@ -1844,7 +1959,7 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
             }
         }
     }
-    public Integer getInt(int index) throws Exception{
+    public Integer getInt(int index) throws Exception {
         return getInt(key(index));
     }
     public Integer getInt(String key) throws Exception {
@@ -1878,6 +1993,16 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
         } catch (Exception e) {
             return def;
         }
+    }
+    public Integer getInt(Integer def, String ... keys){
+        Integer result = null;
+        for(String key:keys){
+            result = getInt(key, null);
+            if(null != result){
+                return result;
+            }
+        }
+        return def;
     }
 
     public Double getDouble(String ... keys) throws Exception {
@@ -2108,10 +2233,10 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
         return result;
     }
 
-    public Date getDate(int index, String def) throws Exception{
+    public Date getDate(int index, String def) throws Exception {
         return getDate(key(index), def);
     }
-    public Date getDate(String key, String def) throws Exception{
+    public Date getDate(String key, String def) throws Exception {
         try {
             return getDate(key);
         } catch (Exception e) {
@@ -2234,7 +2359,19 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
         }
         return this;
     }
-
+    public boolean equals(DataRow row, String ... columns){
+        if(null == row || null == columns || columns.length == 0){
+            return false;
+        }
+        for(String column:columns){
+            String v1 = getString(column);
+            String v2 = row.getString(column);
+            if(!BasicUtil.equals(v1, v2)){
+                return false;
+            }
+        }
+        return true;
+    }
     /**
      * 轮换成xml格式
      * @return String
@@ -2353,18 +2490,25 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
     }
 
     public Table getTable() {
-        if (null != table) {
-            return table;
-        } else {
+        return getTable(true);
+    }
+
+    public Table getTable(boolean checkContainer) {
+        if (null != tables && !tables.isEmpty()) {
+            return tables.values().iterator().next();
+        } else if(checkContainer){
             DataSet container = getContainer();
             if (null != container) {
-                return container.getTable();
+                return container.getTable(false);
             } else {
                 return null;
             }
+        }else{
+            return null;
         }
     }
     public String getTableName(){
+        Table table = getTable();
         if(null != table){
             return table.getName();
         }
@@ -2398,24 +2542,54 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
         }
         return dest;
     }
-    public DataRow setTable(String table) {
-        if(null != table) {
-            if (table.contains(".")) {
-                String[] tbs = table.split("\\.");
-                if (tbs.length == 2) {
-                    this.table = new Table(tbs[1]);
-                    this.schema = new Schema(tbs[0]);
-                } else if (tbs.length == 3) {
-                    this.table = new Table(tbs[2]);
-                    this.schema = new Schema(tbs[1]);
-                    this.catalog = new Catalog(tbs[0]);
-                }
+    public DataRow setTable(Table table){
+        tables = new LinkedHashMap<>();
+        addTable(table);
+        return this;
+    }
+    public LinkedHashMap<String, Table> getTables(){
+        return getTables(true);
+    }
+    public LinkedHashMap<String, Table> getTables(boolean checkContainer){
+        if (null != tables && !tables.isEmpty()) {
+            return tables;
+        } else if(checkContainer){
+            DataSet container = getContainer();
+            if (null != container) {
+                return container.getTables(false);
             } else {
-                this.table = new Table(table);
+                return tables;
             }
-        }else{
-            this.table = null;
         }
+        return tables;
+    }
+    public DataRow setTables(List<Table> tables){
+        this.tables = new LinkedHashMap<>();
+        for(Table table:tables){
+            addTable(table);
+        }
+        return this;
+    }
+
+    public DataRow setTables(LinkedHashMap<String, Table> tables){
+        this.tables = tables;
+        return this;
+    }
+    public DataRow addTable(Table table){
+        if(null == tables) {
+            tables = new LinkedHashMap<>();
+        }
+        if(null != table){
+            String name = table.getName();
+            if(null != name){
+                tables.put(name.toUpperCase(), table);
+            }
+        }
+        return this;
+    }
+
+    public DataRow setTable(String table) {
+        setDest(table);
         return this;
     }
 
@@ -2465,7 +2639,7 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
         row.primaryKeys = this.primaryKeys;
         row.dataSource = this.dataSource;
         row.schema = this.schema;
-        row.table = this.table;
+        row.tables = this.tables;
         row.createTime = this.createTime;
         row.nanoTime = this.nanoTime;
         row.isNew = this.isNew;
@@ -3018,7 +3192,7 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
         List<String> keys = keys();
         for (String key : keys) {
             Object value = get(key);
-            if (null != value && value instanceof String) {
+            if (value instanceof String) {
                 put(KEY_CASE.SRC, key, ((String)value).trim());
             }
         }
@@ -3027,7 +3201,7 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
     public DataRow trim(String ... keys) {
         for (String key : keys) {
             Object value = get(key);
-            if (null != value && value instanceof String) {
+            if (value instanceof String) {
                 put(KEY_CASE.SRC, key, ((String)value).trim());
             }
         }
@@ -3041,7 +3215,7 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
     public DataRow compress(){
         for(String key:keySet()){
             Object value = get(key);
-            if (null != value && value instanceof String) {
+            if (value instanceof String) {
                 put(KEY_CASE.SRC, key, BasicUtil.compress((String)value));
             }
         }
@@ -3050,7 +3224,7 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
     public DataRow compress(String ... keys){
         for(String key:keys){
             Object value = get(key);
-            if (null != value && value instanceof String) {
+            if (value instanceof String) {
                 put(KEY_CASE.SRC, key, BasicUtil.compress((String)value));
             }
         }
@@ -3064,7 +3238,7 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
     public DataRow sbc2dbc(){
         for(String key:keySet()){
             Object value = get(key);
-            if (null != value && value instanceof String) {
+            if (value instanceof String) {
                 put(KEY_CASE.SRC, key, CharUtil.sbc2dbc((String)value));
             }
         }
@@ -3073,7 +3247,7 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
     public DataRow sbc2dbc(String ... keys){
         for(String key:keys){
             Object value = get(key);
-            if (null != value && value instanceof String) {
+            if (value instanceof String) {
                 put(KEY_CASE.SRC, key, CharUtil.sbc2dbc((String)value));
             }
         }
@@ -3086,7 +3260,6 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
      * @return DataRow
      */
     public DataRow replaceEmpty(String replace, String ... keys) {
-
         List<String> ks = null;
         if(null == keys || keys.length ==0){
             ks = keys();
@@ -3108,7 +3281,6 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
      * @return DataRow
      */
     public DataRow replaceNull(String replace, String ... keys) {
-
         List<String> ks = null;
         if(null == keys || keys.length ==0){
             ks = keys();
@@ -3369,6 +3541,9 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
      */
     public Object get(String ... keys) {
         Object result = null;
+        if(null == keys){
+            return result;
+        }
         for(String key:keys) {
             if (null != key) {
                 if(keyAdapter.getKeyCase() != KEY_CASE.SRC) {
@@ -3390,7 +3565,7 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
     }
 
     public Object get(String key) {
-        if(keyAdapter.getKeyCase() == KEY_CASE.SRC){
+        if(keyAdapter.getKeyCase() == KEY_CASE.SRC && !ConfigTable.IS_KEY_IGNORE_CASE){
             return super.get(key);
         }
         Object result = null;
@@ -3728,7 +3903,13 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
     }
 
     public String toString(){
-        return toJSON();
+        String result = this.getClass().getSimpleName();
+        Object pv = getPrimaryValue();
+        if(null != pv){
+            result += "(" + pv + ")";
+        }
+        result += ":" + toJSON();
+        return result;
     }
 
     protected DataRow numberFormat(String src, String tar, String format, String def) {
@@ -3769,7 +3950,6 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
      * @param format 如果是String 按format格式解析
      * @param def 默认值
      * @return DataRow
-     * @throws Exception
      */
     protected DataRow dateParse(String src, String tar, String format, Date def)  {
         if (null == tar || null == src || isEmpty(src) || null == format) {
@@ -3793,7 +3973,6 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
      * @param tar 结果列
      * @param def 默认值 如果默认值转换数字失败会抛出异常
      * @return DataRow
-     * @throws Exception
      */
     protected DataRow numberParse(String src, String tar, String def) {
         if (null == tar || null == src || isEmpty(src) ) {
@@ -3866,8 +4045,8 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
             List<String> keys = keys();
             for(String key:keys){
                 Object value = get(key);
-                Class vc = value.getClass();
                 if(null != value){
+                    Class vc = value.getClass();
                     boolean exe = false;
                     for(Class c:classes){
                         if(vc.equals(c)){
@@ -3939,8 +4118,8 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
             List<String> keys = keys();
             for(String key:keys){
                 Object value = get(key);
-                String vc = value.getClass().getSimpleName();
                 if(null != value){
+                    String vc = value.getClass().getSimpleName();
                     boolean exe = false;
                     if(vc.toUpperCase().contains("DATE")){
                         exe = true;
@@ -4026,8 +4205,8 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
             List<String> keys = keys();
             for(String key:keys){
                 Object value = get(key);
-                Class vc = value.getClass();
                 if(null != value){
+                    Class vc = value.getClass();
                     boolean exe = false;
                     for(Class c:classes){
                         if(vc.equals(c)){
@@ -4058,8 +4237,8 @@ public class DataRow extends LinkedHashMap<String, Object> implements Serializab
             List<String> keys = keys();
             for(String key:keys){
                 Object value = get(key);
-                String vc = value.getClass().getSimpleName().toUpperCase();
                 if(null != value){
+                    String vc = value.getClass().getSimpleName().toUpperCase();
                     boolean exe = false;
                     if(vc.startsWith("INT") || vc.contains("SHORT") || vc.contains("LONG") || vc.contains("FLOAT") || vc.contains("DOUBLE") || vc.contains("DECIMAL") || vc.contains("NUMERIC") || vc.contains("NUMBER")){
                         exe = true;
